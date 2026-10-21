@@ -12,7 +12,27 @@
 | Android API 36 x86_64 模拟器，WebView 133.0.6943.137 | 原生 SQLite、账户/记账、杀进程重启、断网解锁与余额一致；普通短信权限拒绝/授予、银行/日期候选、勾选识别、撤回；软键盘保存按钮可见、返回键草稿确认、前后台恢复；发布包安装启动 | 物理 Android、厂商权限差异、生产 OAuth |
 | 物理 Android / iPad | 无设备接入 | 全部真机交互与安装体验待用户设备验证 |
 
-Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 使用专用长期签名，最终发布 APK/哈希在版本产物记录中补齐，不能拿调试包作为正式发布验收。
+Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 发布包使用专用长期签名；原生主要功能在调试验收包验证，最终非调试 APK 另行验签、覆盖安装及启动，不将两类证据混淆。
+
+## 已发布的预览产物
+
+发布日期：2026-10-22。版本页：[v0.1.0-preview.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0-preview.1)，明确标记 prerelease，尚未达到完整第一版的 OAuth/跨端验收条件。
+
+| 项目 | 已核实值 |
+| --- | --- |
+| 构建源码 | 863eb99629d505730679350d76642e78e2e08ced |
+| APK | BesLedger-0.1.0-release.apk，8,355,995 字节 |
+| 版本/包名 | versionName 0.1.0 / versionCode 4；com.bensoftware.besledger |
+| 系统范围 | minSdk 29 / targetSdk 36；API 29 仅构建与 Lint 检查，实际运行验证为 API 36 |
+| APK SHA-256 | 3d1a5bf3ef2ca6691e5a24d5e70f3280ae1ce040e32a571f781c5c5de30f1a1c |
+| 签名 | 专用 RSA-3072，APK Signature Scheme v2；无 DEBUGGABLE 标记 |
+| 证书 SHA-256 | b54b12f342a892713a8764ae2544e68de234309a266e7a70c6fba87000a22716 |
+| Web 生产包 | BesLedger-0.1.0-web-pwa.zip，193,251 字节；/BesLedger/ 子路径 |
+| Web ZIP SHA-256 | 74d9036afa27fc68efca46b9b79349c9cc99685969504038814df529536fead6 |
+
+发布时的签名构建、Web/Android 构建、完整 lintDebug 与 Pages 部署均已通过。最终 APK 在本任务隔离模拟器从同签名 versionCode 2 执行 install -r 升级到 4，系统读回版本正确，冷启动正常显示本地账本创建页，应用进程无崩溃。该升级检查不等于带真实账目的迁移验证。
+
+版本附件同时提供 SHA256SUMS.txt 与 signature.txt。本机相同文件在 artifacts/final/，生产目录为 dist/。最终 APK/Web ZIP 的 472 个归档条目通过受保护凭证精确匹配、私钥/令牌模式、禁止文件类型和源码映射检查；签名私钥与口令未分发。
 
 ## 功能验收对照
 

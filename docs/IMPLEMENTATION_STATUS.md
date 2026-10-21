@@ -1,88 +1,63 @@
 # 实施状态
 
-更新：2026-10-22。当前处于实际实施，未完成整体验收。采用本轮明确授权；后续提交标题和正文使用中文。
+更新：2026-10-22。已发布可安装 Android APK 与 Web/PWA 实施预览版，**完整第一版尚未完成**。剩余必要项是实际 OAuth 应用注册、用户授权及登录后的私有仓库/双端同步验收。采用本轮明确授权；本轮所有新增提交标题和正文均为中文。
 
 ## 阶段与验收
 
 - [x] A：锁定依赖、领域模型、整数金额、期初边界、转账/借贷/退款、加密持久化、备份迁移与失败恢复。
 - [x] B：正式 Vue 界面、短信确认、稳定分类排序、周期幂等、事件、日历/预算、统计与下钻、响应式/离线验证。
-- [ ] C：真实应用 GitHub 授权、独立私有仓库、客户端加密、发现与双端同步、冲突/删除/响应丢失验证。
-- [ ] D：Web/PWA 部署、Android 发布构建与长期签名、安装运行、隐私检查和交付文档。
+- [ ] C：真实应用 GitHub 授权、应用内独立私有仓库创建、发现与登录后的双端同步。
+- [x] D（预览产物）：Web/PWA 部署、Android 专用长期签名、安装启动与覆盖升级、隐私检查和交付文档。
+
+D 是可用的预览产物验收，不代表 C 可以省略。全量功能、实际设备及未覆盖范围见 [逐项验收记录](DELIVERY_VERIFICATION.md)。
+
+## 已交付与验证
+
+- Web/PWA：https://bensonlaur.github.io/BesLedger/。
+- 预览版：https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0-preview.1。包含 APK、Web 生产 ZIP、SHA256SUMS.txt、signature.txt。
+- 构建源码：863eb99629d505730679350d76642e78e2e08ced；APK 0.1.0 / versionCode 4，8,355,995 字节。全部阶段提交已推送。
+- APK SHA-256：3d1a5bf3ef2ca6691e5a24d5e70f3280ae1ce040e32a571f781c5c5de30f1a1c。签名证书与本机专用公钥一致，v2 验签通过，非调试包。
+- 核心自动化 27 项通过；真实私有仓库 API 集成另 1 项通过；三种浏览器/尺寸共 12 条端到端路径通过。
+- Android API 36 模拟器：原生 SQLite、保存后杀进程重启、离线解锁、普通短信权限拒绝/授予/撤回、范围查询与勾选识别、软键盘和返回键草稿保护、前后台恢复通过。
+- 最终发布包从同签名 versionCode 2 覆盖安装到 4，读回版本正确并冷启动正常。物理 Android/iPad 未接入，没有宣称真机通过。
+- 云端 Web、原生编译、完整 lintDebug 和专用签名构建通过；npm audit 无已知漏洞。最终产物、Git 历史与公开内容隐私检查通过，演示数据均为虚构。
 
 ## 已核实环境
 
-- 初始源码提交：32253d5db86e9c6873153d34842e916a2985b316；工作区初始干净。
-- Node 24.15.0、npm 11.12.1；开发账号 BensonLaur 的 gh 可用。此登录不是应用内登录。
-- 源码远端：https://github.com/BensonLaur/BesLedger.git。
-- 已阅读执行正文与交付基线；演示数据均为虚构。
-- 独立 Microsoft JDK 21.0.12.1、Android SDK/API 36、build-tools 36.0.0、API 36 模拟器已就绪；物理设备未接入。
+- 初始源码提交：32253d5db86e9c6873153d34842e916a2985b316；工作区初始干净。远端：https://github.com/BensonLaur/BesLedger.git。
+- Node 24.15.0 / npm 11.12.1；Vue 3.5.44、Vite 7.3.7、TypeScript 5.9.3、Capacitor core/android/cli 8.4.3。完整精确版本见 package-lock.json。
+- 独立 Microsoft JDK 21.0.12.1、Android SDK/API 36、build-tools 36.0.0；Gradle 8.14.3 / AGP 8.13.0。本机 Gradle 官方 ZIP 下载过慢，使用相同锁定配置的 GitHub Actions 实际构建，未改系统代理。
+- Edge 155.0.4283.62（桌面与 Pixel 7 尺寸）、WebKit 27.2（iPad 尺寸）；API 36 x86_64 模拟器 / WebView 133.0.6943.137。
+- 自建隔离 AVD：BesLedgerTestApi36，serial emulator-5556；工具在被忽略的 .tools/，不会改系统 Java/SDK 或操作真实设备。
 
-## 当前工程决定
+## 已落实的工程决定
 
-- 本地加密先于真实落盘：随机主密钥、口令派生封装、独立恢复材料，解锁密钥仅在内存；数据库只保存密文与非财务版本元数据。
-- 本金与利息保存在同一业务操作中，账户投影与统计纯计算，避免半笔事务。
-- 保留删除标记和稳定周期期次 ID；冲突不按时间戳静默覆盖。
-- 按账本同步，账户仅传递被选账本引用的定义；不上传其他本地账本的流水或余额投影。余额明确标注本机数据范围。
-- Web 按用户指定部署到 GitHub Pages；Android 与 Web 复用领域层，原生存储另适配。
+- 业务、短信解析、加密、本地适配和 GitHub 访问分层。账户余额与收支统计统一由整数金额记录投影；本金与利息作为同一业务原子保存。
+- Web IndexedDB 与 Android SQLite 仅落盘加密空间及上一版本。口令封装和独立恢复材料分离，多个窗口保存执行版本比较，锁定期间异步回调不能重新解锁。
+- 同步采用稳定身份、实体版本向量、SHA 比较写入及墓碑；并发同笔/删除冲突必须显式处理。周期期次 ID 稳定，独立生成与规则游标可收敛。
+- 按账本同步，只携带被其引用的共用账户定义；不上传其他本地流水或余额投影，始终标注“本机已知范围”。密文快照 25 MB、完整备份 50 MB 上限明确失败，不截断；尚未做增量块/历史压缩。
+- Web 发布目录 dist/，Android dist-android/ 不启用 PWA Service Worker；正式 APK 禁止系统自动备份，使用显式加密备份。
+- Set.of 仅从 API 30 提供，已替换为 API 29 可用集合并通过完整 Lint；电话硬件为可选，不阻止无 SIM 设备安装。
+- 专用 RSA-3072 发布签名位于 private/signing/，ACL 仅当前用户/SYSTEM，口令 Windows DPAPI 保护；同一材料安全配置在本仓库 Actions secrets。未发布私钥或口令，升级不得重建签名。
 
-## 当前工作与阻塞
+## 当前外部阻塞与继续入口
 
-本地功能、Web 发布和原生主要流程已验证；正在整理最终签名产物与矩阵。唯一账号侧阻塞是 GitHub 浏览器登录/应用注册，公开 Client ID 尚未取得；应用内登录后的真实跨端验收必须继续。完整清单见 DELIVERY_VERIFICATION.md。
+开发账号 BensonLaur 的 gh 可用，但浏览器 GitHub 注册入口未登录，尚未取得用户 OAuth App 的公开 Client ID；开发 gh 凭证不能替代应用登录。已向用户集中说明外部登录动作，其余可独立工作均已推进至预览发布。
 
-## 恢复入口
+需要用户在 GitHub 注册 BesLedger OAuth App、开启 Device Flow，并提供**公开 Client ID**（或完成浏览器登录后由实施者继续注册）；无需提供密码、2FA、Client Secret 或长期 token。准确网址及字段见 [DEPLOYMENT.md](DEPLOYMENT.md)。这属于外部账号登录/注册依赖，不是再次申请已经授予的 GitHub、私有仓库或发布权限。
 
-继续当前工作区，先看本文件与 git status，不重新初始化。新增有效命令、测试证据、部署地址和剩余项随各阶段更新。
-## 2026-10-21 实施进展
+已准备的线上授权服务：https://besledger-github-auth.bensonlaur.chatgpt.site。Sites project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；保留既有项目，不重复创建。当前未配置 GITHUB_CLIENT_ID；生产 Pages 的浏览器跨域 POST 已实际返回预期 503/app_not_configured，证明跨域连通但不能当作授权成功。命令行请求受 Cloudflare 拦截，不代表浏览器调用结果。
 
-- 已实现正式 Vue 应用、加密本地空间、账本/共用账户、收支转账借贷、退款、周期/事件、短信确认、分类排序、日历预算、统计下钻及备份恢复。
-- 19 项 Vitest 测试通过；严格 TypeScript 检查和 Web/PWA 生产构建通过；npm audit 全部依赖 0 漏洞。
-- Edge 桌面和 Pixel 7 尺寸模拟：短信确认/日期保留、创建账户、保存/编辑、主要页面、无横向溢出、生产子路径和离线重新解锁均通过。
-- 已修复实际浏览器发现的响应式 Proxy 无法 structuredClone 问题。截图仅含虚构测试账。
-- 已创建 Android 工程（min 29 / compile/target 36），编写原生 SQLite 密文存储、短信范围查询和发布签名配置，尚未构建验证。
-- 安全修复版本组合：Capacitor core/android/cli 8.4.3、Vue 3.5.44、Vite 7.3.7、Vitest 5.0.5、TypeScript 5.x；精确依赖见 package-lock.json。8.5.3 CLI 带入 iOS xcode/uuid 审计问题，本轮不交付 iOS，选用同样含 Android 修复的 8.4.3。
-- 最小 OAuth Device Flow 中转服务代码和隔离测试已准备。Sites project_id：appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；源码包在被忽略的 .cache/relay-site；注册配置见 services/auth-relay/hosting.json。不得再次创建同名 Site。
-- GitHub 浏览器入口处于未登录状态，OAuth App 注册与用户实际授权尚未完成。中转服务没有 client ID，不能宣称登录成功。
-- Android SDK tools 已校验下载；JDK GitHub 下载过慢，改走 Microsoft 官方 CDN，独立安装在 .tools，正在下载/校验。系统 JRE 未改动。
-- 浏览器批量下载慢，先复用本机 Edge；WebKit/iPad、真实 Android/iPad 与模拟器尚未验证。
+取得 Client ID 后更新既有服务运行环境并重新部署，设置源码仓库变量 BESLEDGER_AUTH_SERVICE，再发布 Web/APK。随后必须用两个独立实际客户端存储完成真实授权、应用内私有仓库创建/选择与 private 读回、首次上传、发现下载、编辑回传、冲突、拒绝/失效/退出重连验收。
 
-有效命令：npm ci；npm test；npm run check；npm run build；npm run preview -- --port 4173；npm run test:e2e -- --project=desktop --project=android-layout；node scripts/text-format.mjs --check。
+独立私有测试仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 已实际创建并读回 private；仅含客户端加密的虚构测试账。现有真实 API 测试使用两个独立 Vault/fake-indexeddb 实例及开发凭证，证明同步协议，不冒充登录后的两台实际终端。
 
-当前下一步：完成授权服务发布、Android 构建/签名、扩展端到端业务测试、真实 GitHub 私有测试仓库集成与部署。尚未创建主仓库阶段提交或推送，不要把上述实现视为完整第一版验收完成。
-## 最新验证补充
+## 有效命令与恢复
 
-- 独立私有测试仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 已创建并读回确认 private；只上传客户端加密的虚构账目。
-- 真实 GitHub API 集成 1 项完整流程通过（41 秒）：两套隔离的加密存储、发现/下载、双向编辑、同笔冲突选择、删除传播及显式恢复。测试凭证来自开发 gh，仅证明协议与真实 API；未冒充应用内 OAuth 登录验收。
-- Sites 授权服务版本 1 已部署成功：https://besledger-github-auth.bensonlaur.chatgpt.site。浏览器健康检查返回 configured=false；缺少 OAuth App client ID。命令行访问受 Cloudflare 拦截，后续须验证实际浏览器和 APK 跨域请求。
-- 专用 RSA-3072 发布签名已生成；private/signing 仅当前用户/SYSTEM 可访问，口令 DPAPI 加密。无签名秘密进入源码/日志。
-- Microsoft JDK 21.0.12.1 已下载并核对官方 SHA-256；Android SDK 36/build-tools 36.0.0、模拟器及 API 36 系统镜像已安装。修正了命令行工具多嵌套一层导致 avdmanager 找不到镜像的问题。
-- Android Web 资源构建与 cap sync 通过；Gradle 8.14.3 正在官方网络下载，完整原生编译未结束。
-- WebKit/iPad 尺寸的主要页面、保存编辑、离线重开已通过；时间值断言调整以接受浏览器保留零秒的标准差异，正在复验短信路径。
-- GitHub Pages 已配置 workflow 发布模式，正式地址 https://bensonlaur.github.io/BesLedger/，尚未完成首次部署。
-## 阶段提交与发布
+- npm ci；npm test；npm run check；npm run build；npm run preview -- --port 4173。
+- npm run test:e2e（需本机 Edge 与已安装 Playwright WebKit）；npm run android:sync。
+- PowerShell 7：./scripts/build-android.ps1 -JavaDirectory <JDK绝对路径> -SdkDirectory <SDK绝对路径>；正式签名材料已存在，禁止再次生成覆盖。
+- 原生验收入口：scripts/test-android.mjs、scripts/test-android-sms.mjs、scripts/test-android-lifecycle.mjs；须使用指定隔离模拟器与调试验收包。
+- 文本检查：node scripts/text-format.mjs --check，只处理本批触及文件；gradlew 和 *.sh 按显式规则 LF，其余文本纯 CRLF。
 
-- 主仓库阶段提交 907cd8f3b5ffe757daa72003283ca633f5823b87 已推送，标题与正文为中文，署名取自规定脚本实际输出。
-- GitHub Actions 的 Web 与 Android 构建验证均成功；Android 编译成功产物目前是明确标注的调试验收包，正式长期签名构建继续进行。
-- GitHub Pages 首次发布成功并读取验证 HTML，地址：https://bensonlaur.github.io/BesLedger/。当前尚未配置应用内 GitHub OAuth，不能宣布完整第一版完成。
-- WebKit iPad 尺寸短信复验通过；三种浏览器/尺寸共 6 条端到端路径已分别通过。
-- Android API 36 模拟器已启动且 boot_completed=1；真实物理设备仍未接入。
-- GitHub Actions 专用签名 secrets 已安全配置于 BesLedger 源码仓库，仅用于本项目发布流程。未将签名文件或口令写入 Git。
-## 2026-10-22 原生验收进展
-
-- Android API 36 / WebView 133 模拟器：使用 scripts/test-android.mjs 通过原生 SQLite 保存、账户起算、记账、杀进程重启、断网解锁与余额一致验证。
-- 已生成并验签专用发布 APK，证书 SHA-256 为 b54b12f342a892713a8764ae2544e68de234309a266e7a70c6fba87000a22716，与本机专用签名证书一致。最终文件哈希将在原生修复复验后更新。
-- 短信运行时拒绝、再次普通授权已实际验证；测试发现 Capacitor getDouble 不接受 JSON Long 毫秒时间戳，导致正常筛选范围被拒绝，已修正并继续构建复验，不能暂称短信读取完整通过。
-- SDK 安装路径已校正，模拟器已正常启动。原生发布在 GitHub Actions 使用相同锁定版本构建通过；本机 Gradle 官方 ZIP 下载异常缓慢，停止冗余下载，未改动系统代理或安全设置。
-- 目前 24 项核心测试、6 项浏览器端到端测试通过；新增锁定期间保存回调不得重新解锁的生命周期测试。
-
-## 当前验证结论补充
-
-- 已修复短信 Long 时间戳后，在 API 36 模拟器通过普通权限拒绝、再次授予、按银行/日期读取虚构短信、勾选、进入本地识别及撤回。撤回后系统权限读回 granted=false。
-- 生产 Pages 到实际授权服务的浏览器 CORS 请求已验证，返回 HTTP 503 与 app_not_configured，符合当前缺 client ID 的事实；不是跨域配置失败。
-- 核心测试 27 项通过，真实 API 集成再次通过（约 40 秒），浏览器新增借贷草稿和预算交互后共 9 条路径通过。
-- 发布包专用证书与本机公钥证书一致，非调试包已安装启动；versionCode 3 正在准备最终构建，不能引用旧包哈希作为最终结果。
-
-- 最后增加信用卡溢缴、借出收回利息、包含退款/周期墓碑的完整备份恢复验证，核心测试合计 27 项通过。
-- 借还总额与统计明细保持同一口径：统计只列实际利息，主业务总额作为辅助信息并能进入原详情；三种浏览器新增完整借还路径后合计 12 条通过。
-- Android 实际软键盘测试通过：保存按钮无遮挡，返回键先隐藏键盘，再确认未保存草稿；取消返回保留草稿，前后台切换恢复已有流水。
-- 生产客户端仍未配置 GitHub OAuth，不因本地、协议与 APK 完成而标记整体完成。
-- 最低系统兼容复核发现 Set.of 仅从 API 30 提供（官方 SDK api-versions.xml），已改为 API 29 支持的集合构建；加入完整 lintDebug 检查。电话硬件声明为可选，避免短信增强限制无 SIM 设备安装。最终 versionCode 更新为 4。
+继续时先看本文件、git status 和 DEPLOYMENT.md，不重新初始化、不重复创建 Site/签名/测试仓库。验收与部署证据见 DELIVERY_VERIFICATION.md；加密备份、恢复、账号与签名边界见 SECURITY_AND_RECOVERY.md。
