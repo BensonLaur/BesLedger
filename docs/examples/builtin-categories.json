@@ -1,0 +1,721 @@
+{
+  "schemaVersion": 1,
+  "status": "design-proposal",
+  "expense": [
+    {
+      "id": "expense.food",
+      "name": "餐饮",
+      "icon": "utensils",
+      "categories": [
+        {
+          "id": "expense.food.001",
+          "name": "早餐",
+          "icon": "egg-fried"
+        },
+        {
+          "id": "expense.food.002",
+          "name": "午餐",
+          "icon": "soup"
+        },
+        {
+          "id": "expense.food.003",
+          "name": "晚餐",
+          "icon": "utensils"
+        },
+        {
+          "id": "expense.food.004",
+          "name": "夜宵",
+          "icon": "sandwich"
+        },
+        {
+          "id": "expense.food.005",
+          "name": "零食",
+          "icon": "cookie"
+        },
+        {
+          "id": "expense.food.006",
+          "name": "饮料水果",
+          "icon": "apple"
+        },
+        {
+          "id": "expense.food.007",
+          "name": "买菜原料",
+          "icon": "carrot"
+        },
+        {
+          "id": "expense.food.008",
+          "name": "油盐酱醋",
+          "icon": "cooking-pot"
+        },
+        {
+          "id": "expense.food.009",
+          "name": "餐饮其他",
+          "icon": "coffee"
+        }
+      ]
+    },
+    {
+      "id": "expense.transport",
+      "name": "交通",
+      "icon": "bus",
+      "categories": [
+        {
+          "id": "expense.transport.001",
+          "name": "打车",
+          "icon": "car-front"
+        },
+        {
+          "id": "expense.transport.002",
+          "name": "公交",
+          "icon": "bus"
+        },
+        {
+          "id": "expense.transport.003",
+          "name": "加油",
+          "icon": "fuel"
+        },
+        {
+          "id": "expense.transport.004",
+          "name": "停车费",
+          "icon": "square-parking"
+        },
+        {
+          "id": "expense.transport.005",
+          "name": "地铁",
+          "icon": "train-front"
+        },
+        {
+          "id": "expense.transport.006",
+          "name": "火车",
+          "icon": "train-front"
+        },
+        {
+          "id": "expense.transport.007",
+          "name": "长途汽车",
+          "icon": "bus-front"
+        },
+        {
+          "id": "expense.transport.008",
+          "name": "飞机",
+          "icon": "plane"
+        },
+        {
+          "id": "expense.transport.009",
+          "name": "自行车",
+          "icon": "bike"
+        },
+        {
+          "id": "expense.transport.010",
+          "name": "船舶",
+          "icon": "ship"
+        },
+        {
+          "id": "expense.transport.011",
+          "name": "保养维修",
+          "icon": "wrench"
+        },
+        {
+          "id": "expense.transport.012",
+          "name": "过路过桥",
+          "icon": "route"
+        },
+        {
+          "id": "expense.transport.013",
+          "name": "罚款赔偿",
+          "icon": "receipt-text"
+        },
+        {
+          "id": "expense.transport.014",
+          "name": "购车支出",
+          "icon": "car-front"
+        },
+        {
+          "id": "expense.transport.015",
+          "name": "车险",
+          "icon": "shield-check"
+        },
+        {
+          "id": "expense.transport.016",
+          "name": "驾照费用",
+          "icon": "id-card"
+        },
+        {
+          "id": "expense.transport.017",
+          "name": "交通其他",
+          "icon": "bus"
+        }
+      ]
+    },
+    {
+      "id": "expense.shopping",
+      "name": "购物",
+      "icon": "shopping-bag",
+      "categories": [
+        {
+          "id": "expense.shopping.001",
+          "name": "服饰鞋包",
+          "icon": "shirt"
+        },
+        {
+          "id": "expense.shopping.002",
+          "name": "家居百货",
+          "icon": "package"
+        },
+        {
+          "id": "expense.shopping.003",
+          "name": "宝宝用品",
+          "icon": "baby"
+        },
+        {
+          "id": "expense.shopping.004",
+          "name": "化妆护肤",
+          "icon": "sparkles"
+        },
+        {
+          "id": "expense.shopping.005",
+          "name": "烟酒",
+          "icon": "wine"
+        },
+        {
+          "id": "expense.shopping.006",
+          "name": "电子数码",
+          "icon": "headphones"
+        },
+        {
+          "id": "expense.shopping.007",
+          "name": "文具玩具",
+          "icon": "pencil-ruler"
+        },
+        {
+          "id": "expense.shopping.008",
+          "name": "报刊书籍",
+          "icon": "book-open"
+        },
+        {
+          "id": "expense.shopping.009",
+          "name": "珠宝首饰",
+          "icon": "gem"
+        },
+        {
+          "id": "expense.shopping.010",
+          "name": "家具家纺",
+          "icon": "sofa"
+        },
+        {
+          "id": "expense.shopping.011",
+          "name": "保健用品",
+          "icon": "heart-pulse"
+        },
+        {
+          "id": "expense.shopping.012",
+          "name": "电器",
+          "icon": "washing-machine"
+        },
+        {
+          "id": "expense.shopping.013",
+          "name": "摄影文印",
+          "icon": "camera"
+        },
+        {
+          "id": "expense.shopping.014",
+          "name": "购物其他",
+          "icon": "shopping-cart"
+        }
+      ]
+    },
+    {
+      "id": "expense.leisure",
+      "name": "娱乐",
+      "icon": "clapperboard",
+      "categories": [
+        {
+          "id": "expense.leisure.001",
+          "name": "旅游度假",
+          "icon": "palmtree"
+        },
+        {
+          "id": "expense.leisure.002",
+          "name": "电影",
+          "icon": "clapperboard"
+        },
+        {
+          "id": "expense.leisure.003",
+          "name": "网游电玩",
+          "icon": "gamepad-2"
+        },
+        {
+          "id": "expense.leisure.004",
+          "name": "麻将棋牌",
+          "icon": "dices"
+        },
+        {
+          "id": "expense.leisure.005",
+          "name": "洗浴足浴",
+          "icon": "bath"
+        },
+        {
+          "id": "expense.leisure.006",
+          "name": "运动健身",
+          "icon": "dumbbell"
+        },
+        {
+          "id": "expense.leisure.007",
+          "name": "花鸟宠物",
+          "icon": "paw-print"
+        },
+        {
+          "id": "expense.leisure.008",
+          "name": "聚会玩乐",
+          "icon": "party-popper"
+        },
+        {
+          "id": "expense.leisure.009",
+          "name": "茶酒咖啡",
+          "icon": "coffee"
+        },
+        {
+          "id": "expense.leisure.010",
+          "name": "卡拉OK",
+          "icon": "mic-vocal"
+        },
+        {
+          "id": "expense.leisure.011",
+          "name": "歌舞演出",
+          "icon": "ticket"
+        },
+        {
+          "id": "expense.leisure.012",
+          "name": "影音会员",
+          "icon": "tv"
+        },
+        {
+          "id": "expense.leisure.013",
+          "name": "娱乐其他",
+          "icon": "clapperboard"
+        }
+      ]
+    },
+    {
+      "id": "expense.health-education",
+      "name": "医教",
+      "icon": "cross",
+      "categories": [
+        {
+          "id": "expense.health-education.001",
+          "name": "医疗药品",
+          "icon": "pill"
+        },
+        {
+          "id": "expense.health-education.002",
+          "name": "挂号门诊",
+          "icon": "stethoscope"
+        },
+        {
+          "id": "expense.health-education.003",
+          "name": "养生保健",
+          "icon": "heart-pulse"
+        },
+        {
+          "id": "expense.health-education.004",
+          "name": "住院费",
+          "icon": "hospital"
+        },
+        {
+          "id": "expense.health-education.005",
+          "name": "养老院",
+          "icon": "heart-handshake"
+        },
+        {
+          "id": "expense.health-education.006",
+          "name": "学杂教材",
+          "icon": "notebook"
+        },
+        {
+          "id": "expense.health-education.007",
+          "name": "培训考试",
+          "icon": "graduation-cap"
+        },
+        {
+          "id": "expense.health-education.008",
+          "name": "幼儿教育",
+          "icon": "baby"
+        },
+        {
+          "id": "expense.health-education.009",
+          "name": "学费",
+          "icon": "school"
+        },
+        {
+          "id": "expense.health-education.010",
+          "name": "家教补习",
+          "icon": "book-open"
+        },
+        {
+          "id": "expense.health-education.011",
+          "name": "出国留学",
+          "icon": "plane"
+        },
+        {
+          "id": "expense.health-education.012",
+          "name": "医教其他",
+          "icon": "cross"
+        }
+      ]
+    },
+    {
+      "id": "expense.home",
+      "name": "居家",
+      "icon": "house",
+      "categories": [
+        {
+          "id": "expense.home.001",
+          "name": "手机电话",
+          "icon": "smartphone"
+        },
+        {
+          "id": "expense.home.002",
+          "name": "水电燃气",
+          "icon": "flame"
+        },
+        {
+          "id": "expense.home.003",
+          "name": "生活费",
+          "icon": "wallet"
+        },
+        {
+          "id": "expense.home.004",
+          "name": "美发美容",
+          "icon": "scissors"
+        },
+        {
+          "id": "expense.home.005",
+          "name": "住宿房租",
+          "icon": "house"
+        },
+        {
+          "id": "expense.home.006",
+          "name": "材料建材",
+          "icon": "brick-wall"
+        },
+        {
+          "id": "expense.home.007",
+          "name": "购房支出",
+          "icon": "house-plus"
+        },
+        {
+          "id": "expense.home.008",
+          "name": "快递邮政",
+          "icon": "package"
+        },
+        {
+          "id": "expense.home.009",
+          "name": "电脑宽带",
+          "icon": "wifi"
+        },
+        {
+          "id": "expense.home.010",
+          "name": "家政服务",
+          "icon": "brush-cleaning"
+        },
+        {
+          "id": "expense.home.011",
+          "name": "物业",
+          "icon": "building-2"
+        },
+        {
+          "id": "expense.home.012",
+          "name": "税费手续费",
+          "icon": "receipt"
+        },
+        {
+          "id": "expense.home.013",
+          "name": "保险费",
+          "icon": "shield-check"
+        },
+        {
+          "id": "expense.home.014",
+          "name": "婚庆摄影",
+          "icon": "camera"
+        },
+        {
+          "id": "expense.home.015",
+          "name": "生活其他",
+          "icon": "house"
+        }
+      ]
+    },
+    {
+      "id": "expense.investment",
+      "name": "投资",
+      "icon": "chart-no-axes-combined",
+      "categories": [
+        {
+          "id": "expense.investment.001",
+          "name": "利息支出",
+          "icon": "percent"
+        },
+        {
+          "id": "expense.investment.002",
+          "name": "投资手续费",
+          "icon": "receipt"
+        },
+        {
+          "id": "expense.investment.003",
+          "name": "投资其他",
+          "icon": "chart-no-axes-combined"
+        }
+      ]
+    },
+    {
+      "id": "expense.social",
+      "name": "人情",
+      "icon": "gift",
+      "categories": [
+        {
+          "id": "expense.social.001",
+          "name": "礼金红包",
+          "icon": "gift"
+        },
+        {
+          "id": "expense.social.002",
+          "name": "礼物",
+          "icon": "gift"
+        },
+        {
+          "id": "expense.social.003",
+          "name": "孝敬",
+          "icon": "heart-handshake"
+        },
+        {
+          "id": "expense.social.004",
+          "name": "请客",
+          "icon": "utensils"
+        },
+        {
+          "id": "expense.social.005",
+          "name": "给予",
+          "icon": "hand-coins"
+        },
+        {
+          "id": "expense.social.006",
+          "name": "慈善捐款",
+          "icon": "heart"
+        },
+        {
+          "id": "expense.social.007",
+          "name": "人情其他",
+          "icon": "heart"
+        }
+      ]
+    },
+    {
+      "id": "expense.business",
+      "name": "生意",
+      "icon": "store",
+      "categories": [
+        {
+          "id": "expense.business.001",
+          "name": "进货采购",
+          "icon": "package-open"
+        },
+        {
+          "id": "expense.business.002",
+          "name": "人工支出",
+          "icon": "users"
+        },
+        {
+          "id": "expense.business.003",
+          "name": "材料辅料",
+          "icon": "boxes"
+        },
+        {
+          "id": "expense.business.004",
+          "name": "办公费用",
+          "icon": "printer"
+        },
+        {
+          "id": "expense.business.005",
+          "name": "交通运输",
+          "icon": "truck"
+        },
+        {
+          "id": "expense.business.006",
+          "name": "工程付款",
+          "icon": "hard-hat"
+        },
+        {
+          "id": "expense.business.007",
+          "name": "运营费",
+          "icon": "store"
+        },
+        {
+          "id": "expense.business.008",
+          "name": "会务费",
+          "icon": "users"
+        },
+        {
+          "id": "expense.business.009",
+          "name": "营销广告",
+          "icon": "megaphone"
+        },
+        {
+          "id": "expense.business.010",
+          "name": "店面租金",
+          "icon": "store"
+        },
+        {
+          "id": "expense.business.011",
+          "name": "注册登记",
+          "icon": "id-card"
+        },
+        {
+          "id": "expense.business.012",
+          "name": "生意其他",
+          "icon": "store"
+        }
+      ]
+    }
+  ],
+  "income": [
+    {
+      "id": "income.001",
+      "name": "工资薪水",
+      "icon": "badge-dollar-sign"
+    },
+    {
+      "id": "income.002",
+      "name": "奖金",
+      "icon": "award"
+    },
+    {
+      "id": "income.003",
+      "name": "兼职外快",
+      "icon": "clock"
+    },
+    {
+      "id": "income.004",
+      "name": "营业收入",
+      "icon": "store"
+    },
+    {
+      "id": "income.005",
+      "name": "销售款",
+      "icon": "shopping-bag"
+    },
+    {
+      "id": "income.006",
+      "name": "红包",
+      "icon": "gift"
+    },
+    {
+      "id": "income.007",
+      "name": "礼金",
+      "icon": "gift"
+    },
+    {
+      "id": "income.008",
+      "name": "报销款",
+      "icon": "receipt"
+    },
+    {
+      "id": "income.009",
+      "name": "福利补贴",
+      "icon": "hand-coins"
+    },
+    {
+      "id": "income.010",
+      "name": "生活费",
+      "icon": "wallet"
+    },
+    {
+      "id": "income.011",
+      "name": "利息",
+      "icon": "percent"
+    },
+    {
+      "id": "income.012",
+      "name": "分红",
+      "icon": "chart-pie"
+    },
+    {
+      "id": "income.013",
+      "name": "租金",
+      "icon": "house"
+    },
+    {
+      "id": "income.014",
+      "name": "公积金",
+      "icon": "building-2"
+    },
+    {
+      "id": "income.015",
+      "name": "工程款",
+      "icon": "hard-hat"
+    },
+    {
+      "id": "income.016",
+      "name": "赔付款",
+      "icon": "shield-check"
+    },
+    {
+      "id": "income.017",
+      "name": "投资收益",
+      "icon": "chart-no-axes-combined"
+    },
+    {
+      "id": "income.018",
+      "name": "捐赠收入",
+      "icon": "heart"
+    },
+    {
+      "id": "income.019",
+      "name": "其他收入",
+      "icon": "ellipsis"
+    }
+  ],
+  "defaultQuick": {
+    "expense": [
+      "expense.food.001",
+      "expense.food.002",
+      "expense.food.003",
+      "expense.food.007",
+      "expense.food.006",
+      "expense.shopping.002",
+      "expense.transport.001",
+      "expense.transport.003",
+      "expense.transport.004",
+      "expense.home.002",
+      "expense.home.001"
+    ],
+    "income": [
+      "income.001",
+      "income.002",
+      "income.003",
+      "income.006",
+      "income.009",
+      "income.011",
+      "income.008"
+    ]
+  },
+  "quickLimits": {
+    "expense": 11,
+    "income": 7
+  },
+  "ranking": {
+    "rollingDays": [
+      7,
+      30,
+      365
+    ],
+    "weights": [
+      0.6,
+      0.3,
+      0.1
+    ],
+    "priorStrength": 5,
+    "swapMargin": 0.02,
+    "timeBasis": "manual-classification-confirmed-at",
+    "scope": "book-and-income-or-expense",
+    "moreButton": "fixed-last"
+  }
+}

@@ -1,0 +1,1101 @@
+<!-- 设计源码快照：演示数据均为虚构；不是正式应用。详见同目录 README。 -->
+<div id="besledger-preview" aria-label="BesLedger 页面预览">
+  <div class="bl-stage viz-dotted-background">
+    <div class="bl-shell" data-device="mobile">
+      <aside class="bl-sidebar" aria-label="主导航"></aside>
+      <div class="bl-app">
+        <div class="bl-status"><span>9:41</span><span>BesLedger · 预览</span><span><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+        <header class="bl-header"></header>
+        <main class="bl-main"></main>
+        <nav class="bl-bottom" aria-label="底部导航"></nav>
+        <div class="bl-modal-host"></div>
+        <div class="bl-toast" role="status" aria-live="polite" hidden></div>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+#besledger-preview { --bl-bg:light-dark(#f4f5f1,#141c18);--bl-surface:light-dark(#ffffff,#202a24);--bl-ink:light-dark(#25372e,#edf3ed);--bl-muted:light-dark(#748078,#a1b2a6);--bl-line:light-dark(#e7ebe4,#35433a);--bl-accent:light-dark(#27684a,#a3d6b4);--bl-soft:light-dark(#e8f1e6,#2a4132);--bl-orange:light-dark(#e4733e,#f6a879);--bl-tint:light-dark(#fbefe7,#463226);--bl-blue:light-dark(#5f7599,#aec2e4);--bl-red:light-dark(#b65148,#f5a299);--bl-hero:light-dark(#2b624a,#203f2d);--bl-hero-text:#f7fff8;--bl-shadow:light-dark(0 18px 60px #283d2c14,0 18px 60px #00000030);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color:var(--bl-ink);color-scheme:light dark }
+#besledger-preview { --bl-income:light-dark(#27684a,#a3d6b4) }
+#besledger-preview[data-palette="ink"] { --bl-bg:light-dark(#f5f5f2,#171c24);--bl-surface:light-dark(#ffffff,#222a35);--bl-ink:light-dark(#273444,#e8edf5);--bl-muted:light-dark(#657183,#a8b5c6);--bl-line:light-dark(#e3e7ec,#374456);--bl-accent:light-dark(#354f73,#aec6e8);--bl-soft:light-dark(#e9eef5,#303e52);--bl-hero:light-dark(#304765,#253750);--bl-hero-text:#f4f7fc;--bl-shadow:light-dark(0 18px 60px #29374914,0 18px 60px #00000030) }
+#besledger-preview[data-palette="amber"] { --bl-bg:light-dark(#f7f4ee,#211d18);--bl-surface:light-dark(#fffefa,#2d2821);--bl-ink:light-dark(#40372b,#f3ece0);--bl-muted:light-dark(#796c5b,#bdb09c);--bl-line:light-dark(#e9e1d5,#484034);--bl-accent:light-dark(#815b25,#dfbf89);--bl-soft:light-dark(#f3ead9,#443724);--bl-hero:light-dark(#6c522f,#44351f);--bl-hero-text:#fff8ea;--bl-shadow:light-dark(0 18px 60px #483c2714,0 18px 60px #00000030) }
+#besledger-preview * { box-sizing:border-box }
+#besledger-preview button,#besledger-preview input,#besledger-preview textarea,#besledger-preview select { font:inherit }
+#besledger-preview button { color:inherit;border:0;background:none;cursor:var(--cursor-interaction,default);padding:0;text-align:inherit }
+#besledger-preview button:focus-visible,#besledger-preview input:focus-visible,#besledger-preview textarea:focus-visible,#besledger-preview select:focus-visible { outline:3px solid var(--bl-orange);outline-offset:3px }
+#besledger-preview input,#besledger-preview textarea,#besledger-preview select { color:var(--bl-ink);background:var(--bl-surface);border:1px solid var(--bl-line);border-radius:10px;padding:10px 12px;min-width:0;max-width:100% }
+#besledger-preview input,#besledger-preview textarea { font-size:16px }
+#besledger-preview select option { color:var(--bl-ink);background:var(--bl-surface) }
+#besledger-preview textarea { resize:vertical;width:100%;min-height:86px;line-height:1.6 }
+#besledger-preview input::placeholder,#besledger-preview textarea::placeholder { color:var(--bl-muted) }
+#besledger-preview h1,#besledger-preview h2,#besledger-preview h3,#besledger-preview p { margin:0 }
+#besledger-preview h1 { font-size:22px;font-weight:650;letter-spacing:-.5px }
+#besledger-preview h2 { font-size:17px;font-weight:600 }
+#besledger-preview h3 { font-size:14px;font-weight:600 }
+#besledger-preview svg { flex-shrink:0 }
+#besledger-preview .bl-stage { padding:14px 10px 24px;min-height:800px }
+#besledger-preview .bl-shell { background:var(--bl-bg);border:1px solid var(--bl-line);box-shadow:var(--bl-shadow);margin:auto;border-radius:26px;overflow:clip;max-width:420px;display:block }
+#besledger-preview .bl-app { position:relative;min-width:0;min-height:760px;display:flex;flex-direction:column }
+#besledger-preview .bl-sidebar { display:none }
+#besledger-preview .bl-status { display:flex;justify-content:space-between;align-items:center;height:38px;padding:0 22px;font-size:11px;font-weight:600 }
+#besledger-preview .bl-status>span:nth-child(2) { color:var(--bl-muted);font-weight:400;letter-spacing:.7px }
+#besledger-preview .bl-status>span:last-child { display:flex;gap:5px }
+#besledger-preview .bl-status svg { width:14px;height:14px }
+#besledger-preview .bl-header { display:flex;align-items:center;justify-content:space-between;padding:15px 22px 18px;gap:10px;min-height:70px }
+#besledger-preview .bl-header-left { display:flex;align-items:center;gap:10px;min-width:0 }
+#besledger-preview .bl-kicker { font-size:11px;color:var(--bl-muted);letter-spacing:1.6px;display:block;margin-bottom:2px }
+#besledger-preview .bl-book-trigger { display:flex;align-items:center;gap:8px;font-size:20px;font-weight:600 }
+#besledger-preview .bl-book-trigger svg { width:16px;height:16px }
+#besledger-preview .bl-icon-button { min-width:38px;min-height:38px;display:inline-flex;justify-content:center;align-items:center;border-radius:50% }
+#besledger-preview .bl-icon-button:hover { background:var(--bl-soft) }
+#besledger-preview .bl-header-actions { display:flex;gap:3px;align-items:center }
+#besledger-preview .bl-icon-button svg { width:20px;height:20px }
+#besledger-preview .bl-main { flex:1;padding:0 20px 24px;min-width:0 }
+#besledger-preview .bl-section { margin-top:24px }
+#besledger-preview .bl-section-head { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px }
+#besledger-preview .bl-section-head>span { color:var(--bl-muted);font-size:12px }
+#besledger-preview .bl-link { color:var(--bl-accent);font-size:12px;min-height:30px;display:inline-flex;gap:5px;align-items:center }
+#besledger-preview .bl-link svg { width:13px;height:13px }
+#besledger-preview .bl-card { background:var(--bl-surface);border-radius:18px;padding:18px }
+#besledger-preview .bl-hero { background:var(--bl-hero);color:var(--bl-hero-text);border-radius:20px;padding:22px;position:relative;overflow:hidden }
+#besledger-preview .bl-hero::after { content:"";position:absolute;right:-55px;top:-60px;border:1px solid #ffffff17;border-radius:50%;width:230px;height:230px;pointer-events:none }
+#besledger-preview .bl-hero .bl-caption { color:color-mix(in srgb,var(--bl-hero-text) 82%,transparent) }
+#besledger-preview .bl-caption { font-size:12px;color:var(--bl-muted) }
+#besledger-preview .bl-hero-top { display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1 }
+#besledger-preview .bl-hero .bl-period { background:#ffffff13;border:1px solid #ffffff1f;border-radius:20px;padding:5px 10px;font-size:11px;display:flex;align-items:center;gap:5px }
+#besledger-preview .bl-hero .bl-period svg { width:13px;height:13px }
+#besledger-preview .bl-money-large { font-size:35px;line-height:1.3;font-weight:550;letter-spacing:-1.2px;font-variant-numeric:tabular-nums;margin:8px 0 18px;position:relative;z-index:1 }
+#besledger-preview .bl-money-large>small { font-size:18px;margin-right:5px;font-weight:400 }
+#besledger-preview .bl-hero-bottom { display:grid;grid-template-columns:1fr 1fr;gap:16px;position:relative;z-index:1 }
+#besledger-preview .bl-hero-bottom strong { display:block;font-size:18px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:4px }
+#besledger-preview .bl-hero-bottom>div+div { padding-left:20px;border-left:1px solid #ffffff28 }
+#besledger-preview .bl-quick { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:18px 0 4px }
+#besledger-preview .bl-quick button { display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;min-height:68px }
+#besledger-preview .bl-quick i,#besledger-preview .bl-quick svg { width:20px;height:20px }
+#besledger-preview .bl-quick-icon { width:43px;height:43px;background:var(--bl-surface);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--bl-accent) }
+#besledger-preview .bl-daily { margin-top:20px }
+#besledger-preview .bl-daily-head { display:flex;justify-content:space-between;font-size:12px;color:var(--bl-muted);margin-bottom:9px;padding:0 2px }
+#besledger-preview .bl-list { background:var(--bl-surface);border-radius:17px;padding:0 14px }
+#besledger-preview .bl-row { width:100%;display:flex;align-items:center;gap:12px;padding:15px 0;min-height:70px;border-bottom:1px solid var(--bl-line) }
+#besledger-preview .bl-row:last-child { border-bottom:0 }
+#besledger-preview .bl-row-main { flex:1;min-width:0 }
+#besledger-preview .bl-row-title { display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-weight:500 }
+#besledger-preview .bl-row-meta { color:var(--bl-muted);font-size:11px;margin-top:4px;overflow-wrap:anywhere }
+#besledger-preview .bl-row-value { text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:550 }
+#besledger-preview .bl-row-value small { display:block;color:var(--bl-muted);font-size:11px;font-weight:400;margin-top:4px }
+#besledger-preview .bl-circle { width:39px;height:39px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--bl-soft);color:var(--bl-accent);flex-shrink:0 }
+#besledger-preview .bl-circle svg { width:20px;height:20px }
+#besledger-preview .bl-circle.orange { background:var(--bl-tint);color:var(--bl-orange) }
+#besledger-preview .bl-circle.blue { color:var(--bl-blue);background:light-dark(#edf1f7,#293442) }
+#besledger-preview .bl-badge { font-size:10px;padding:2px 6px;border-radius:5px;color:var(--bl-accent);background:var(--bl-soft);font-weight:400;white-space:nowrap }
+#besledger-preview .bl-badge.orange { color:var(--bl-orange);background:var(--bl-tint) }
+#besledger-preview .bl-bottom { display:grid;grid-template-columns:repeat(5,1fr);align-items:end;padding:12px 8px 16px;background:var(--bl-surface);border-top:1px solid var(--bl-line);gap:3px }
+#besledger-preview .bl-bottom button { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:45px;color:var(--bl-muted);font-size:10px }
+#besledger-preview .bl-bottom button[aria-current="page"] { color:var(--bl-accent) }
+#besledger-preview .bl-bottom svg { width:22px;height:22px }
+#besledger-preview .bl-bottom .bl-add { background:var(--bl-orange);color:light-dark(#40200f,#312014);width:51px;height:51px;min-height:51px;border-radius:17px;justify-self:center;margin-top:-20px;box-shadow:0 5px 14px #dd79432b }
+#besledger-preview .bl-add svg { width:28px;height:28px }
+#besledger-preview .bl-primary,#besledger-preview .bl-secondary { border-radius:12px;min-height:45px;padding:11px 16px;display:inline-flex;justify-content:center;align-items:center;gap:7px;font-weight:500 }
+#besledger-preview .bl-primary { background:var(--bl-accent);color:light-dark(#fff,#172b1d) }
+#besledger-preview .bl-primary.orange { background:var(--bl-orange);color:light-dark(#fff,#312014) }
+#besledger-preview .bl-secondary { background:var(--bl-soft);color:var(--bl-accent) }
+#besledger-preview .bl-full { width:100% }
+#besledger-preview .bl-actions { display:flex;gap:10px;margin-top:20px;flex-wrap:wrap }
+#besledger-preview .bl-actions>* { flex:1 }
+#besledger-preview .bl-segment { display:flex;gap:4px;background:var(--bl-surface);padding:5px;border-radius:12px }
+#besledger-preview .bl-segment button { padding:9px 8px;text-align:center;border-radius:9px;flex:1;color:var(--bl-muted);font-size:13px;white-space:nowrap }
+#besledger-preview .bl-segment button[aria-selected="true"],#besledger-preview .bl-segment button[aria-pressed="true"] { background:var(--bl-soft);color:var(--bl-accent);font-weight:550 }
+#besledger-preview .bl-type-tabs { display:flex;justify-content:space-around;gap:7px;margin-bottom:16px }
+#besledger-preview .bl-type-tabs button { padding:8px 12px;color:var(--bl-muted);font-size:16px;border-bottom:2px solid transparent }
+#besledger-preview .bl-type-tabs button[aria-selected="true"] { color:var(--bl-accent);border-bottom-color:var(--bl-accent);font-weight:600 }
+#besledger-preview .bl-amount-card { background:var(--bl-surface);padding:18px;border-radius:18px }
+#besledger-preview .bl-amount-line { display:flex;align-items:center;justify-content:space-between;gap:12px }
+#besledger-preview .bl-selected-category { display:flex;align-items:center;gap:10px;white-space:nowrap }
+#besledger-preview .bl-amount-line>button,#besledger-preview .bl-amount-line>.bl-selected-category { min-width:0;flex:0 0 auto;max-width:52% }
+#besledger-preview .bl-amount-line>.bl-amount { flex:1 1 0 }
+#besledger-preview .bl-selected-category>span:last-child { white-space:normal;overflow-wrap:anywhere }
+#besledger-preview .bl-amount { display:flex;justify-content:flex-end;align-items:baseline;min-width:0;gap:4px }
+#besledger-preview .bl-amount>span { font-size:18px;color:var(--bl-muted) }
+#besledger-preview .bl-amount input { width:100%;min-width:70px;text-align:right;border:0;padding:4px 0;background:transparent;font-size:31px;font-weight:550;font-variant-numeric:tabular-nums;letter-spacing:-1px }
+#besledger-preview .bl-category-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 8px;padding:18px 0 }
+#besledger-preview .bl-category-grid button { display:flex;flex-direction:column;gap:7px;align-items:center;font-size:12px;min-height:76px;padding:3px 0;border-radius:12px }
+#besledger-preview .bl-category-grid .bl-circle { background:var(--bl-surface);color:var(--bl-accent);width:50px;height:50px;border:1px solid var(--bl-line);border-radius:50%;transition:background .15s ease,color .15s ease,border-color .15s ease }
+/* 四种记账入口共用图标尺寸，覆盖预览宿主的统一小图标规则。 */
+#besledger-preview .bl-category-grid .bl-circle svg { width:26px!important;height:26px!important;stroke-width:1.65 }
+#besledger-preview .bl-category-grid button:hover .bl-circle { border-color:var(--bl-accent) }
+#besledger-preview .bl-category-grid button[aria-pressed="true"] .bl-circle { background:var(--bl-accent);border-color:var(--bl-accent);color:light-dark(#fff,#172b1d);box-shadow:0 3px 8px light-dark(#273e6019,#00000020) }
+#besledger-preview .bl-category-grid button[aria-pressed="true"] { color:var(--bl-accent);font-weight:600 }
+#besledger-preview .bl-selected-category .bl-circle { border-radius:50% }
+#besledger-preview .bl-field-head { display:flex;align-items:center;justify-content:space-between;gap:8px;margin:16px 0 8px }
+#besledger-preview .bl-field-head label { color:var(--bl-muted);font-size:12px }
+#besledger-preview .bl-recognition { background:var(--bl-soft);border-radius:11px;padding:10px 12px;color:var(--bl-accent);font-size:11px;display:flex;gap:8px;align-items:flex-start;margin-top:10px }
+#besledger-preview .bl-recognition svg { width:16px;height:16px;flex-shrink:0 }
+#besledger-preview .bl-chips { display:flex;gap:8px;flex-wrap:wrap;margin-top:13px }
+#besledger-preview .bl-chip { border:1px solid var(--bl-line);background:var(--bl-surface);border-radius:9px;padding:8px 10px;font-size:11px;display:inline-flex;align-items:center;gap:6px;min-height:36px }
+#besledger-preview .bl-chip svg { width:13px;height:13px }
+#besledger-preview .bl-keypad { display:grid;grid-template-columns:repeat(3,1fr) 1.15fr;gap:1px;background:var(--bl-line);border-radius:14px;overflow:hidden;margin-top:20px }
+#besledger-preview .bl-keypad button { min-height:48px;display:flex;align-items:center;justify-content:center;background:var(--bl-surface);font-size:20px;font-variant-numeric:tabular-nums }
+#besledger-preview .bl-keypad .bl-key-alt { font-size:13px;background:var(--bl-soft);color:var(--bl-accent) }
+#besledger-preview .bl-keypad .bl-key-save { grid-column:4;grid-row:3 / span 2;background:var(--bl-orange);color:light-dark(#40200f,#312014);font-size:16px }
+#besledger-preview .bl-keypad button:hover { filter:brightness(.97) }
+#besledger-preview .bl-keypad .bl-key-delete svg { width:21px;height:21px }
+#besledger-preview .bl-form-row { display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;min-height:51px;border-bottom:1px solid var(--bl-line) }
+#besledger-preview .bl-form-row:last-child { border-bottom:0 }
+#besledger-preview .bl-form-row>label,#besledger-preview .bl-form-row>span:first-child { color:var(--bl-muted);font-size:13px }
+#besledger-preview .bl-form-row select { max-width:65%;border:0;background:transparent;padding:4px 0;text-align:right;font-size:13px }
+#besledger-preview .bl-form-row input { max-width:60%;text-align:right;border:0;padding:5px 0 }
+#besledger-preview .bl-account-flow { max-width:600px;margin:0 auto }
+#besledger-preview .bl-flow-caption { color:var(--bl-muted);font-size:12px;margin:0 0 16px }
+#besledger-preview .bl-account-types .bl-row { min-height:76px;gap:14px }
+#besledger-preview .bl-account-types .bl-row-title { font-size:16px }
+#besledger-preview .bl-account-types .bl-row-meta { display:block;font-size:12px;margin-top:3px }
+#besledger-preview .bl-account-types .bl-row>svg { width:16px;color:var(--bl-muted) }
+#besledger-preview .bl-account-types .bl-row:hover { background:var(--bl-bg) }
+#besledger-preview .bl-account-types .bl-circle { width:42px;height:42px;border-radius:14px }
+#besledger-preview .bl-account-types [data-kind="cash"] .bl-circle { background:light-dark(#e9effa,#2c3952);color:light-dark(#4a6aaf,#a8c1f4) }
+#besledger-preview .bl-account-types [data-kind="credit"] .bl-circle { background:light-dark(#e3f2ee,#234238);color:light-dark(#267260,#9cd3c0) }
+#besledger-preview .bl-account-types [data-kind="debit"] .bl-circle { background:light-dark(#f9e9e6,#4c302e);color:light-dark(#b85f53,#eda99e) }
+#besledger-preview .bl-account-types [data-kind="online"] .bl-circle { background:light-dark(#eee9f8,#3b314b);color:light-dark(#7960a8,#c5afe5) }
+#besledger-preview .bl-account-types [data-kind="investment"] .bl-circle { background:light-dark(#e8ecf9,#30374f);color:light-dark(#5d69a7,#b3beed) }
+#besledger-preview .bl-account-types [data-kind="receivable"] .bl-circle { background:var(--bl-tint);color:light-dark(#ac6035,#f0b38d) }
+#besledger-preview .bl-account-types [data-kind="stored"] .bl-circle { background:light-dark(#f9f0d9,#463e26);color:light-dark(#92701e,#deca89) }
+#besledger-preview .bl-account-selected { display:flex;align-items:center;gap:12px;margin-bottom:20px }
+#besledger-preview .bl-account-selected .bl-row-main { font-size:16px }
+#besledger-preview .bl-account-fields { display:grid;gap:18px }
+#besledger-preview .bl-account-field { display:grid;gap:7px;min-width:0 }
+#besledger-preview .bl-account-field>label,#besledger-preview .bl-account-field>span { font-size:13px;color:var(--bl-muted) }
+#besledger-preview .bl-account-field input { width:100% }
+#besledger-preview .bl-account-pair { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px }
+#besledger-preview .bl-account-choice { display:flex;gap:8px }
+#besledger-preview .bl-account-choice button { flex:1;min-height:44px;padding:9px 6px;text-align:center;border:1px solid var(--bl-line);border-radius:10px;font-size:13px }
+#besledger-preview .bl-account-choice button[aria-pressed="true"] { background:var(--bl-soft);border-color:var(--bl-accent);color:var(--bl-accent) }
+@media(max-width:370px){#besledger-preview .bl-account-pair{grid-template-columns:1fr}}
+#besledger-preview .bl-note { color:var(--bl-muted);font-size:11px;margin-top:10px;line-height:1.65 }
+#besledger-preview .bl-note.accent { color:var(--bl-accent) }
+#besledger-preview .bl-loan-types,#besledger-preview .bl-transfer-types { padding:18px 0 4px }
+#besledger-preview .bl-loan-pair { margin:14px 0 18px }
+#besledger-preview .bl-loan-direction { display:flex;justify-content:center;color:var(--bl-muted) }
+#besledger-preview .bl-loan-summary { display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--bl-muted);margin-top:10px }
+#besledger-preview .bl-loan-summary:empty { display:none }
+#besledger-preview .bl-loan-summary>span { min-width:0;overflow-wrap:anywhere }
+#besledger-preview .bl-loan-summary .bl-link { flex-shrink:0 }
+#besledger-preview .bl-loan-interest { display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bl-surface);border-radius:12px;margin-top:12px }
+#besledger-preview .bl-loan-interest label { white-space:nowrap;font-size:13px }
+#besledger-preview .bl-loan-interest input { flex:1;width:80px;min-width:0;border:0;padding:6px 0;text-align:right }
+#besledger-preview .bl-loan-interest .bl-icon-button { background:var(--bl-tint);color:var(--bl-ink);min-width:36px;min-height:36px }
+#besledger-preview .bl-loan-entry .bl-chips .bl-chip { min-height:40px }
+#besledger-preview .bl-summary-box { background:var(--bl-soft);border-radius:12px;padding:13px 15px;margin-top:16px }
+#besledger-preview .bl-summary-line { display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:12px }
+#besledger-preview .bl-summary-line strong { font-weight:550;font-variant-numeric:tabular-nums }
+#besledger-preview .bl-summary-line.total { border-top:1px solid var(--bl-line);margin-top:7px;padding-top:12px;color:var(--bl-accent) }
+#besledger-preview .bl-error { color:var(--bl-red);font-size:12px;margin-top:8px }
+#besledger-preview .bl-detail-amount { text-align:center;padding:14px 0 24px }
+#besledger-preview .bl-detail-amount .bl-circle { margin:0 auto 10px;width:48px;height:48px }
+#besledger-preview .bl-detail-amount h2 { margin-bottom:7px }
+#besledger-preview .bl-detail-amount strong { display:block;font-size:34px;font-weight:550;letter-spacing:-1px;font-variant-numeric:tabular-nums }
+#besledger-preview .bl-refund-summary { display:grid;grid-template-columns:1fr 1fr;text-align:center;background:var(--bl-soft);border-radius:13px;padding:14px;gap:10px;margin-top:16px }
+#besledger-preview .bl-refund-summary small { color:var(--bl-muted);font-size:11px }
+#besledger-preview .bl-refund-summary strong { font-size:19px;font-weight:550;display:block;margin-top:4px;color:var(--bl-accent) }
+#besledger-preview .bl-timeline { margin-top:14px }
+#besledger-preview .bl-timeline-item { display:flex;gap:13px;padding:12px 0;position:relative }
+#besledger-preview .bl-timeline-dot { width:9px;height:9px;border-radius:50%;background:var(--bl-accent);margin:7px 3px 0;flex-shrink:0 }
+#besledger-preview .bl-timeline-item:not(:last-child)::after { content:"";position:absolute;left:7px;top:27px;bottom:-6px;width:1px;background:var(--bl-line) }
+#besledger-preview .bl-timeline-item>div:nth-child(2) { flex:1;min-width:0 }
+#besledger-preview .bl-timeline-item strong { font-size:14px;font-weight:550;font-variant-numeric:tabular-nums }
+#besledger-preview .bl-progress-track { height:5px;border-radius:8px;background:var(--bl-line);overflow:hidden;margin-top:12px }
+#besledger-preview .bl-progress-fill { height:100%;border-radius:8px;background:var(--bl-accent) }
+#besledger-preview .bl-section-tabs { display:flex;gap:20px;border-bottom:1px solid var(--bl-line);margin:20px 0 15px }
+#besledger-preview .bl-section-tabs button { padding:10px 0;color:var(--bl-muted);font-size:13px;border-bottom:2px solid transparent }
+#besledger-preview .bl-section-tabs button[aria-selected="true"] { color:var(--bl-accent);border-bottom-color:var(--bl-accent) }
+#besledger-preview .bl-chart { width:100%;height:auto;display:block;color:var(--bl-accent) }
+#besledger-preview .bl-chart text { font-family:inherit;font-size:11px;fill:var(--bl-muted) }
+#besledger-preview .bl-chart .bl-chart-grid { stroke:var(--bl-line);stroke-width:1 }
+#besledger-preview .bl-chart .bl-chart-line { fill:none;stroke:var(--bl-accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round }
+#besledger-preview .bl-chart .bl-chart-area { fill:var(--bl-soft);stroke:none }
+#besledger-preview .bl-metrics { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:20px }
+#besledger-preview .bl-metrics>div { padding:12px 0 }
+#besledger-preview .bl-metrics span { color:var(--bl-muted);font-size:11px;display:block }
+#besledger-preview .bl-metrics strong { font-size:17px;font-weight:550;letter-spacing:-.4px;display:block;margin-top:7px;font-variant-numeric:tabular-nums }
+#besledger-preview .bl-metrics .active strong { color:var(--bl-accent) }
+#besledger-preview .bl-bars { display:flex;align-items:flex-end;gap:12px;min-height:160px;padding-top:20px }
+#besledger-preview .bl-bar-item { flex:1;text-align:center;min-width:0 }
+#besledger-preview .bl-bar-item span { color:var(--bl-muted);font-size:11px;display:block;margin-top:10px }
+#besledger-preview .bl-bar { width:100%;max-width:24px;margin:auto;border-radius:5px 5px 0 0;background:var(--bl-soft) }
+#besledger-preview .bl-bar-item.active .bl-bar { background:var(--bl-accent) }
+#besledger-preview .bl-rank { margin-top:20px }
+#besledger-preview .bl-rank-row { margin-top:18px }
+#besledger-preview .bl-rank-label { display:flex;justify-content:space-between;gap:10px;font-size:12px }
+#besledger-preview .bl-rank-label strong { font-variant-numeric:tabular-nums;font-weight:500 }
+#besledger-preview .bl-book-card { border-radius:16px;background:var(--bl-surface);padding:18px;margin-bottom:13px;display:flex;gap:14px;align-items:flex-start }
+#besledger-preview .bl-cover { width:45px;height:62px;border-radius:4px 10px 10px 4px;background:var(--bl-soft);border-left:4px solid var(--bl-accent);display:flex;align-items:center;justify-content:center;color:var(--bl-accent);flex-shrink:0 }
+#besledger-preview .bl-cover.orange { background:var(--bl-tint);border-left-color:var(--bl-orange);color:var(--bl-orange) }
+#besledger-preview .bl-book-body { flex:1;min-width:0 }
+#besledger-preview .bl-book-body .bl-caption { margin-top:4px }
+#besledger-preview .bl-book-actions { display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px }
+#besledger-preview .bl-status-pill { display:inline-flex;gap:4px;align-items:center;font-size:10px;color:var(--bl-accent);padding:4px 7px;border-radius:6px;background:var(--bl-soft) }
+#besledger-preview .bl-status-pill svg { width:11px;height:11px }
+#besledger-preview .bl-status-pill.muted { color:var(--bl-muted);background:var(--bl-bg) }
+#besledger-preview .bl-status-pill.orange { color:var(--bl-orange);background:var(--bl-tint) }
+#besledger-preview .bl-search { display:flex;align-items:center;gap:8px;background:var(--bl-surface);border:1px solid var(--bl-line);border-radius:11px;padding:0 12px;margin-bottom:15px }
+#besledger-preview .bl-search svg { width:17px;height:17px;color:var(--bl-muted) }
+#besledger-preview .bl-search input { border:0;width:100%;background:transparent;padding:11px 0 }
+#besledger-preview .bl-category-parent { border-bottom:1px solid var(--bl-line) }
+#besledger-preview .bl-category-parent>button { display:flex;justify-content:space-between;align-items:center;width:100%;padding:14px 0;gap:10px }
+#besledger-preview .bl-category-parent>button>span { display:flex;align-items:center;gap:11px }
+#besledger-preview .bl-category-children { display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 0 16px }
+#besledger-preview .bl-category-children button { border-radius:8px;background:var(--bl-bg);padding:8px 4px;text-align:center;font-size:12px }
+#besledger-preview .bl-category-children button[aria-pressed="true"] { background:var(--bl-soft);color:var(--bl-accent) }
+#besledger-preview .bl-toggle { position:relative;display:inline-flex;width:38px;height:23px;background:var(--bl-line);border-radius:20px;align-items:center;padding:3px;flex-shrink:0 }
+#besledger-preview .bl-toggle[aria-checked="true"] { background:var(--bl-accent) }
+#besledger-preview .bl-toggle::after { content:"";width:17px;height:17px;border-radius:50%;background:var(--bl-surface);display:block;transition:transform .15s }
+#besledger-preview .bl-toggle[aria-checked="true"]::after { transform:translateX(15px) }
+#besledger-preview .bl-modal-host:empty { display:none }
+#besledger-preview .bl-modal-host:not(:empty) { position:absolute;inset:0;background:#152b2066;display:flex;align-items:flex-end;justify-content:center;padding-top:55px;z-index:5 }
+#besledger-preview .bl-sheet { background:var(--bl-surface);border-radius:23px 23px 0 0;padding:22px;width:100%;box-shadow:0 -10px 40px #00000012 }
+#besledger-preview .bl-sheet-head { display:flex;justify-content:space-between;align-items:center;margin-bottom:15px }
+#besledger-preview .bl-sheet .bl-form-row { padding:12px 0 }
+#besledger-preview .bl-sheet>input,#besledger-preview .bl-sheet>select { width:100%;margin:10px 0 }
+#besledger-preview .bl-toast { position:absolute;top:100px;left:20px;right:20px;z-index:8;background:var(--bl-ink);color:var(--bl-surface);border-radius:12px;padding:12px 16px;text-align:center;box-shadow:var(--bl-shadow);font-size:12px }
+#besledger-preview .bl-toast[hidden] { display:none }
+#besledger-preview .bl-empty { text-align:center;padding:30px 10px;color:var(--bl-muted) }
+#besledger-preview .bl-two-col { display:block }
+#besledger-preview .bl-desktop-only { display:none }
+#besledger-preview .bl-transfer-pair { display:grid;grid-template-columns:1fr 30px 1fr;align-items:center;gap:8px;margin:22px 0 }
+#besledger-preview .bl-transfer-pair label { background:var(--bl-surface);border-radius:12px;padding:14px 10px;min-width:0 }
+#besledger-preview .bl-transfer-pair label>span { display:block;color:var(--bl-muted);font-size:11px;margin-bottom:8px }
+#besledger-preview .bl-transfer-pair select { width:100%;padding:0;border:0;font-size:12px;background:transparent }
+#besledger-preview .bl-mini-calendar { display:grid;grid-template-columns:repeat(7,1fr);text-align:center;gap:5px;margin-top:16px }
+#besledger-preview .bl-mini-calendar span { padding:5px 2px;font-size:12px;border-radius:9px }
+#besledger-preview .bl-mini-calendar .selected { background:var(--bl-accent);color:light-dark(#fff,#172b1d) }
+#besledger-preview .bl-mini-calendar .marked { color:var(--bl-accent);background:var(--bl-soft) }
+#besledger-preview .bl-mini-calendar .weekday { color:var(--bl-muted);font-size:10px }
+#besledger-preview .bl-shell[data-device="tablet"] { max-width:740px;border-radius:22px }
+#besledger-preview .bl-shell[data-device="desktop"] { max-width:1024px;border-radius:18px;display:grid;grid-template-columns:178px minmax(0,1fr) }
+#besledger-preview .bl-shell[data-device="desktop"] .bl-sidebar { display:flex;flex-direction:column;background:var(--bl-surface);padding:25px 16px;border-right:1px solid var(--bl-line) }
+#besledger-preview .bl-brand { display:flex;align-items:center;gap:9px;font-size:18px;font-weight:650;letter-spacing:-.5px;margin-bottom:32px }
+#besledger-preview .bl-brand>span { display:flex;align-items:center;justify-content:center;background:var(--bl-accent);color:light-dark(#fff,#172b1d);border-radius:9px;width:30px;height:32px }
+#besledger-preview .bl-side-label { color:var(--bl-muted);font-size:10px;letter-spacing:1px;margin:20px 10px 8px }
+#besledger-preview .bl-side-nav { display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;min-height:44px;margin-bottom:4px;font-size:13px }
+#besledger-preview .bl-side-nav.active { background:var(--bl-soft);color:var(--bl-accent) }
+#besledger-preview .bl-side-nav svg { width:17px;height:17px }
+#besledger-preview .bl-side-foot { margin-top:auto;color:var(--bl-muted);font-size:11px;padding:30px 10px 0 }
+#besledger-preview .bl-shell[data-device="desktop"] .bl-status { display:none }
+#besledger-preview .bl-shell[data-device="desktop"] .bl-bottom { display:none }
+#besledger-preview .bl-shell[data-device="desktop"] .bl-header { padding:25px 30px }
+#besledger-preview .bl-shell[data-device="desktop"] .bl-main { padding:0 30px 30px }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-two-col { display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-two-col .bl-section:first-child { margin-top:0 }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-hero { margin-bottom:20px }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-desktop-only { display:block }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-entry-layout { display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;align-items:start }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-keypad { margin-top:10px }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-modal-host:not(:empty) { align-items:center;padding:30px }
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-sheet { max-width:430px;border-radius:22px }
+@media(max-width:650px){#besledger-preview .bl-stage { padding:5px 0 15px }#besledger-preview .bl-shell[data-device="desktop"]{display:block}#besledger-preview .bl-shell[data-device="desktop"] .bl-sidebar{display:none}#besledger-preview .bl-shell[data-device="desktop"] .bl-bottom{display:grid}#besledger-preview .bl-shell[data-device="desktop"] .bl-header{padding:20px}#besledger-preview .bl-shell[data-device="desktop"] .bl-main{padding:0 20px 20px}#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-two-col,#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-entry-layout{display:block}#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-two-col .bl-section:first-child{margin-top:20px}#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-desktop-only{display:none}}
+@media(max-width:370px){#besledger-preview .bl-main{padding-left:14px;padding-right:14px}#besledger-preview .bl-header{padding-left:16px;padding-right:16px}#besledger-preview .bl-card{padding:14px}#besledger-preview .bl-type-tabs button{padding:8px}#besledger-preview .bl-money-large{font-size:31px}#besledger-preview .bl-metrics strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){#besledger-preview *{transition:none!important}}
+
+#besledger-calendar-overview{--bc-bg:light-dark(#f4f5f3,#17202b);--bc-paper:light-dark(#ffffff,#222f3d);--bc-ink:light-dark(#283b52,#e5eef8);--bc-muted:light-dark(#65768a,#afbdd0);--bc-primary:light-dark(#385978,#a6c6e8);--bc-soft:light-dark(#eaf0f6,#31475b);--bc-line:light-dark(#dde5ed,#405265);--bc-green:light-dark(#286b50,#a5d8b9);--bc-green-soft:light-dark(#e9f2ec,#283f36);--bc-cut:light-dark(#974726,#ffc2a3);--bc-side:light-dark(#2c4662,#7699ba);--bc-top:light-dark(#7d9bb5,#cce2f5);--bc-plane:light-dark(#e5ebf0,#3b4b5c);color:var(--bc-ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;color-scheme:light dark}
+#besledger-calendar-overview *{box-sizing:border-box}
+#besledger-calendar-overview .bc-stage{padding:12px 0}
+#besledger-calendar-overview .bc-app{max-width:460px;margin:auto;background:var(--bc-bg);border:1px solid var(--bc-line);border-radius:24px;padding:20px 14px}
+#besledger-calendar-overview :where(.bc-app) button,#besledger-calendar-overview :where(.bc-app) input{font:inherit;color:inherit}
+#besledger-calendar-overview :where(.bc-app) button{border:0;padding:0;background:transparent;cursor:var(--cursor-interaction,default);text-align:inherit}
+#besledger-calendar-overview :where(.bc-app) button:disabled{cursor:default}
+#besledger-calendar-overview h1,#besledger-calendar-overview h2,#besledger-calendar-overview p{margin:0}
+#besledger-calendar-overview h1{font-size:21px;letter-spacing:-.5px;font-weight:600}
+#besledger-calendar-overview h2{font-size:16px;font-weight:600}
+#besledger-calendar-overview .bc-muted{color:var(--bc-muted);font-size:12px}
+#besledger-calendar-overview .bc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 4px 12px}
+#besledger-calendar-overview .bc-top small{display:block;color:var(--bc-muted);font-size:11px;margin-bottom:3px}
+#besledger-calendar-overview .bc-pill{border-radius:10px;background:var(--bc-paper);color:var(--bc-primary);padding:0 12px;min-height:44px;white-space:nowrap}
+#besledger-calendar-overview .bc-period{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 0 7px}
+#besledger-calendar-overview .bc-icon{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0}
+#besledger-calendar-overview .bc-month-button{display:flex;align-items:center;justify-content:center;gap:7px;font-weight:500;min-height:44px}
+#besledger-calendar-overview .bc-picker{background:var(--bc-paper);padding:12px;border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+#besledger-calendar-overview .bc-picker input{background:var(--bc-bg);border:1px solid var(--bc-line);padding:7px;border-radius:8px;font-size:16px;min-width:0;flex:1;width:160px;min-height:44px}
+#besledger-calendar-overview .bc-picker label{font-size:12px;color:var(--bc-muted);width:100%}
+#besledger-calendar-overview .bc-primary{background:var(--bc-primary);color:light-dark(#fff,#172536);padding:0 12px;min-height:44px;border-radius:9px;text-align:center}
+#besledger-calendar-overview .bc-card{background:var(--bc-paper);border-radius:18px;padding:14px 0 8px}
+#besledger-calendar-overview .bc-summary{padding:0 14px}
+#besledger-calendar-overview .bc-total{font-size:29px;line-height:1.3;font-weight:600;letter-spacing:-.6px;margin:4px 0 9px;font-variant-numeric:tabular-nums}
+#besledger-calendar-overview .bc-total small{font-size:15px;margin-right:4px;font-weight:400}
+#besledger-calendar-overview .bc-secondary{display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:var(--bc-muted)}
+#besledger-calendar-overview .bc-secondary strong{font-weight:500;color:var(--bc-ink);font-variant-numeric:tabular-nums;margin-left:6px}
+#besledger-calendar-overview .bc-chart-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 8px 6px}
+#besledger-calendar-overview .bc-metrics{display:flex;background:var(--bc-bg);border-radius:9px;padding:3px}
+#besledger-calendar-overview .bc-metrics button{min-height:38px;padding:0 10px;font-size:12px;border-radius:7px}
+#besledger-calendar-overview .bc-metrics button[aria-pressed="true"]{background:var(--bc-soft);color:var(--bc-primary);font-weight:500}
+#besledger-calendar-overview .bc-link{display:inline-flex;align-items:center;gap:4px;min-height:44px;color:var(--bc-primary);font-size:12px}
+#besledger-calendar-overview .bc-weekdays,#besledger-calendar-overview .bc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0}
+#besledger-calendar-overview .bc-weekdays span{text-align:center;color:var(--bc-muted);font-size:11px;line-height:26px}
+#besledger-calendar-overview .bc-day{min-width:0;min-height:58px;position:relative;isolation:isolate;container-type:inline-size;padding:3px 1px 5px;border-radius:10px;display:flex;align-items:center;flex-direction:column;justify-content:flex-start;font-variant-numeric:tabular-nums}
+#besledger-calendar-overview .bc-day>span{position:relative;z-index:1}
+#besledger-calendar-overview .bc-day .bc-date{position:absolute;inset:0 0 16px;z-index:0;display:flex;align-items:center;justify-content:center;font-size:clamp(28px,82cqw,44px);font-weight:600;line-height:1;letter-spacing:-2px;color:var(--bc-primary);opacity:var(--bc-date-opacity,.18);pointer-events:none;user-select:none}
+#besledger-calendar-overview .bc-day .bc-value{font-size:11px;line-height:16px;white-space:nowrap}
+#besledger-calendar-overview .bc-day .bc-value.is-negative{color:var(--bc-green)}
+#besledger-calendar-overview .bc-day[aria-pressed="true"]{background:var(--bc-soft);box-shadow:inset 0 0 0 2px var(--bc-primary)}
+#besledger-calendar-overview .bc-day[aria-pressed="true"] .bc-date{opacity:calc(var(--bc-date-opacity,.18) + .1)}
+#besledger-calendar-overview .bc-day[data-today="true"]::after{content:"";position:absolute;top:5px;right:5px;width:4px;height:4px;border-radius:50%;background:var(--bc-primary);z-index:2;pointer-events:none}
+#besledger-calendar-overview .bc-day.is-future{color:var(--bc-muted)}
+#besledger-calendar-overview .bc-day.is-future .bc-date{opacity:calc(var(--bc-date-opacity,.18) * .65)}
+#besledger-calendar-overview .bc-day.is-future .bc-value{font-size:11px;visibility:hidden}
+#besledger-calendar-overview .bc-bar{position:relative;z-index:1;width:40px;max-width:100%;height:34px;flex-shrink:0;display:block;overflow:hidden;pointer-events:none}
+#besledger-calendar-overview .bc-day .bc-missing{width:40px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--bc-muted);font-size:12px}
+#besledger-calendar-overview .bc-legend{display:flex;align-items:center;justify-content:space-between;gap:3px;flex-wrap:wrap;color:var(--bc-muted);font-size:11px;padding:8px 12px 3px}
+#besledger-calendar-overview .bc-cut-key{color:var(--bc-cut);font-weight:600}
+#besledger-calendar-overview .bc-selected{padding:8px 12px 3px;font-size:12px;min-height:33px;color:var(--bc-muted)}
+#besledger-calendar-overview .bc-selected strong{font-weight:500;color:var(--bc-ink)}
+#besledger-calendar-overview .bc-scope{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 12px}
+#besledger-calendar-overview .bc-scope button{padding:0 12px;min-height:44px;border-radius:9px;font-size:12px;background:var(--bc-paper)}
+#besledger-calendar-overview .bc-scope button[aria-pressed="true"]{color:var(--bc-primary);background:var(--bc-soft);box-shadow:inset 0 0 0 1px var(--bc-primary)}
+#besledger-calendar-overview .bc-details-heading{padding:0 3px}
+#besledger-calendar-overview .bc-details-heading p{margin-top:4px;color:var(--bc-muted);font-size:12px}
+#besledger-calendar-overview .bc-group-title{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--bc-muted);margin:14px 3px 5px}
+#besledger-calendar-overview .bc-list{background:var(--bc-paper);border-radius:14px;padding:0 12px}
+#besledger-calendar-overview .bc-row{display:flex;width:100%;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--bc-line);min-height:68px}
+#besledger-calendar-overview .bc-row:last-child{border:0}
+#besledger-calendar-overview .bc-circle{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;background:var(--bc-soft);color:var(--bc-primary);border-radius:11px}
+#besledger-calendar-overview .bc-name{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
+#besledger-calendar-overview .bc-name small{display:block;color:var(--bc-muted);font-size:11px;margin-top:3px}
+#besledger-calendar-overview .bc-amount{font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#besledger-calendar-overview .bc-positive{color:var(--bc-green)}
+#besledger-calendar-overview .bc-empty{text-align:center;color:var(--bc-muted);font-size:13px;padding:26px 10px}
+#besledger-calendar-overview .bc-more{width:100%;justify-content:center;margin-top:3px}
+#besledger-calendar-overview .bc-note{font-size:11px;color:var(--bc-muted);margin:14px 4px 0}
+#besledger-calendar-overview .bc-record-fields{padding:0 14px}
+#besledger-calendar-overview .bc-field{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--bc-line);font-size:13px;padding:13px 0}
+#besledger-calendar-overview .bc-field span:first-child{color:var(--bc-muted)}
+#besledger-calendar-overview .bc-field span:last-child{text-align:right;overflow-wrap:anywhere}
+@media(max-width:340px){#besledger-calendar-overview .bc-app{padding:16px 0;border-radius:18px}#besledger-calendar-overview .bc-top{padding-inline:7px}#besledger-calendar-overview .bc-summary{padding-inline:10px}#besledger-calendar-overview .bc-secondary{gap:12px}}
+
+/* 预览手机应用的滚动区域，导航栏与录入入口始终留在屏幕内。 */
+#besledger-preview .bl-app{height:840px;min-height:0}
+#besledger-preview .bl-main{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#besledger-preview .bl-header,#besledger-preview .bl-status,#besledger-preview .bl-bottom{flex-shrink:0}
+#besledger-preview .bl-shell[data-page="home"] .bl-main{padding:0 10px 18px}
+#besledger-preview .bl-bottom .bl-add{height:60px;min-height:60px;width:64px;gap:0;border-radius:19px;font-size:11px;margin-top:-10px}
+#besledger-preview .bl-bottom .bl-add svg{width:26px;height:26px}
+#besledger-preview .bl-home-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
+#besledger-preview .bl-home-overview,#besledger-preview .bl-home-details{min-width:0}
+#besledger-preview #besledger-calendar-overview{--bc-bg:var(--bl-bg);--bc-paper:var(--bl-surface);--bc-ink:var(--bl-ink);--bc-muted:var(--bl-muted);--bc-primary:var(--bl-accent);--bc-soft:var(--bl-soft);--bc-line:var(--bl-line);--bc-green:var(--bl-income);color-scheme:inherit;font:inherit}
+#besledger-preview #besledger-calendar-overview .bc-app{padding:0;border:0;border-radius:0;background:transparent;max-width:none}
+#besledger-preview #besledger-calendar-overview .bc-period{justify-content:flex-start;gap:0;padding:0 0 8px}
+#besledger-preview #besledger-calendar-overview .bc-period .bc-pill{margin-left:auto}
+#besledger-preview #besledger-calendar-overview .bc-period .bc-icon{width:38px}
+#besledger-preview #besledger-calendar-overview .bc-month-button{font-size:13px}
+#besledger-preview #besledger-calendar-overview .bc-scope{margin-top:10px}
+#besledger-preview #besledger-calendar-overview .bc-between{display:flex;justify-content:space-between;gap:8px;width:100%}
+#besledger-preview .bl-save-notice{display:flex;align-items:center;justify-content:space-between;padding:0 12px;margin-bottom:10px;background:var(--bl-soft);border-radius:10px;font-size:12px}
+#besledger-preview .bl-home-details .bc-group-title{scroll-margin-top:8px}
+#besledger-preview .bl-home-search{margin:0 4px 10px}
+#besledger-preview .bl-shell[data-device="desktop"] .bl-app{height:880px}
+@media(min-width:900px){#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-home-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-home-details .bc-scope{margin-top:0}}
+@media(max-width:370px){#besledger-preview .bl-stage{padding-inline:0}#besledger-preview .bl-shell[data-page="home"] .bl-main{padding-inline:0}#besledger-preview .bl-header{padding-inline:14px}#besledger-preview #besledger-calendar-overview .bc-period .bc-icon{width:32px}#besledger-preview #besledger-calendar-overview .bc-pill{padding-inline:8px}}
+
+#besledger-preview #besledger-calendar-overview .bc-selected:empty{display:none}
+#besledger-preview .bl-shell[data-page="home"][data-device="mobile"] .bl-status{height:28px}
+#besledger-preview .bl-shell[data-page="home"][data-device="mobile"] .bl-header{padding-top:10px;padding-bottom:10px;min-height:62px}
+#besledger-preview .bl-quick-trigger{display:inline-flex;align-items:center;gap:4px;min-height:38px;padding:0 6px;border-radius:10px;background:var(--bl-soft);color:var(--bl-accent);font-size:12px;white-space:nowrap}
+#besledger-preview .bl-quick-trigger svg{width:15px;height:15px}
+#besledger-preview .bl-shell[data-page="home"] .bl-header-actions{gap:2px}
+#besledger-preview .bl-shortcut-grid{padding:0 0 4px;gap:8px}
+#besledger-preview .bl-shortcut-grid .bl-quick-icon{background:var(--bl-soft);width:46px;height:46px;border-radius:15px}
+#besledger-preview .bl-modal-host[data-panel="quick"]{background:light-dark(#182b3d44,#070d1777)}
+#besledger-preview .bl-modal-host[data-panel="quick"] .bl-sheet{padding:22px 18px 26px}
+#besledger-preview .bl-modal-host[data-panel="quick"] .bl-sheet-head{margin-bottom:18px}
+#besledger-preview .bl-modal-host[data-panel="quick"] .bl-sheet-head .bl-icon-button{min-height:44px;min-width:44px}
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-modal-host[data-panel="quick"]{align-items:flex-start;justify-content:flex-end;padding:96px 22px 0}
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-modal-host[data-panel="quick"] .bl-sheet{max-width:360px;box-shadow:var(--bl-shadow)}
+#besledger-preview #besledger-calendar-overview .bc-budget-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px}
+#besledger-preview #besledger-calendar-overview .bc-budget-heading p{min-width:0}
+#besledger-preview #besledger-calendar-overview .bc-budget-switch{display:inline-flex;align-items:center;gap:6px;min-height:38px;flex-shrink:0;font-size:12px;color:var(--bl-muted)}
+#besledger-preview #besledger-calendar-overview .bc-budget-switch-track{display:flex;align-items:center;width:34px;height:20px;padding:3px;border-radius:12px;background:var(--bl-line)}
+#besledger-preview #besledger-calendar-overview .bc-budget-switch-track>span{width:14px;height:14px;border-radius:50%;background:var(--bl-surface);box-shadow:0 1px 3px light-dark(#25372e22,#00000044)}
+#besledger-preview #besledger-calendar-overview .bc-budget-switch[aria-checked="true"]{color:var(--bl-accent)}
+#besledger-preview #besledger-calendar-overview .bc-budget-switch[aria-checked="true"] .bc-budget-switch-track{background:var(--bl-accent)}
+#besledger-preview #besledger-calendar-overview .bc-budget-switch[aria-checked="true"] .bc-budget-switch-track>span{transform:translateX(14px)}
+#besledger-preview #besledger-calendar-overview .bc-budget-amount{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 10px;width:calc(100% + 12px);min-height:52px;margin:2px -6px 9px;padding:7px 6px;border-radius:12px;overflow:hidden;--bc-budget-color:var(--bl-accent)}
+#besledger-preview #besledger-calendar-overview .bc-budget-amount.is-enabled{background:color-mix(in srgb,var(--bl-accent) 5%,var(--bl-surface))}
+#besledger-preview #besledger-calendar-overview .bc-budget-amount .bc-total{position:relative;z-index:1;margin:0;white-space:nowrap;color:var(--bl-ink)}
+#besledger-preview #besledger-calendar-overview .bc-budget-watermark{position:absolute;inset:0 auto 0 0;z-index:0;background:color-mix(in srgb,var(--bc-budget-color) 20%,transparent);pointer-events:none}
+#besledger-preview #besledger-calendar-overview .bc-budget-used{position:relative;z-index:1;font-size:11px;color:var(--bl-ink);white-space:nowrap}
+#besledger-preview #besledger-calendar-overview .bc-budget-amount.near{--bc-budget-color:var(--bl-orange)}
+#besledger-preview #besledger-calendar-overview .bc-budget-amount.over{--bc-budget-color:var(--bl-red)}
+#besledger-preview #besledger-calendar-overview .bc-budget-meta{display:flex;align-items:center;justify-content:space-between;gap:5px 10px;flex-wrap:wrap;font-size:11px;color:var(--bl-muted);margin:-6px 0 9px}
+#besledger-preview #besledger-calendar-overview .bc-budget-edit{min-height:28px;color:var(--bl-accent);font-size:11px}
+#besledger-preview #besledger-calendar-overview .bc-budget-meta.over>span{color:var(--bl-red);font-weight:500}
+#besledger-preview .bl-budget-error{font-size:12px;color:var(--bl-red);margin:9px 0}
+@media(max-width:430px){#besledger-preview #besledger-calendar-overview .bc-refund-hint{display:none}}
+</style>
+<script>
+(() => {
+  const root = document.getElementById('besledger-preview');
+  const saved = window.openai?.widgetState?.modelContent || {};
+  const pages = {home:'首页明细',entry:'记一笔',categories:'分类选择',accounts:'账户',account:'账户详情',accountTypes:'选择账户类型',accountForm:'添加账户',loan:'借贷记账',detail:'账单与退款',refund:'添加退款',recurring:'事件',rule:'周期规则',reports:'统计',books:'账本管理',settings:'设置',features:'全部功能'};
+  const state = {page:pages[saved.page]?saved.page:'home',device:['mobile','tablet','desktop'].includes(saved.device)?saved.device:'mobile',appearance:saved.appearance||'auto',book:'日常账本',entryType:'支出',category:'午餐',amount:'',note:'',recognized:false,date:'2026-10-21T12:08',account:'常用储蓄卡',loanType:'还款',loanTotal:'1020',interest:'20',reportTab:'趋势',reportPeriod:'月',month:10,categoryGroup:'餐饮',categoryQuery:'',search:'',modal:'',refundAmount:'50',refunds:[{date:'10月18日',amount:150,account:'微信钱包'},{date:'10月12日',amount:200,account:'常用储蓄卡'}],savedRows:[],ruleAmount:'1860',ruleTitle:'公积金入账',ruleEnabled:true,history:[1860,1860,1860],historyIndex:0,downloaded:false,synced:false,hideMoney:false,notice:true};
+  state.palette=['ink','forest','amber'].includes(saved.palette)?saved.palette:'ink';
+  const transferKinds={转账:'arrow-right-left',投资:'chart-no-axes-combined',赎回:'coins',存钱:'piggy-bank',取钱:'banknote-arrow-up'};
+  const transferAccounts=['常用储蓄卡','微信钱包','现金','投资账户','日常信用卡','公积金'];
+  state.transferKind=transferKinds[saved.transferKind]?saved.transferKind:'转账';
+  state.transferFrom='常用储蓄卡';
+  state.transferTo='微信钱包';
+  if(['收入','支出','转账','借贷'].includes(saved.entryType))state.entryType=saved.entryType;
+  state.loanFundingAccount='常用储蓄卡';
+  state.loanCounterparty='';
+  state.loanDate='2026-10-21T12:08';
+  state.loanDueDate='';
+  state.loanNote='';
+  state.loanInputTarget='loanTotal';
+  state.loanInterestOpen=false;
+  state.loanDrafts={};
+  state.accountKind='debit';
+  state.accountDrafts={};
+  // 首次展示已整合日历的首页；只记住预览选项，不向宿主保存账户与账目内容。
+  if(saved.revision!=='home-budget-watermark'){state.page='home';state.entryType='支出';}
+  state.planTab=0;
+  const accountKinds={
+    cash:{label:'现金',hint:'随身现金、备用金',icon:'banknote',placeholder:'例如 随身现金'},
+    credit:{label:'信用卡',hint:'消费欠款、还款与退款',icon:'credit-card',placeholder:'例如 日常信用卡'},
+    debit:{label:'储蓄卡 / 借记卡',hint:'工资卡、日常消费银行卡',icon:'landmark',placeholder:'例如 常用储蓄卡'},
+    online:{label:'网络账户',hint:'微信零钱、支付宝余额',icon:'wallet',placeholder:'例如 微信零钱'},
+    investment:{label:'投资账户',hint:'证券账户、基金账户',icon:'chart-no-axes-combined',placeholder:'例如 基金账户'},
+    receivable:{label:'应收 / 应付',hint:'别人欠我的钱、我欠别人的钱',icon:'hand-coins',placeholder:'例如 朋友甲'},
+    stored:{label:'储值卡',hint:'购物卡、公交卡、饭卡',icon:'tickets',placeholder:'例如 食堂饭卡'},
+    custom:{label:'自定义账户',hint:'其他资产或负债',icon:'sliders-horizontal',placeholder:'例如 公积金'}
+  };
+  function accountDraft(){
+    // 按类型保留草稿，切换类型时不把余额自动当成欠款。
+    return state.accountDrafts[state.accountKind] ||= {name:'',amount:'',date:'2026-10-21',tail:'',direction:'receivable',position:'debt',nature:'asset'};
+  }
+  const categories = {
+    餐饮:['早餐','午餐','晚餐','夜宵','零食','饮料水果','买菜原料','油盐酱醋','餐饮其他'],
+    交通:['打车','公交','加油','停车费','地铁','火车','长途汽车','飞机','自行车','船舶','保养维修','过路过桥','罚款赔偿','购车支出','车险','驾照费用','交通其他'],
+    购物:['服饰鞋包','家居百货','宝宝用品','化妆护肤','烟酒','电子数码','文具玩具','报刊书籍','珠宝首饰','家具家纺','保健用品','电器','摄影文印','购物其他'],
+    娱乐:['旅游度假','电影','网游电玩','麻将棋牌','洗浴足浴','运动健身','花鸟宠物','聚会玩乐','茶酒咖啡','卡拉OK','歌舞演出','影音会员','娱乐其他'],
+    医教:['医疗药品','挂号门诊','养生保健','住院费','养老院','学杂教材','培训考试','幼儿教育','学费','家教补习','出国留学','医教其他'],
+    居家:['手机电话','水电燃气','生活费','美发美容','住宿房租','材料建材','购房支出','快递邮政','电脑宽带','家政服务','物业','税费手续费','保险费','婚庆摄影','生活其他'],
+    投资:['利息支出','投资手续费','投资其他'],
+    人情:['礼金红包','礼物','孝敬','请客','给予','慈善捐款','人情其他'],
+    生意:['进货采购','人工支出','材料辅料','办公费用','交通运输','工程付款','运营费','会务费','营销广告','店面租金','注册登记','生意其他']
+  };
+  const incomeCategories=['工资薪水','奖金','兼职外快','营业收入','销售款','红包','礼金','报销款','福利补贴','生活费','利息','分红','租金','公积金','工程款','赔付款','投资收益','捐赠收入','其他收入'];
+  const catIcons = {餐饮:'utensils',早餐:'egg-fried',午餐:'soup',晚餐:'utensils',餐饮其他:'coffee',交通:'bus',停车费:'square-parking',加油:'fuel',打车:'car-front',地铁:'train-front',火车:'train-front',交通其他:'bus',购物:'shopping-bag',购物其他:'shopping-cart',日用百货:'package',数码家电:'monitor',衣服鞋包:'shirt',娱乐:'clapperboard',运动健身:'dumbbell',电影演出:'ticket',居家:'house',水电燃气:'flame',手机电话:'smartphone',房租物业:'building-2',税费手续费:'receipt',医教:'cross',医疗健康:'heart-pulse',书籍课程:'book-open',学习培训:'graduation-cap',投资:'chart-no-axes-combined',利息支出:'percent',车款车贷:'car',人情:'gift',礼物礼金:'gift',人情其他:'heart',孝敬家人:'heart-handshake',生意:'store',采购进货:'package-open',经营支出:'store'};
+  Object.assign(catIcons,{夜宵:'sandwich',零食:'cookie',饮料水果:'apple',买菜原料:'carrot',油盐酱醋:'cooking-pot',公交:'bus',长途汽车:'bus-front',飞机:'plane',自行车:'bike',船舶:'ship',保养维修:'wrench',过路过桥:'route',罚款赔偿:'receipt-text',购车支出:'car-front',车险:'shield-check',驾照费用:'id-card',服饰鞋包:'shirt',家居百货:'package',宝宝用品:'baby',化妆护肤:'sparkles',烟酒:'wine',电子数码:'headphones',文具玩具:'pencil-ruler',报刊书籍:'book-open',珠宝首饰:'gem',家具家纺:'sofa',保健用品:'heart-pulse',电器:'washing-machine',摄影文印:'camera',旅游度假:'palmtree',电影:'clapperboard',网游电玩:'gamepad-2',麻将棋牌:'dices',洗浴足浴:'bath',花鸟宠物:'paw-print',聚会玩乐:'party-popper',茶酒咖啡:'coffee',卡拉OK:'mic-vocal',歌舞演出:'ticket',影音会员:'tv',医疗药品:'pill',挂号门诊:'stethoscope',养生保健:'heart-pulse',住院费:'hospital',养老院:'heart-handshake',学杂教材:'notebook',培训考试:'graduation-cap',幼儿教育:'baby',学费:'school',家教补习:'book-open',出国留学:'plane',美发美容:'scissors',住宿房租:'house',材料建材:'brick-wall',购房支出:'house-plus',快递邮政:'package',电脑宽带:'wifi',家政服务:'brush-cleaning',物业:'building-2',保险费:'shield-check',婚庆摄影:'camera',投资手续费:'receipt',礼金红包:'gift',礼物:'gift',孝敬:'heart-handshake',请客:'utensils',给予:'hand-coins',慈善捐款:'heart',进货采购:'package-open',人工支出:'users',材料辅料:'boxes',办公费用:'printer',交通运输:'truck',工程付款:'hard-hat',运营费:'store',会务费:'users',营销广告:'megaphone',店面租金:'store',注册登记:'id-card',工资薪水:'badge-dollar-sign',奖金:'award',兼职外快:'clock',营业收入:'store',销售款:'shopping-bag',红包:'gift',礼金:'gift',报销款:'receipt',福利补贴:'hand-coins',生活费:'wallet',利息:'percent',分红:'chart-pie',租金:'house',公积金:'building-2',工程款:'hard-hat',赔付款:'shield-check',投资收益:'chart-no-axes-combined',捐赠收入:'heart',其他收入:'ellipsis'});
+  const quickDefaults={支出:['早餐','午餐','晚餐','买菜原料','饮料水果','家居百货','打车','加油','停车费','水电燃气','手机电话'],收入:['工资薪水','奖金','兼职外快','红包','福利补贴','利息','报销款']};
+  const quickLimits={支出:11,收入:7};
+  state.categoryUsage=[];
+  state.quickOrders={};
+  const categoryNames=type=>type==='收入'?incomeCategories:Object.values(categories).flat();
+  const categoryIcon=name=>catIcons[name]||catIcons[Object.keys(categories).find(group=>categories[group].includes(name))]||'shapes';
+  // 次数先归一化为各窗口占比，再加权。5 次先验平滑冷启动，2 个百分点抑制小幅换位。
+  function rankQuickCategories(defaults,events,previous=[],now=Date.now()){
+    const names=[...new Set([...defaults,...events.map(event=>event.category)])];
+    const windows=[7,30,365].map(days=>events.filter(event=>now-event.usedAt>=0&&now-event.usedAt<days*86400000));
+    const weights=[.6,.3,.1];
+    const scores=Object.fromEntries(names.map(name=>[name,windows.reduce((score,items,index)=>score+weights[index]*(items.filter(item=>item.category===name).length+5*(defaults.includes(name)?1/defaults.length:0))/(items.length+5),0)]));
+    const result=[...new Set([...previous.filter(name=>names.includes(name)),...names])];
+    // 沿上次顺序插入；同分保持位置，只有明显更常用时才越过相邻项。
+    for(let i=1;i<result.length;i++){let j=i;while(j>0&&scores[result[j]]>scores[result[j-1]]+.02){[result[j],result[j-1]]=[result[j-1],result[j]];j--;}}
+    return result;
+  }
+  function refreshQuickOrder(){
+    const type=state.entryType==='收入'?'收入':'支出',scope=JSON.stringify([state.book,type]),valid=categoryNames(type);
+    const events=state.categoryUsage.filter(event=>event.book===state.book&&event.type===type&&valid.includes(event.category));
+    state.quickOrders[scope]=rankQuickCategories(quickDefaults[type],events,state.quickOrders[scope]);
+  }
+  function quickCategories(){const type=state.entryType==='收入'?'收入':'支出',scope=JSON.stringify([state.book,type]);if(!state.quickOrders[scope])refreshQuickOrder();return state.quickOrders[scope].slice(0,quickLimits[type]);}
+  function recordCategoryUse(){state.categoryUsage.push({id:'preview-category-'+state.categoryUsage.length,book:state.book,type:state.entryType,category:state.category,usedAt:Date.now()});}
+  const money = value => Number(value||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const esc = value => String(value??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const icon = (name,cls='') => `<i data-lucide="${name}" aria-hidden="true" class="${cls}"></i>`;
+  const button = (label,action,extra='',cls='bl-link') => `<button type="button" class="${cls} cursor-interaction" data-action="${action}" ${extra}>${label}</button>`;
+  const circle = (name,cls='') => `<span class="bl-circle ${cls}">${icon(name)}</span>`;
+  const primary = (label,action,extra='') => button(label,action,extra,'bl-primary bl-full');
+  const titleRow = (title,action='',label='查看全部') => `<div class="bl-section-head"><h2>${title}</h2>${action?button(label+icon('chevron-right'),action):''}</div>`;
+  const navIcon = (name,action,label,extra='') => button(icon(name),action,`aria-label="${label}" ${extra}`,'bl-icon-button');
+  function keepState(){ if(window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{product:'BesLedger',revision:'home-budget-watermark',page:state.page,device:state.device,appearance:state.appearance,palette:state.palette,entryType:state.entryType,transferKind:state.transferKind,homeState:ledgerHome.viewState()},privateContent:null}).catch(()=>{}); }
+  function refreshIcons(){ if(globalThis.lucide) globalThis.lucide.createIcons({attrs:{width:18,height:18}}); }
+  function go(page){if(page==='entry'&&state.page!=='entry'&&state.page!=='categories')refreshQuickOrder();state.page=page;state.modal='';render();root.querySelector('.bl-main').scrollTop=0;keepState();}
+  let toastTimer;
+  let quickReturnTarget=null,quickBackground=[];
+  function toast(message){const el=root.querySelector('.bl-toast');el.textContent=message;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,2300);}
+  function periodLabel(){return state.reportPeriod==='年'?'2026年':`2026年${state.month}月`;}
+  function header(){
+    const p=state.page;
+    const home=p==='home';
+    const isRoot=['home','accounts','recurring','reports','settings'].includes(p);
+    const left=home?`<div><span class="bl-kicker">BESLEDGER</span><button type="button" class="bl-book-trigger cursor-interaction" data-action="go" data-page="books">${esc(state.book)}${icon('chevron-down')}</button></div>`:`${!isRoot?navIcon('arrow-left','back','返回'):''}<div>${['entry','loan'].includes(p)?`<span class="bl-kicker">${esc(state.book)}</span>`:''}<h1>${p==='loan'?'记一笔':pages[p]}</h1></div>`;
+    let actions=home?navIcon('search','search-open','搜索账单')+navIcon('sliders-horizontal','home-options','首页选项')+button(icon('layout-grid')+'<span>快捷</span>','home-shortcuts','aria-label="展开快捷功能" aria-haspopup="dialog" aria-expanded="false"','bl-quick-trigger'):'';
+    if(p==='accounts') actions=navIcon('plus','new-account','添加账户');
+    if(p==='recurring'&&state.planTab===1) actions=navIcon('plus','new-rule','新建周期规则');
+    if(p==='books') actions=navIcon('plus','new-book','新建账本');
+    if(p==='categories') actions=button('管理','manage-categories');
+    if(p==='account') actions=navIcon('ellipsis','account-options','账户设置');
+    if(p==='reports') actions=navIcon('sliders-horizontal','report-filter','统计筛选');
+    return `<div class="bl-header-left">${left}</div><div class="bl-header-actions">${actions}${state.device==='desktop'&&isRoot?button(icon('plus')+' 记一笔','go','data-page="entry"','bl-primary'):''}</div>`;
+  }
+  function sidebar(){
+    return `<div class="bl-brand"><span>${icon('book-open')}</span>BesLedger</div><div class="bl-caption" style="padding:0 10px">${esc(state.book)}</div><div class="bl-side-label">日常记账</div>${[['home','house','首页明细'],['accounts','wallet','账户'],['recurring','calendar-clock','事件'],['reports','chart-pie','统计']].map(([p,i,n])=>button(icon(i)+n,'go',`data-page="${p}"`,'bl-side-nav'+(state.page===p?' active':''))).join('')}<div class="bl-side-label">管理</div>${[['books','notebook','我的账本'],['categories','shapes','分类管理'],['settings','settings-2','设置']].map(([p,i,n])=>button(icon(i)+n,'go',`data-page="${p}"`,'bl-side-nav'+(state.page===p?' active':''))).join('')}<div class="bl-side-foot">${icon('hard-drive')} 本地账本<br><span style="display:block;margin-top:6px">示例数据 · 界面预览</span></div>`;
+  }
+  function bottom(){
+    if(['entry','loan','refund','rule','categories','accountTypes','accountForm'].includes(state.page)) return '';
+    return [['accounts','wallet','账户'],['recurring','calendar-clock','事件'],['entry','plus','记一笔'],['reports','chart-pie','统计'],['settings','user-round','我的']].map(([p,i,n])=>p==='entry'?(state.page==='home'?button(icon(i)+'<span>记一笔</span>','go','data-page="entry" aria-label="记一笔"','bl-add'):button(icon('house')+'<span>首页</span>','go','data-page="home" aria-label="首页"','')):button(icon(i)+`<span>${n}</span>`,'go',`data-page="${p}" ${state.page===p?'aria-current="page"':''}`,'')).join('');
+  }
+  function row(name,meta,amount,i='utensils',action='detail',extra='',badge=''){
+    return button(`${circle(i,amount.startsWith('+')?'orange':'')}<span class="bl-row-main"><span class="bl-row-title">${esc(name)}${badge?`<span class="bl-badge">${badge}</span>`:''}</span><span class="bl-row-meta">${esc(meta)}</span></span><span class="bl-row-value" ${amount.startsWith('+')?'style="color:var(--bl-income)"':''}>${amount}</span>` ,action,extra+` data-row-name="${esc(name)}" data-row-amount="${esc(amount)}" data-row-meta="${esc(meta)}"`,'bl-row');
+  }
+  function lineChart(values,labels,caption){
+    const max=Math.max(...values,1)*1.12,min=Math.min(0,...values)*1.12,w=320,h=140,left=35,top=12,bottom=108,step=(w-left-12)/Math.max(1,values.length-1),span=max-min;
+    const points=values.map((v,i)=>[left+i*step,bottom-(v-min)/span*(bottom-top)]);
+    const path=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    return `<svg class="bl-chart" viewBox="0 0 320 140" role="img" aria-label="${esc(caption)}"><title>${esc(caption)}</title>${[0,.5,1].map(f=>`<line class="bl-chart-grid" x1="35" y1="${bottom-f*(bottom-top)}" x2="308" y2="${bottom-f*(bottom-top)}"/><text x="28" y="${bottom-f*(bottom-top)+4}" text-anchor="end">${Math.round(min+span*f)}</text>`).join('')}<path class="bl-chart-area" d="${path} L308,108 L35,108 Z"/><path class="bl-chart-line" d="${path}"/>${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="var(--bl-accent)" data-tooltip="${esc(labels[i])}：${money(values[i])}元"/>`).join('')}${labels.map((l,i)=>`<text x="${left+i*step}" y="128" text-anchor="middle">${esc(l)}</text>`).join('')}<text x="1" y="10">元</text></svg>`;
+  }
+  function createHomeCalendar(appState,initial){
+ const root=document.getElementById('besledger-preview');
+ const saved=initial||{};
+ const revision='calendar-daily-scale-v2',today='2026-10-21',currentMonth=today.slice(0,7);
+ const state={month:'2026-10',scope:'month',day:null,metric:'expense',picker:false,collapsed:false,limit:6,selectedId:null,scenario:'normal',appearance:'auto',dateOpacity:18};
+ const extras=[],budgets=new Map();let sequence=0;
+ const icon=name=>`<i data-lucide="${name}" aria-hidden="true"></i>`;
+ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const button=(label,action,cls='bc-link',attrs='')=>`<button type="button" class="${cls} cursor-interaction" data-home-action="${action}" ${attrs}>${label}</button>`;
+ const money=cents=>(cents/100).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+ const monthName=month=>`${Number(month.slice(0,4))}年${Number(month.slice(5))}月`;
+ const dateOf=(month,day)=>`${month}-${String(day).padStart(2,'0')}`;
+ const dateName=date=>`${monthName(date.slice(0,7))}${Number(date.slice(8))}日`;
+ const monthValid=value=>/^20\d{2}-(0[1-9]|1[0-2])$/.test(value);
+ const expense=rows=>rows.reduce((n,r)=>n+(r.type==='expense'?r.amount:r.type==='refund'?-r.amount:r.expensePart||0),0);
+ const income=rows=>rows.reduce((n,r)=>n+(r.type==='income'?r.amount:r.incomePart||0),0);
+ const amountFor=rows=>state.metric==='income'?income(rows):expense(rows);
+ const metricName=()=>state.metric==='income'?'收入':'净支出';
+ const base=[];
+ const amounts=[35,65,72,180,80,26,128,95,39,54,120,68,45,85,32,126,80,1000,60,168,32];
+ for(const month of ['2026-09','2026-10']){
+  const add=(day,type,category,name,amount,time='12:08',account='常用储蓄卡',glyph='soup')=>base.push({id:`${month}-${type}-${base.length}`,date:dateOf(month,day),type,category,name,amount:Math.round(amount*100),time,account,glyph});
+  amounts.forEach((amount,i)=>{const day=i+1,category=day===18?'运动健身':day===20?'家居百货':day%5===0?'交通':'餐饮';add(day,'expense',category,day===18?'运动课程':day===20?'家居百货':`日常${category}`,amount*(month==='2026-09'?.9:1),'12:08','常用储蓄卡',day===18?'dumbbell':day===20?'shopping-bag':day%5===0?'bus':'soup');});
+  add(20,'expense','交通','停车费',15,'18:40','常用储蓄卡','square-parking');
+  add(21,'refund','家居百货','购物退款',month==='2026-10'?50:40,'10:26','微信钱包','rotate-ccw');
+  add(15,'income','工资薪水','工资薪水',6000,'09:00','常用储蓄卡','badge-dollar-sign');
+  add(18,'income','奖金','奖金',400,'16:00','常用储蓄卡','award');
+  add(19,'transfer','转账','账户转账',1000,'20:15','储蓄卡 → 微信钱包','arrow-right-left');
+  if(month==='2026-09')for(let day=22;day<=30;day++)add(day,'expense','餐饮','日常餐饮',30+day,'12:30');
+ }
+ function records(){
+  const rows=[...(appState.book==='日常账本'?base:[]),...extras.filter(r=>r.book===appState.book)].map(r=>state.scenario==='high'&&['expense','refund'].includes(r.type)?{...r,amount:r.amount*10}:r);
+  if(state.scenario==='large')rows.push({id:'demo-large',date:'2026-10-08',type:'expense',category:'专项采购',name:'专项采购（虚构大额示例）',amount:12000000,time:'15:00',account:'常用储蓄卡',glyph:'car'});
+  return rows;
+ }
+ function restore(s){
+  if(![revision,'calendar-overview-v1'].includes(s.proposal))return;
+  if(monthValid(s.month))state.month=s.month;
+  if(['month','day','all'].includes(s.scope))state.scope=s.scope;
+  if(Number.isInteger(s.day)&&s.day>=1&&s.day<=new Date(Number(state.month.slice(0,4)),Number(state.month.slice(5)),0).getDate())state.day=s.day;
+  if(state.scope==='day'&&!state.day)state.scope='month';
+  if(['expense','income'].includes(s.metric))state.metric=s.metric;
+  if(['normal','large','high'].includes(s.scenario))state.scenario=s.scenario;
+  if(['auto','light','dark'].includes(s.appearance))state.appearance=s.appearance;
+  if(typeof s.collapsed==='boolean')state.collapsed=s.collapsed;
+  if(Number.isFinite(s.dateOpacity))state.dateOpacity=Math.max(8,Math.min(32,s.dateOpacity));
+ }
+ restore(saved);
+ function monthRows(){return records().filter(r=>r.date.startsWith(state.month));}
+ function visibleRows(){return records().filter(r=>state.scope==='all'||r.date.startsWith(state.month)&&(state.scope!=='day'||r.date===dateOf(state.month,state.day))).filter(r=>!appState.search||[r.name,r.category,r.account,r.note].join(' ').toLowerCase().includes(appState.search.toLowerCase())).sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time));}
+ function setMonth(value){if(!monthValid(value))return;state.month=value;state.scope='month';state.day=null;state.limit=6;state.picker=false;state.selectedId=null;}
+ function rangeTitle(){return state.scope==='all'?'全部时间明细':state.scope==='day'?`${dateName(dateOf(state.month,state.day))}明细`:`${monthName(state.month)}明细`;}
+ function header(){return `<div class="bc-period">${button(icon('chevron-left'),'prev','bc-icon','aria-label="上个月"')}${button(`${monthName(state.month)} ${icon('chevron-down')}`,'picker','bc-month-button',`aria-expanded="${state.picker}"`)}${button(icon('chevron-right'),'next','bc-icon','aria-label="下个月"')}${button('本月','current','bc-pill','aria-label="回到本月整月"')}</div>${state.picker?`<div class="bc-picker"><label>选择月份</label><input type="month" data-input="month" aria-label="选择月份" min="2000-01" max="2099-12" value="${state.month}">${button('查看整月','apply-month','bc-primary')}</div>`:''}`;}
+ function compact(cents){const val=cents/100,abs=Math.abs(val),sign=val<0?'−':'';if(abs>=10000)return sign+(abs/10000).toFixed(1).replace(/\.0$/,'')+'万';return sign+abs.toLocaleString('zh-CN',{maximumFractionDigits:1});}
+ function chooseDailyCeiling(currentValues,previousValues=[]){
+  const nonzero=values=>values.filter(Number.isFinite).map(Math.abs).filter(value=>value>0);
+  const current=nonzero(currentValues);
+  // 每个发生日只提供一个样本；稀疏月份补历史，仍不足十日时不凭少数值判定大额。
+  const samples=(current.length>=10?current:[...current,...nonzero(previousValues)]).sort((a,b)=>a-b);
+  if(!samples.length)return {ceiling:1,source:'empty',sampleCount:0};
+  const sparse=samples.length<10;
+  const reference=sparse?samples.at(-1):samples[Math.ceil(samples.length*.9)-1];
+  const order=10**Math.floor(Math.log10(reference));
+  const ceiling=Math.ceil([1,2,2.5,5,10].find(n=>n*order>=reference)*order);
+  return {ceiling,source:sparse?'sparse':current.length>=10?'month':'history',sampleCount:samples.length};
+ }
+ function previousDailyValues(){
+  const end=state.month+'-01',start=new Date(Number(state.month.slice(0,4)),Number(state.month.slice(5))-1,1);
+  start.setDate(start.getDate()-90);
+  const from=`${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`;
+  const groups=new Map();
+  for(const row of records())if(row.date>=from&&row.date<end&&row.date<=today){
+   if(!groups.has(row.date))groups.set(row.date,[]);
+   groups.get(row.date).push(row);
+  }
+  // 仅取被查看月份之前的数据，回看旧月不会受未来新增账单影响。
+  return [...groups.values()].map(amountFor);
+ }
+ function bar(cents,ceiling){
+  if(cents===0)return '<span class="bc-missing" aria-hidden="true">·</span>';
+  // 同月共用比例；超出日常刻度必须折断标记，不能静默改变各格比例。
+  const ratio=Math.min(Math.abs(cents)/ceiling,1),h=ratio*22,negative=cents<0,cut=Math.abs(cents)>ceiling;
+  const color=negative?'var(--bc-green)':'var(--bc-primary)',side=negative?'var(--bc-green)':'var(--bc-side)',top=negative?'var(--bc-green)':'var(--bc-top)';
+  // 柱体只在本日期格预留区域内向右上方延伸，日期与金额保持平面显示。
+  const dir=negative?-1:1,baseY=negative?8:28,dy=h*dir,dx=h*.18;
+  let shapes=`<polygon points="9,${baseY} 22,${baseY} 30,${baseY-4} 17,${baseY-4}" fill="var(--bc-plane)"/>
+    <polygon points="12,${baseY} 23,${baseY} ${23+dx},${baseY-dy} ${12+dx},${baseY-dy}" fill="${color}"/>
+    <polygon points="23,${baseY} 28,${baseY-3} ${28+dx},${baseY-3-dy} ${23+dx},${baseY-dy}" fill="${side}"/>
+    <polygon points="${12+dx},${baseY-dy} ${23+dx},${baseY-dy} ${28+dx},${baseY-3-dy} ${17+dx},${baseY-3-dy}" fill="${top}"/>`;
+  if(cut)shapes+='<path d="M12 19 L21 14 M20 19 L29 14" stroke="var(--bc-paper)" stroke-width="3.5"/><path d="M12 19 L21 14 M20 19 L29 14" stroke="var(--bc-cut)" stroke-width="1.3"/>';
+  return `<svg class="bc-bar" viewBox="0 0 40 34" aria-hidden="true" data-cut="${cut}" data-ratio="${ratio}">${shapes}</svg>`;
+ }
+ function calendar(){
+  const rows=monthRows(),year=Number(state.month.slice(0,4)),month=Number(state.month.slice(5)),count=new Date(year,month,0).getDate(),offset=(new Date(year,month-1,1).getDay()+6)%7;
+  const daily=Array.from({length:count},(_,i)=>amountFor(rows.filter(r=>r.date===dateOf(state.month,i+1))));
+  const maximum=Math.max(0,...daily.map(Math.abs));
+  const scale=chooseDailyCeiling(daily,previousDailyValues()),ceiling=scale.ceiling;
+  let cells=Array.from({length:offset},()=>'<div aria-hidden="true"></div>').join('');
+  for(let day=1;day<=count;day++){
+   const date=dateOf(state.month,day),future=date>today,items=rows.filter(r=>r.date===date),value=daily[day-1],hasRows=items.length>0;
+   const text=future?'未发生':!hasRows?'—':compact(value);
+   const aria=`${dateName(date)}，${future?'尚未发生':!hasRows?'无已记账单':`${metricName()} ${money(value)} 元，${items.length} 笔账单`}`;
+   cells+=button(`<span class="bc-date">${day}</span>${future||!hasRows?'<span class="bc-missing" aria-hidden="true">·</span>':bar(value,ceiling)}<span class="bc-value ${value<0?'is-negative':''}">${text}</span>`,'day',`bc-day ${future?'is-future':''}`,`data-day="${day}" data-today="${date===today}" aria-label="${aria}" aria-pressed="${state.scope==='day'&&state.day===day}" ${future?'disabled':''}`);
+  }
+  // 补齐末周，立体柱不会改变月份布局。
+  for(let i=offset+count;i<Math.ceil((offset+count)/7)*7;i++)cells+='<div aria-hidden="true"></div>';
+  const selected=state.scope==='day'?`<strong>${Number(state.month.slice(5))}月${state.day}日</strong> · ${metricName()} ¥${money(daily[state.day-1])} · ${rows.filter(r=>r.date===dateOf(state.month,state.day)).length} 笔`:'点日期查看明细 · 浅色日期尚未发生';
+  return `<div class="bc-weekdays" aria-hidden="true">${['一','二','三','四','五','六','日'].map(d=>`<span>${d}</span>`).join('')}</div><div class="bc-grid" aria-label="${monthName(state.month)}${metricName()}日历">${cells}</div><div class="bc-legend" data-ceiling="${ceiling}" data-scale-source="${scale.source}"><span>${scale.source==='empty'?'暂无金额刻度':`自动刻度：0–¥${money(ceiling).replace(/\.00$/,'')}`}</span><span>${maximum>ceiling?'<b class="bc-cut-key">//</b> 超出刻度，点选看原值':'同月统一比例'}</span></div><div class="bc-selected" aria-live="polite">${state.scope==='day'?selected:''}</div>`;
+ }
+ function overview(){
+  const rows=state.scope==='all'?records():monthRows(),net=expense(rows),inc=income(rows);
+  return `<section class="bc-card"><div class="bc-summary">${budgetSummary(net)}<div class="bc-secondary"><span>收入<strong>${money(inc)}</strong></span><span>收支结余<strong>${money(inc-net)}</strong></span></div></div>${state.scope==='all'?'':`<div class="bc-chart-toolbar"><div class="bc-metrics" aria-label="月图指标">${button('净支出','metric-expense','',`aria-pressed="${state.metric==='expense'}"`)}${button('收入','metric-income','',`aria-pressed="${state.metric==='income'}"`)}</div>${button(state.collapsed?'展开月历':'收起月历','collapse')}</div>${state.collapsed?'':calendar()}`}</section>`;
+ }
+ function row(r){const sign=['income','refund'].includes(r.type)?'+':r.type==='expense'?'−':'';return button(`<span class="bc-circle">${icon(r.glyph)}</span><span class="bc-name">${esc(r.name)}<small>${r.time} · ${esc(r.account)}</small></span><span class="bc-amount ${sign==='+'?'bc-positive':''}">${sign}${money(r.amount)}</span>`,'record','bc-row',`data-id="${r.id}"`);}
+ function details(){
+  const rows=visibleRows(),shown=rows.slice(0,state.limit),dates=[...new Set(shown.map(r=>r.date))];
+  return `<div class="bc-scope" aria-label="明细时间范围">${button('整月','whole','',`aria-pressed="${state.scope==='month'}"`)}${button('全部时间','all','',`aria-pressed="${state.scope==='all'}"`)}${state.scope==='day'?button(`${Number(state.month.slice(5))}月${state.day}日 ×`,'whole','',`aria-pressed="true" aria-label="清除日期筛选，查看${monthName(state.month)}整月"`):''}</div><section class="bc-details-heading" aria-live="polite"><h2>${rangeTitle()}</h2><p>${rows.length} 笔 · 净支出 ¥${money(expense(rows))}</p></section>${dates.map(date=>`<div class="bc-group-title"><span>${dateName(date)}</span><span>${state.scope==='all'?'':`净支出 ${money(expense(rows.filter(r=>r.date===date)))}`}</span></div><div class="bc-list">${shown.filter(r=>r.date===date).map(row).join('')}</div>`).join('')||'<p class="bc-empty">此范围暂无已记账单</p>'}${rows.length>shown.length?button(`加载更多 · 已显示 ${shown.length} / ${rows.length} 笔`,'more','bc-link bc-more'):''}`;
+ }
+ function detailRecord(){const r=records().find(r=>r.id===state.selectedId);if(!r){state.selectedId=null;return '';}return `<div class="bc-top">${button(icon('arrow-left')+' 返回明细','back')}<span class="bc-muted">${dateName(r.date)}</span></div><section class="bc-card"><div class="bc-summary"><h2>${esc(r.name)}</h2><div class="bc-total"><small>¥</small>${money(r.amount)}</div></div><div class="bc-record-fields">${[['类型',{expense:'支出',refund:'退款',income:'收入',transfer:'转账',loan:'借贷'}[r.type]],['发生时间',`${r.date} ${r.time}`],['分类',r.category],['账户',r.account]].map(([k,v])=>`<div class="bc-field"><span>${k}</span><span>${esc(v)}</span></div>`).join('')}</div></section>`;}
+ function budgetKey(){return JSON.stringify([appState.book,state.month]);}
+ function budgetSummary(net){
+  const monthly=state.scope!=='all',config=monthly?budgets.get(budgetKey()):null,enabled=!!config?.enabled;
+  const title=`${monthly?monthName(state.month):'全部时间'}净支出`;
+  const toggle=monthly?button('<span>预算</span><span class="bc-budget-switch-track" aria-hidden="true"><span></span></span>','budget-toggle','bc-budget-switch',`role="switch" aria-label="启用${monthName(state.month)}预算" aria-checked="${enabled}"`):'';
+  const header=`<div class="bc-budget-heading"><p class="bc-muted">${title}<span class="bc-refund-hint"> · 已抵减退款</span></p>${toggle}</div>`;
+  const total=`<span class="bc-total" data-net="${net}"><small>¥</small>${money(net)}</span>`;
+  if(!enabled)return `${header}<div class="bc-budget-amount">${total}</div>`;
+  const amount=config.amount,remaining=amount-net,ratio=net/amount,over=net>amount,tone=over?'over':ratio>=.8?'near':'normal';
+  const percent=(ratio*100).toLocaleString('zh-CN',{maximumFractionDigits:1});
+  const used=net<0?`净退款 ¥${money(-net)}`:`已用 ${percent}%`;
+  const status=`${over?'超出':'剩余'} ¥${money(Math.abs(remaining))}`;
+  // 只限制填充几何范围，实际负净支出、超额和比例始终保留原值。
+  const fill=Math.max(0,Math.min(1,ratio))*100;
+  return `${header}${button(`<span class="bc-budget-watermark" style="width:${fill}%" aria-hidden="true"></span>${total}<span class="bc-budget-used">${used}</span>`,'budget','bc-budget-amount is-enabled '+tone,`data-budget-ratio="${ratio}" aria-label="调整${monthName(state.month)}预算，预算 ${money(amount)} 元，净支出 ${money(net)} 元，${used}，${status}"`)}<div class="bc-budget-meta ${tone}">${button(`预算 ¥${money(amount)}`,'budget','bc-budget-edit','aria-label="调整月预算金额"')}<span>${status}</span></div>`;
+ }
+ function html(){
+  const last=extras.find(r=>r.book===appState.book);
+  const notice=last?`<div class="bl-save-notice" role="status"><span>已记入 ${dateName(last.date)}</span>${button('查看','last-saved')}</div>`:'';
+  const content=state.selectedId?detailRecord():`${header()}${notice}<div class="bl-home-layout"><div class="bl-home-overview">${overview()}</div><div class="bl-home-details">${details()}</div></div>`;
+  return `<div id="besledger-calendar-overview" style="--bc-date-opacity:${state.dateOpacity/100}"><div class="bc-app">${content}</div></div>`;
+ }
+ function handle(target){
+  if(target.disabled)return;const action=target.dataset.homeAction;
+  if(action==='budget-toggle'){
+   const config=budgets.get(budgetKey());
+   if(!config){handle({dataset:{homeAction:'budget'}});return;}
+   config.enabled=!config.enabled;
+  }
+  if(action==='budget'){
+   const config=budgets.get(budgetKey());
+   showSheet(`${monthName(state.month)}预算`,`<label for="bl-month-budget">月预算（元）</label><input id="bl-month-budget" inputmode="decimal" autocomplete="off" placeholder="例如 4000" value="${config?config.amount/100:''}"><p class="bl-note">${esc(appState.book)} · ${monthName(state.month)}。净支出占用预算，退款抵减；转账与借贷本金不重复计入。</p><p id="bl-budget-error" class="bl-budget-error" role="alert" hidden></p><div class="bl-actions">${button('取消','budget-cancel','bl-secondary')}${button(config?.enabled?'保存预算':'保存并启用','budget-save','bl-primary')}</div>`);
+   root.querySelector('#bl-month-budget').focus({preventScroll:true});return;
+  }
+  if(action==='budget-cancel'){
+   root.querySelector('.bl-modal-host').innerHTML='';
+   root.querySelector('[data-home-action="budget-toggle"]')?.focus({preventScroll:true});return;
+  }
+  if(action==='budget-save'){
+   const value=cents(root.querySelector('#bl-month-budget').value);
+   if(!Number.isFinite(value)||value<=0){const error=root.querySelector('#bl-budget-error');error.hidden=false;error.textContent='请填写大于 0、最多两位小数的预算金额';return;}
+   budgets.set(budgetKey(),{amount:value,enabled:true});
+  }
+  if(action==='picker')state.picker=!state.picker;
+  if(action==='apply-month')setMonth(root.querySelector('[data-input="month"]').value);
+  if(action==='current')setMonth(currentMonth);
+  if(action==='prev'||action==='next'){const d=new Date(Number(state.month.slice(0,4)),Number(state.month.slice(5))-1+(action==='next'?1:-1),1);setMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);}
+  if(action==='day'){state.scope='day';state.day=Number(target.dataset.day);state.limit=6;}
+  if(action==='whole'){state.scope='month';state.day=null;state.limit=6;}
+  if(action==='all'){state.scope='all';state.day=null;state.limit=6;state.picker=false;}
+  if(action==='metric-expense')state.metric='expense';
+  if(action==='metric-income')state.metric='income';
+  if(action==='collapse')state.collapsed=!state.collapsed;
+  if(action==='more')state.limit+=12;
+  if(action==='record')state.selectedId=target.dataset.id;
+  if(action==='back')state.selectedId=null;
+  if(action==='last-saved'){const r=extras.find(r=>r.book===appState.book);if(r){setMonth(r.date.slice(0,7));state.scope='day';state.day=Number(r.date.slice(8));appState.search='';}}
+  const day=target.dataset.day;
+  render();keepState();
+  const focus=root.querySelector(action==='day'?`[data-home-action="day"][data-day="${day}"]`:action==='apply-month'?'[data-home-action="picker"]':`[data-home-action="${action}"]`);
+  focus?.focus({preventScroll:true});
+ }
+ function addRecord(record){
+  extras.unshift({...record,id:'preview-saved-'+(++sequence),book:appState.book,date:record.date.slice(0,10),time:record.date.slice(11,16),glyph:record.glyph||'receipt-text'});
+  state.selectedId=null;
+ }
+ function reportData(period,month){
+  const selected=records().filter(r=>period==='全部'||period==='年'&&r.date.startsWith('2026-')||period==='月'&&r.date.startsWith(`2026-${String(month).padStart(2,'0')}`));
+  return {rows:selected,expense:expense(selected)/100,income:income(selected)/100};
+ }
+ function reportGroups(rows,dimension){
+  const names=[...new Set(rows.map(r=>dimension==='账户'?r.account:r.category))];
+  return names.map(name=>({name,amount:expense(rows.filter(r=>(dimension==='账户'?r.account:r.category)===name))/100})).filter(g=>g.amount!==0).sort((a,b)=>b.amount-a.amount);
+ }
+ return {html,handle,addRecord,reportData,reportGroups,restore,viewState:()=>({proposal:revision,month:state.month,scope:state.scope,day:state.day,metric:state.metric,dateOpacity:state.dateOpacity,collapsed:state.collapsed})};
+}
+
+  const ledgerHome=createHomeCalendar(state,saved.homeState);
+  function home(){return `${state.modal==='search'?`<div class="bl-search bl-home-search">${icon('search')}<input aria-label="搜索账单" placeholder="分类、名称或账户" data-field="search" value="${esc(state.search)}"></div>`:''}${ledgerHome.html()}`;}
+  function keypad(isLoan=false){return `<div class="bl-keypad" aria-label="金额键盘">${['7','8','9','del','4','5','6','again','1','2','3','save','0','.','00'].map(k=>button(k==='del'?icon('delete'):k==='again'?'再记':k==='save'?'保存':k,k==='again'?(isLoan?'save-loan-again':'save-again'):k==='save'?(isLoan?'save-loan':'save-entry'):'key',`data-key="${k}" ${k==='del'?'aria-label="删除末位金额"':''}`,k==='save'?'bl-key-save':k==='again'?'bl-key-alt':k==='del'?'bl-key-delete':'')).join('')}</div>`;}
+  function entry(){
+    const income=state.entryType==='收入',transfer=state.entryType==='转账';
+    const cats=quickCategories();
+    const selected=transfer?`<span class="bl-selected-category" aria-live="polite">${circle(transferKinds[state.transferKind])}<span>${state.transferKind}</span></span>`:button(`<span class="bl-selected-category">${circle(categoryIcon(state.category))}<span>${esc(state.category)}</span></span>`,'go','data-page="categories"','');
+    const accountOptions=field=>transferAccounts.map(name=>`<option value="${name}" ${state[field]===name?'selected':''}>${name}</option>`).join('');
+    return `<div class="bl-type-tabs" role="tablist" aria-label="记账类型">${['收入','支出','转账','借贷'].map(t=>button(t,'entry-type',`data-type="${t}" role="tab" aria-selected="${state.entryType===t}"`,'')).join('')}</div><div class="bl-entry-layout"><div><div class="bl-amount-card"><div class="bl-amount-line">${selected}<div class="bl-amount"><span>¥</span><input aria-label="记账金额" inputmode="decimal" data-field="amount" value="${esc(state.amount)}" placeholder="0.00"></div></div></div>${transfer?`<div class="bl-category-grid bl-transfer-types" aria-label="转账类型">${Object.entries(transferKinds).map(([name,i])=>button(`${circle(i)}<span>${name}</span>`,'transfer-kind',`data-kind="${name}" aria-pressed="${state.transferKind===name}"`,'')).join('')}</div><div class="bl-transfer-pair"><label><span>转出账户</span><select aria-label="转出账户" data-field="transferFrom">${accountOptions('transferFrom')}</select></label>${navIcon('arrow-right-left','swap-accounts','交换转出转入账户')}<label><span>转入账户</span><select aria-label="转入账户" data-field="transferTo">${accountOptions('transferTo')}</select></label></div><p class="bl-note">账户之间转移资金，不计入收入和支出。</p>`:`<div class="bl-category-grid" aria-label="${income?'收入':'支出'}分类">${cats.map(c=>button(`${circle(catIcons[c]||(income?'badge-dollar-sign':'shapes'))}<span>${c}</span>`,'select-category',`data-category="${c}" aria-pressed="${state.category===c}"`,'')).join('')}</div>`}</div><div><div class="bl-field-head"><label for="bl-note-input">备注</label>${!transfer?button(icon('sparkles')+' 试一条示例','sample-sms'):''}</div><textarea id="bl-note-input" data-field="note" placeholder="${transfer?'输入备注…':'在这里粘贴银行短信，自动填入账单信息'}">${esc(state.note)}</textarea>${!transfer&&state.recognized?`<div class="bl-recognition">${icon('circle-check')}<span>已识别金额、账户与月日时间<br>年份按本次补账设置：2026 · 可修改<br>建议分类：${esc(state.category)} · 保存前可修改</span></div>`:''}<div class="bl-chips">${button(icon('calendar-days')+esc(state.date.slice(5).replace('T',' ')),'date-picker','','bl-chip')}${!transfer?button(icon('credit-card')+esc(state.account),'account-picker','','bl-chip'):''}${button(icon('tag')+' 标签','tag-picker','','bl-chip')}</div>${keypad()}</div></div>`;
+  }
+  function categoryPage(){
+    const q=state.categoryQuery,type=state.entryType==='收入'?'收入':'支出',sourceCategories=type==='收入'?{收入:incomeCategories}:categories;
+    const groups=Object.entries(sourceCategories).filter(([g,cs])=>!q||g.includes(q)||cs.some(c=>c.includes(q)));
+    return `<div class="bl-segment">${['支出','收入'].map(t=>button(t,'category-type',`data-type="${t}" aria-pressed="${type===t}"`,'')).join('')}</div><div class="bl-search">${icon('search')}<input data-field="categoryQuery" aria-label="搜索类别" value="${esc(q)}" placeholder="搜索类别"></div><div class="bl-card" style="padding-top:0;padding-bottom:0">${groups.map(([g,cs])=>`<div class="bl-category-parent">${button(`<span>${circle(catIcons[g]||'badge-dollar-sign')}${esc(g)}</span>${icon((state.categoryGroup===g||q||type==='收入')?'chevron-up':'chevron-down')}`,'expand-category',`data-group="${esc(g)}" aria-expanded="${state.categoryGroup===g||!!q||type==='收入'}"`,'')}${state.categoryGroup===g||q||type==='收入'?`<div class="bl-category-children">${cs.filter(c=>!q||c.includes(q)||g.includes(q)).map(c=>button(esc(c),'pick-category',`data-category="${esc(c)}" aria-pressed="${c===state.category}"`,'')).join('')}</div>`:''}</div>`).join('')||'<p class="bl-empty">没有匹配的类别，可以添加自定义类别。</p>'}</div><div class="bl-actions">${button(icon('plus')+' 添加类别','new-category','','bl-secondary bl-full')}</div>`;
+  }
+  function accounts(){
+    const show=v=>state.hideMoney?'••••••':money(v);
+    return `<div class="bl-two-col"><div><section class="bl-hero"><div class="bl-hero-top"><span class="bl-caption">净资产</span>${button(icon(state.hideMoney?'eye-off':'eye'),'toggle-money','aria-label="切换金额显示"','bl-icon-button')}</div><div class="bl-money-large"><small>¥</small>${show(29140.50)}</div><div class="bl-hero-bottom"><div><span class="bl-caption">总资产</span><strong>${show(31420.50)}</strong></div><div><span class="bl-caption">总负债</span><strong>${show(2280)}</strong></div></div></section><div class="bl-note">账户在多个账本间共用 · 本机记录均已计入</div><div class="bl-card bl-section bl-desktop-only">${titleRow('账户概览')}<div class="bl-form-row"><span>日常可用资金</span><strong>13,220.50</strong></div><div class="bl-form-row"><span>公积金</span><strong>18,200.00</strong></div><div class="bl-form-row"><span>本月待还本金</span><strong>2,280.00</strong></div>${button('管理期初余额','opening','','bl-link')}</div></div><div>${[['储蓄卡','常用储蓄卡','尾号 4321',12860,'landmark'],['网络账户','微信钱包','日常零钱',360.5,'wallet'],['其他资产','公积金','每月周期入账',18200,'building-2'],['信用卡','日常信用卡','11月10日还款',-1280,'credit-card'],['应收应付','朋友甲','应付 · 11月5日',-1000,'hand-coins']].map(([g,n,m,v,i])=>`<section class="bl-section">${titleRow(g)}<div class="bl-list">${row(n,m,(v<0?'−':'')+show(Math.abs(v)),i,'open-account',`data-name="${n}"`)}</div></section>`).join('')}</div></div>`;
+  }
+  function accountTypes(){
+    return `<div class="bl-account-flow"><p class="bl-flow-caption">添加账户 · 先选择类型</p><div class="bl-list bl-account-types">${Object.entries(accountKinds).filter(([key])=>key!=='custom').map(([key,kind])=>button(`${circle(kind.icon)}<span class="bl-row-main"><span class="bl-row-title">${kind.label}</span><span class="bl-row-meta">${kind.hint}</span></span>${icon('chevron-right')}`,'choose-account-kind',`data-kind="${key}"`,'bl-row')).join('')}</div><div class="bl-actions">${button(icon('plus')+' 自定义账户','choose-account-kind','data-kind="custom"','bl-link')}</div></div>`;
+  }
+  function accountForm(){
+    const kind=accountKinds[state.accountKind],draft=accountDraft(),key=state.accountKind;
+    const debt=(key==='credit'&&draft.position==='debt')||(key==='receivable'&&draft.direction==='payable')||(key==='custom'&&draft.nature==='liability');
+    const amountLabel=key==='receivable'?(debt?'期初应付金额':'期初应收金额'):key==='credit'?(debt?'期初欠款':'期初溢缴款'):debt?'期初欠款':'期初余额';
+    const choices=(field,items)=>`<div class="bl-account-choice">${items.map(([value,label])=>button(label,'account-choice',`data-draft-field="${field}" data-value="${value}" aria-pressed="${draft[field]===value}"`,'')).join('')}</div>`;
+    return `<div class="bl-account-flow"><p class="bl-flow-caption">添加账户 · 填写信息</p><div class="bl-card"><div class="bl-account-selected">${circle(kind.icon)}<span class="bl-row-main">${kind.label}</span>${button('更换类型','go','data-page="accountTypes"','bl-link')}</div><div class="bl-account-fields"><div class="bl-account-field"><label for="bl-new-account-name">${key==='receivable'?'往来方名称':'账户名称'}</label><input id="bl-new-account-name" data-account-field="name" value="${esc(draft.name)}" placeholder="${kind.placeholder}" maxlength="40" autocomplete="off"></div>${key==='receivable'?`<div class="bl-account-field"><span>期初往来方向</span>${choices('direction',[['receivable','别人欠我'],['payable','我欠别人']])}</div>`:''}${key==='credit'?`<div class="bl-account-field"><span>期初状态</span>${choices('position',[['debt','有欠款'],['surplus','有溢缴款']])}</div>`:''}${key==='custom'?`<div class="bl-account-field"><span>账户性质</span>${choices('nature',[['asset','资产'],['liability','负债']])}</div>`:''}<div class="bl-account-pair"><div class="bl-account-field"><label for="bl-new-account-amount">${amountLabel}（元）</label><input id="bl-new-account-amount" data-account-field="amount" inputmode="decimal" value="${esc(draft.amount)}" placeholder="0.00"></div><div class="bl-account-field"><label for="bl-new-account-date">起算日期</label><input id="bl-new-account-date" data-account-field="date" type="date" value="${esc(draft.date)}"></div></div>${['credit','debit'].includes(key)?`<div class="bl-account-field"><label for="bl-new-account-tail">卡号后四位（选填）</label><input id="bl-new-account-tail" data-account-field="tail" inputmode="numeric" maxlength="4" value="${esc(draft.tail)}" placeholder="用于匹配交易短信"></div>`:''}</div><p class="bl-note">${key==='receivable'?'记录你与对方的往来，不是对方的银行账户。':key==='credit'?(debt?'填写尚未归还的总欠款，不是信用额度。':'填写超出欠款后留在卡内的资金。'):''}</p><p id="bl-account-error" class="bl-error" role="alert" hidden></p></div><p class="bl-note">期初金额不计入收支，同一账户可在多个账本中使用。</p><div class="bl-actions">${primary('保存账户','preview-account-save')}</div></div>`;
+  }
+  function accountDetail(){
+    const name=state.accountDetail||'常用储蓄卡';const debt=['日常信用卡','朋友甲'].includes(name);const amount=name==='朋友甲'?1000:debt?1280:name==='微信钱包'?360.5:name==='公积金'?18200:12860;
+    return `<div class="bl-two-col"><div><section class="bl-hero"><div class="bl-hero-top"><span>${esc(name)}</span><span class="bl-caption">${debt?'负债账户':'人民币'}</span></div><p class="bl-caption" style="margin-top:22px">${debt?'当前欠款':'当前余额'}</p><div class="bl-money-large"><small>¥</small>${money(amount)}</div><span class="bl-caption">${debt?'还款后欠款减少':'包含期初余额与后续收支'}</span></section><div class="bl-card bl-section">${titleRow(debt?'欠款变化':'余额变化')}${lineChart(debt?[400,600,560,900,1280]:[6200,8500,7100,14000,12860],['6月','7月','8月','9月','10月'],debt?'近五个月欠款趋势':'近五个月余额趋势')}</div></div><div><section class="bl-section">${titleRow('10月流水')}<div class="bl-list">${debt?row('消费','购物 · 10月20日','−168.00','shopping-bag')+row('还款','来自常用储蓄卡 · 10月10日','+500.00','arrow-right-left','go','data-page="loan"'):row('午餐','10月21日 12:08 · 余额 12,860.00','−32.00','soup')+row('日用百货','10月20日 19:35 · 余额 12,892.00','−168.00','shopping-bag')+row('工资薪水','10月15日 09:00','+6,000.00','badge-dollar-sign')+row('期初余额','10月1日 · 不计入收支','8,500.00','flag','opening')}</div></section><div class="bl-actions">${button(icon('plus')+' 记一笔','go','data-page="entry"','bl-primary')}${debt?button('还款','go','data-page="loan"','bl-secondary'):button('核对余额','opening','','bl-secondary')}</div></div></div>`;
+  }
+  const loanKinds={借入:{icon:'banknote-arrow-down',party:'出借方',fund:'收款账户',partyFirst:true,due:'还款日'},借出:{icon:'banknote-arrow-up',party:'借款方',fund:'付款账户',partyFirst:false,due:'收回日'},还款:{icon:'hand-coins',party:'出借方',fund:'付款账户',partyFirst:false},收款:{icon:'wallet',party:'借款方',fund:'收款账户',partyFirst:true}};
+  const loanDraftFields=['loanTotal','interest','loanNote','loanDate','loanDueDate','loanFundingAccount','loanCounterparty'];
+  const cents=value=>{const raw=String(value??'').trim();return raw===''?0:/^\d{1,9}(\.\d{0,2})?$/.test(raw)?Math.round(Number(raw)*100):NaN;};
+  function loanValues(){
+    const total=cents(state.loanTotal),paying=['还款','收款'].includes(state.loanType),interest=paying?cents(state.interest):0;
+    return {total,interest,principal:total-interest,paying};
+  }
+  function loanSummary(){
+    const {total,interest,principal,paying}=loanValues();
+    if(!Number.isFinite(total)||!Number.isFinite(interest))return '<span class="bl-error" role="alert">请填写有效金额，最多两位小数。</span>';
+    if(interest>total)return '<span class="bl-error" role="alert">包含利息不能大于总额。</span>';
+    if(!paying||interest===0)return '';
+    return `<span>本金 ¥${money(principal/100)} · 利息 ¥${money(interest/100)}</span>${button('查看拆分','loan-breakdown')}`;
+  }
+  function refreshLoanSummary(){const el=root.querySelector('#bl-loan-summary');if(el)el.innerHTML=loanSummary();}
+  function loan(){
+    const kind=loanKinds[state.loanType],paying=['还款','收款'].includes(state.loanType);
+    const accountSelect=(isParty)=>{const label=isParty?kind.party:kind.fund,field=isParty?'loanCounterparty':'loanFundingAccount',options=isParty?['朋友甲','朋友乙']:['常用储蓄卡','微信钱包'];return `<label><span>${label}</span><select aria-label="${label}" data-field="${field}">${isParty?'<option value="">请选择</option>':''}<optgroup label="${isParty?'应收 / 应付账户':'资金账户'}">${options.map(value=>`<option value="${value}" ${state[field]===value?'selected':''}>${value}</option>`).join('')}</optgroup></select></label>`;};
+    return `<div class="bl-type-tabs" role="tablist" aria-label="记账类型">${['收入','支出','转账','借贷'].map(t=>button(t,'entry-type',`data-type="${t}" role="tab" aria-selected="${t==='借贷'}"`,'')).join('')}</div><div class="bl-entry-layout bl-loan-entry"><div><div class="bl-amount-card"><div class="bl-amount-line"><span class="bl-selected-category">${circle(kind.icon)}<span>${state.loanType}${paying?'总额':''}</span></span><div class="bl-amount"><span>¥</span><input data-field="loanTotal" aria-label="${state.loanType}${paying?'总额（包含利息）':'本金'}" inputmode="decimal" value="${esc(state.loanTotal)}" placeholder="0.00"></div></div></div><div class="bl-category-grid bl-loan-types" aria-label="借贷类型">${Object.entries(loanKinds).map(([type,info])=>button(`${circle(info.icon)}<span>${type}</span>`,'loan-type',`data-type="${type}" aria-pressed="${type===state.loanType}"`,'')).join('')}</div><div class="bl-transfer-pair bl-loan-pair">${accountSelect(kind.partyFirst)}<span class="bl-loan-direction" role="img" aria-label="资金从左向右流动">${icon('arrow-right')}</span>${accountSelect(!kind.partyFirst)}</div></div><div><div class="bl-field-head"><label for="bl-loan-note">备注</label></div><textarea id="bl-loan-note" data-field="loanNote" placeholder="输入备注…">${esc(state.loanNote)}</textarea><div class="bl-chips">${button(icon('calendar-days')+esc(state.loanDate.slice(5).replace('T',' ')),'loan-date-picker','','bl-chip')}${button(icon('tag')+' 标签','tag-picker','','bl-chip')}${paying?button(icon('percent')+' 包含利息','loan-interest',`aria-expanded="${state.loanInterestOpen}"`,'bl-chip'):button(icon('calendar-clock')+kind.due+(state.loanDueDate?' '+esc(state.loanDueDate.slice(5)):''),'loan-due-picker','','bl-chip')}</div>${paying&&state.loanInterestOpen?`<div class="bl-loan-interest"><label for="bl-interest">包含利息</label><input id="bl-interest" data-field="interest" inputmode="decimal" aria-label="包含利息，已计入总额" value="${esc(state.interest)}" placeholder="0.00">${navIcon('check','loan-interest-done','完成利息输入')}</div>`:''}<div class="bl-loan-summary" id="bl-loan-summary" aria-live="polite">${loanSummary()}</div>${keypad(true)}</div></div>`;
+  }
+  function detail(){const refunded=state.refunds.reduce((s,r)=>s+r.amount,0);return `<div class="bl-two-col"><div><div class="bl-card"><div class="bl-detail-amount">${circle('dumbbell')}<h2>运动健身</h2><strong>−1,000.00</strong><span class="bl-caption">原始支出</span></div><div class="bl-form-row"><span>交易时间</span><span>2026年10月8日 18:30</span></div><div class="bl-form-row"><span>付款账户</span><span>日常信用卡</span></div><div class="bl-form-row"><span>备注</span><span>运动课程 · 调整套餐</span></div><div class="bl-refund-summary"><div><small>累计退款</small><strong>${money(refunded)}</strong></div><div><small>实际净支出</small><strong>${money(1000-refunded)}</strong></div></div></div><p class="bl-note">原始支出保持不变，每笔退款分别记录。</p></div><div><section class="bl-section">${titleRow('退款记录','go-refund','再记一笔退款')}<div class="bl-card bl-timeline">${state.refunds.map((r,i)=>`<div class="bl-timeline-item"><span class="bl-timeline-dot"></span><div><h3>${r.date} · 部分退款</h3><p class="bl-row-meta">退回 ${r.account}</p></div>${button(`<strong>+${money(r.amount)}</strong>`,'refund-detail',`data-index="${i}"`,'')}</div>`).join('')}</div></section><div class="bl-actions">${button(icon('rotate-ccw')+' 添加退款','go-refund','','bl-primary')}${button('编辑原单','edit-original','','bl-secondary')}</div></div></div>`;}
+  function refund(){const remaining=1000-state.refunds.reduce((s,r)=>s+r.amount,0);return `<div class="bl-card"><div class="bl-row" style="padding-top:0">${circle('dumbbell')}<div class="bl-row-main"><h3>运动健身 · 原支出</h3><p class="bl-row-meta">10月8日 · 日常信用卡</p></div><strong>1,000.00</strong></div><div class="bl-field-head"><label for="bl-refund-amount">本次退款金额</label></div><div class="bl-amount"><span>¥</span><input id="bl-refund-amount" data-field="refundAmount" inputmode="decimal" value="${esc(state.refundAmount)}" aria-label="本次退款金额"></div><p class="bl-note">尚可关联退款 ${money(remaining)} 元</p><div class="bl-form-row"><span>退款入账账户</span><select aria-label="退款入账账户" id="bl-refund-account"><option>微信钱包</option><option>常用储蓄卡</option><option>日常信用卡</option></select></div><div class="bl-form-row"><span>退款日期</span><input type="date" aria-label="退款日期" value="2026-10-21"></div></div><div class="bl-recognition">${icon('info')}<span>退款会冲减支出，并增加实际入账账户的余额。</span></div><div class="bl-field-head"><label for="bl-refund-note">备注</label></div><textarea id="bl-refund-note" placeholder="补充退款原因">套餐差额退回</textarea><div class="bl-actions">${primary('保存退款','save-refund')}</div>`;}
+  // 预览日期与账单样例保持一致；未来事件只是预计事项，不参与实际余额与收支。
+  const eventToday='2026-10-21';
+  function eventItems(){return [
+    {id:'jiebei-oct',title:'借呗还款',date:'2026-10-20',kind:'还款',account:'借呗',amount:600,label:'本期应还',icon:'credit-card',flow:'transfer'},
+    {id:'huabei-oct',title:'花呗还款',date:'2026-10-21',kind:'还款',account:'花呗',amount:650,label:'本期应还',icon:'credit-card',flow:'transfer'},
+    {id:'receive-friend',title:'朋友乙 · 收回借款',date:'2026-10-25',kind:'收回',account:'朋友乙',amount:1000,label:'预计本金',icon:'hand-coins',flow:'loan',loanType:'收款'},
+    {id:'pay-friend',title:'朋友甲 · 归还借款',date:'2026-11-05',kind:'还款',account:'朋友甲',amount:1000,label:'预计本金',icon:'hand-coins',flow:'loan',loanType:'还款'},
+    ...(state.ruleEnabled?[{id:'provident-fund',title:state.ruleTitle,date:'2026-11-05',kind:'周期账',account:'公积金',amount:Number(state.ruleAmount),label:'预计收入',icon:'repeat-2',flow:'rule'}]:[]),
+    {id:'broadband',title:'宽带费用',date:'2026-11-15',kind:'周期账',account:'常用储蓄卡',amount:80,label:'预计支出',icon:'wifi',flow:'broadband'}
+  ].sort((a,b)=>a.date.localeCompare(b.date));}
+  function eventList(){
+    const items=eventItems(),groups=[['已过期 · 待核对',items.filter(e=>e.date<eventToday)],['今天',items.filter(e=>e.date===eventToday)],['即将到来',items.filter(e=>e.date>eventToday)]];
+    return `<p class="bl-note">2026年10月21日 · 有日期的财务事项</p>${groups.filter(([,items])=>items.length).map(([label,events])=>`<section class="bl-section">${titleRow(label)}<div class="bl-list">${events.map(e=>row(e.title,`${e.date.slice(5).replace('-','月')}日 · ${e.account}`,`${money(e.amount)}<small>${e.label}</small>`,e.icon,'event-detail',`data-event-id="${e.id}"`,e.kind)).join('')}</div></section>`).join('')}<p class="bl-note">到期事项与预计金额不会直接计入实际收支。</p>`;
+  }
+  function recurring(){
+    const rules=`<section class="bl-section">${titleRow('我的周期规则','new-rule','新建')}<div class="bl-list">${row(state.ruleTitle,`每月5日 · 公积金 · ${state.ruleEnabled?'下次11月5日':'已暂停'}`,'+'+money(state.ruleAmount),'building-2','go','data-page="rule"',state.ruleEnabled?'进行中':'已暂停')}${row('宽带费用','每月15日 · 常用储蓄卡','−80.00','wifi','edit-broadband')}</div></section><div class="bl-card bl-section">${titleRow('历史账单')}<p class="bl-note">修改规则影响后续账单，已生成的记录可单独调整。</p>${button('查看公积金历史','rule-history','','bl-link')}</div>`;
+    return `<div class="bl-segment">${['待办事件','周期规则'].map((t,i)=>button(t,'plan-tab',`data-tab="${i}" aria-pressed="${state.planTab===i}"`,'')).join('')}</div>${state.planTab===1?rules:eventList()}`;
+  }
+  function features(){
+    const groups=[['记账',[['entry','plus','记一笔'],['sms','clipboard-paste','短信记账'],['loan','hand-coins','借贷'],['rules','repeat-2','周期账']]],['管理与查看',[['accounts','wallet','账户'],['books','notebook','账本'],['recurring','calendar-clock','事件'],['reports','chart-pie','统计'],['categories','shapes','分类管理'],['backup','archive','备份恢复']]]];
+    return groups.map(([label,items])=>`<section class="bl-section">${titleRow(label)}<div class="bl-quick">${items.map(([id,i,name])=>button(`<span class="bl-quick-icon">${icon(i)}</span><span>${name}</span>`,'open-feature',`data-feature="${id}"`,'')).join('')}</div></section>`).join('');
+  }
+  function rule(){return `<div class="bl-two-col"><div><div class="bl-card"><div class="bl-form-row"><label for="bl-rule-name">名称</label><input id="bl-rule-name" data-field="ruleTitle" value="${esc(state.ruleTitle)}"></div><div class="bl-form-row"><span>记账类型</span><span>收入</span></div><div class="bl-form-row"><label for="bl-rule-amount">每次金额</label><input id="bl-rule-amount" data-field="ruleAmount" inputmode="decimal" value="${esc(state.ruleAmount)}"></div><div class="bl-form-row"><span>收款账户</span><span>公积金</span></div><div class="bl-form-row"><span>重复周期</span><select aria-label="周期"><option>每月5日</option><option>每月10日</option><option>每月15日</option></select></div><div class="bl-form-row"><span>规则状态</span>${button('','toggle-rule',`role="switch" aria-label="启用周期规则" aria-checked="${state.ruleEnabled}"`,'bl-toggle')}</div></div><div class="bl-recognition">${icon('calendar-clock')}<span>修改从下一次生成起生效，已生成的账单保持不变。</span></div><div class="bl-actions">${primary('保存规则','save-rule')}</div></div><div><section class="bl-section">${titleRow('已生成的账单')}<div class="bl-list">${state.history.map((v,i)=>row(`${10-i}月公积金`,`${10-i}月5日 · 可单独修改`,'+'+money(v),'building-2','edit-history',`data-index="${i}"`)).join('')}</div></section><p class="bl-note">修改其中一笔，不会改变周期规则。</p></div></div>`;}
+  function reports(){
+    const data=ledgerHome.reportData(state.reportPeriod,state.month),groups=ledgerHome.reportGroups(data.rows,state.reportTab),max=Math.max(1,...groups.map(g=>Math.abs(g.amount)));
+    const monthKey=`2026-${String(state.month).padStart(2,'0')}`,end=state.month===10?21:new Date(2026,state.month,0).getDate();
+    const days=Array.from({length:7},(_,i)=>Math.max(1,end-6)+i),values=days.map(day=>ledgerHome.reportData('月',state.month).rows.filter(r=>r.date===`${monthKey}-${String(day).padStart(2,'0')}`).reduce((n,r)=>n+(r.type==='expense'?r.amount:r.type==='refund'?-r.amount:r.expensePart||0),0)/100);
+    const trend=state.reportPeriod==='月'?lineChart(values,days.map(String),'所选月份末段七日净支出'):lineChart([9,10].map(month=>ledgerHome.reportData('月',month).expense),['9月','10月'],'示例月份净支出');
+    return `<div class="bl-segment">${['全部','年','月'].map(p=>button(p,'report-period',`data-period="${p}" aria-pressed="${state.reportPeriod===p}"`,'')).join('')}${button('自定义','custom-period','','')}</div><div class="bl-section-head" style="margin:18px 0 5px">${navIcon('chevron-left','previous-month','上一期间')}<h2>${state.reportPeriod==='全部'?'全部记录':periodLabel()}</h2>${navIcon('chevron-right','next-month','下一期间')}</div><div class="bl-section-tabs" role="tablist" aria-label="统计维度">${['趋势','大类','小类','账户'].map(t=>button(t,'report-tab',`data-tab="${t}" role="tab" aria-selected="${state.reportTab===t}"`,'')).join('')}</div><div class="bl-two-col"><div class="bl-card"><div class="bl-metrics"><div class="active"><span>净支出</span><strong>${money(data.expense)}</strong></div><div><span>收入</span><strong>${money(data.income)}</strong></div><div><span>结余</span><strong>${money(data.income-data.expense)}</strong></div></div>${state.reportTab==='趋势'?`<h3>净支出趋势</h3>${trend}`:`<h3>${state.reportTab}净支出</h3><div class="bl-bars">${groups.map(g=>`<button type="button" class="bl-bar-item cursor-interaction" data-action="report-drill" data-category="${esc(g.name)}"><div class="bl-bar" style="height:${Math.abs(g.amount)/max*130}px"></div><span>${esc(g.name)}</span></button>`).join('')}</div>`}<p class="bl-note">退款抵减支出；转账和借贷本金不计收支。</p></div><section class="bl-section">${titleRow(state.reportTab==='账户'?'账户净支出':'分类净支出')}<div class="bl-card bl-rank">${groups.map(g=>`<div class="bl-rank-row">${button(`<span>${esc(g.name)}</span><strong>${money(g.amount)}</strong>`,'report-drill',`data-category="${esc(g.name)}"`,'bl-rank-label bl-full')}<div class="bl-progress-track"><div class="bl-progress-fill" style="width:${Math.abs(g.amount)/max*100}%"></div></div></div>`).join('')||'<p class="bl-note">此期间暂无支出记录</p>'}</div></section></div>`;
+  }
+  function books(){return `<div class="bl-note" style="margin-bottom:18px">账本可独立保存在本机，也可开启云端同步。</div>${[['日常账本','日常消费与收支','仅本地','hard-drive','进入账本','book-enter',''],['旅行账本','旅途中的每一笔','已同步','cloud-check','进入账本','book-enter','orange'],['购车账本','购车支出与补贴',state.synced?'已同步':'待同步','refresh-cw',state.synced?'进入账本':'立即同步',state.synced?'book-enter':'sync-book',''],['家庭账本','其他设备创建',state.downloaded?'已同步':'仅云端','cloud-download',state.downloaded?'进入账本':'下载到本机',state.downloaded?'book-enter':'download-book','orange']].map(([n,sub,status,i,a,act,color])=>`<div class="bl-book-card"><div class="bl-cover ${color}">${icon('notebook')}</div><div class="bl-book-body"><h3>${n}${n===state.book?' <span class="bl-badge">当前</span>':''}</h3><div class="bl-caption">${sub}</div><div class="bl-book-actions"><span class="bl-status-pill ${status==='仅本地'||status==='仅云端'?'muted':status==='待同步'?'orange':''}">${icon(i)}${status}</span>${button(a,act,`data-book="${n}"`)}</div></div></div>`).join('')}<div class="bl-actions">${button(icon('plus')+' 新建账本','new-book','','bl-secondary bl-full')}</div><p class="bl-note">同步状态以最近一次检查为准。</p>`;}
+  function settings(){return `<div class="bl-card"><div class="bl-row" style="padding:0;border:0">${circle('notebook')}<div class="bl-row-main"><h2>BesLedger</h2><p class="bl-row-meta">自己的账，自己掌握。</p></div><span class="bl-badge">界面预览</span></div></div><section class="bl-section">${titleRow('记账偏好')}<div class="bl-list">${row('类别管理','常用类别与顺序',icon('chevron-right'),'shapes','go','data-page="categories"')}${row('周期记账','自动生成固定收支',icon('chevron-right'),'repeat-2','go','data-page="recurring"')}${row('账户与期初余额','统一管理余额与欠款',icon('chevron-right'),'wallet','go','data-page="accounts"')}</div></section><section class="bl-section">${titleRow('数据与同步')}<div class="bl-list">${row('我的账本','查看本机与云端账本',icon('chevron-right'),'notebook','go','data-page="books"')}${row('GitHub 同步','已连接 · 示例连接',icon('chevron-right'),'cloud','sync-settings')}${row('备份与恢复','保存账目与关联关系',icon('chevron-right'),'archive','backup')}</div></section><section class="bl-section">${titleRow('隐私与提醒')}<div class="bl-card"><div class="bl-form-row"><span>到期事项提示</span>${button('','toggle-notice',`role="switch" aria-label="到期事项提示" aria-checked="${state.notice}"`,'bl-toggle')}</div><div class="bl-form-row"><span>短信识别</span><span>在本机处理</span></div></div></section><p class="bl-note" style="text-align:center;margin-top:25px">BesLedger · Bes记账</p>`;}
+  const renderers={home,entry,categories:categoryPage,accounts,account:accountDetail,accountTypes,accountForm,loan,detail,refund,recurring,rule,reports,books,settings,features};
+  function render(){
+    closeQuickPanel(false);
+    clearTimeout(toastTimer);
+    root.querySelector('.bl-toast').hidden=true;
+    root.style.colorScheme=state.appearance==='auto'?'inherit':state.appearance;
+    root.dataset.palette=state.palette;
+    root.querySelector('.bl-shell').dataset.device=state.device;
+    root.querySelector('.bl-shell').dataset.page=state.page;
+    root.querySelector('.bl-sidebar').innerHTML=sidebar();
+    root.querySelector('.bl-header').innerHTML=header();
+    root.querySelector('.bl-main').innerHTML=(renderers[state.page]||home)();
+    if(state.page==='entry'&&['收入','支出'].includes(state.entryType)){
+      // “全部”固定在末位，不是类别，不参加频率统计或排序。
+      root.querySelector('.bl-category-grid').insertAdjacentHTML('beforeend',button(`${circle('ellipsis')}<span>全部</span>`,'go','data-page="categories" aria-label="全部分类"','bl-all-categories'));
+    }
+    const b=root.querySelector('.bl-bottom');b.innerHTML=bottom();b.style.display=b.innerHTML?'':'none';
+    root.querySelector('.bl-modal-host').innerHTML='';
+    refreshIcons();
+  }
+  function showSheet(title,content){
+    closeQuickPanel(false);
+    root.querySelector('.bl-modal-host').innerHTML=`<section class="bl-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="bl-sheet-head"><h2>${title}</h2>${navIcon('x','close-sheet','关闭')}</div>${content}</section>`;refreshIcons();
+  }
+  function closeQuickPanel(restoreFocus=true){
+    const host=root.querySelector('.bl-modal-host');
+    if(host.dataset.panel!=='quick')return;
+    host.innerHTML='';delete host.dataset.panel;
+    // 在切页、改布局和关闭浮层时一并恢复背景，避免透明遮罩或 inert 状态遗留。
+    for(const [el,previous] of quickBackground)el.inert=previous;
+    quickBackground=[];
+    const trigger=quickReturnTarget;quickReturnTarget=null;
+    if(trigger?.isConnected){trigger.setAttribute('aria-expanded','false');if(restoreFocus)trigger.focus({preventScroll:true});}
+  }
+  function showQuickPanel(){
+    const host=root.querySelector('.bl-modal-host');
+    if(host.dataset.panel==='quick'){closeQuickPanel();return;}
+    showSheet('快捷功能',`<div class="bl-quick bl-shortcut-grid">${[['sms','clipboard-paste','短信记账'],['loan','hand-coins','借贷'],['rules','repeat-2','周期账'],['features','ellipsis','更多功能']].map(([id,i,label])=>button(`<span class="bl-quick-icon">${icon(i)}</span><span>${label}</span>`,'open-feature',`data-feature="${id}"`,'')).join('')}</div>`);
+    host.dataset.panel='quick';
+    const dialog=host.querySelector('.bl-sheet');dialog.id='bl-home-shortcuts';
+    quickReturnTarget=root.querySelector('[data-action="home-shortcuts"]');
+    quickReturnTarget?.setAttribute('aria-expanded','true');
+    quickReturnTarget?.setAttribute('aria-controls','bl-home-shortcuts');
+    quickBackground=[...root.querySelectorAll('.bl-header,.bl-main,.bl-bottom,.bl-status,.bl-sidebar')].map(el=>[el,el.inert]);
+    for(const [el] of quickBackground)el.inert=true;
+    dialog.querySelector('[data-action="close-sheet"]').focus({preventScroll:true});
+  }
+  root.addEventListener('keydown',event=>{
+    const host=root.querySelector('.bl-modal-host');if(host.dataset.panel!=='quick')return;
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeQuickPanel();return;}
+    if(event.key==='Tab'){
+      const controls=[...host.querySelectorAll('button:not(:disabled)')],first=controls[0],last=controls.at(-1);
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    }
+  });
+  function parseSms(){
+    const text=state.note;
+    const amount=text.match(/(?:消费|支出|扣款|支付|收入)(?:人民币|金额|[：:\s])*([\d,]+\.\d{1,2})\s*元?/);
+    if(!amount){state.recognized=false;return false;}
+    state.amount=amount[1].replace(/,/g,'');
+    state.entryType=/收入/.test(text)?'收入':'支出';
+    state.category=state.entryType==='收入'?'工资薪水':/食堂|餐|饭/.test(text)?'午餐':/加油/.test(text)?'加油':/停车/.test(text)?'停车费':'待分类';
+    state.account=/4321/.test(text)?'常用储蓄卡':'待选择账户';
+    const date=text.match(/(\d{1,2})月(\d{1,2})日\s*(\d{2}:\d{2})/);
+    if(date)state.date=`2026-${date[1].padStart(2,'0')}-${date[2].padStart(2,'0')}T${date[3]}`;
+    state.recognized=true;return true;
+  }
+  root.addEventListener('input',e=>{
+    const accountField=e.target.dataset.accountField;
+    if(accountField){accountDraft()[accountField]=e.target.value;const error=root.querySelector('#bl-account-error');if(error)error.hidden=true;return;}
+    const field=e.target.dataset.field;if(!field)return;
+    state[field]=e.target.value;
+    if(['loanTotal','interest'].includes(field))refreshLoanSummary();
+    if(field==='categoryQuery'||field==='search'){
+      const pos=e.target.selectionStart;render();const input=root.querySelector(`[data-field="${field}"]`);input.focus();input.setSelectionRange(pos,pos);
+    }
+  });
+  root.addEventListener('focusin',e=>{
+    if(state.page==='loan'&&['loanTotal','interest'].includes(e.target.dataset.field)){
+      state.loanInputTarget=e.target.dataset.field;
+      root.querySelector('.bl-keypad')?.setAttribute('aria-label',state.loanInputTarget==='interest'?'包含利息金额键盘':'金额键盘');
+    }
+  });
+  // 当前示例解析器只覆盖普通收支；转账备注不触发自动改写类型或两端账户。
+  root.addEventListener('paste',e=>{if(e.target.dataset.field==='note'&&state.entryType!=='转账')setTimeout(()=>{state.note=e.target.value;if(parseSms())render();},0);});
+  root.addEventListener('click',e=>{
+    if(e.target===root.querySelector('.bl-modal-host')){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else host.innerHTML='';return;}
+    const homeAction=e.target.closest('[data-home-action]');if(homeAction){ledgerHome.handle(homeAction);return;}
+    const el=e.target.closest('[data-action]');if(!el)return;
+    const action=el.dataset.action;
+    if(action==='home-shortcuts'){showQuickPanel();return;}
+    if(root.querySelector('.bl-modal-host').dataset.panel==='quick'&&action==='open-feature')closeQuickPanel(false);
+    if(action==='go'){
+      const sms=el.dataset.page==='entry'&&state.page==='home'&&el.closest('.bl-quick');
+      if(sms){state.entryType='支出';state.category='午餐';}
+      if(el.dataset.page==='recurring')state.planTab=el.closest('.bl-quick')||(state.page==='settings'&&el.closest('.bl-main'))?1:0;
+      if(el.dataset.page==='entry'&&state.entryType==='借贷')state.entryType='支出';
+      go(el.dataset.page);if(sms)root.querySelector('#bl-note-input').focus();return;
+    }
+    if(action==='back'){if(state.page==='rule')state.planTab=1;go(({entry:'home',loan:'home',categories:'entry',account:'accounts',accountTypes:'accounts',accountForm:'accountTypes',detail:'home',refund:'detail',rule:'recurring',books:'home',features:'home'})[state.page]||'home');return;}
+    if(action==='close-sheet'){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else host.innerHTML='';return;}
+    if(action==='entry-type'){state.entryType=el.dataset.type;state.recognized=false;if(state.entryType==='借贷'){go('loan');return;}state.category=state.entryType==='收入'?'工资薪水':'午餐';state.categoryGroup=state.entryType==='收入'?'收入':'餐饮';refreshQuickOrder();go('entry');return;}
+    if(action==='category-type'){state.entryType=el.dataset.type;state.categoryGroup=state.entryType==='收入'?'收入':'餐饮';state.categoryQuery='';render();return;}
+    if(action==='transfer-kind'){if(!transferKinds[el.dataset.kind])return;state.transferKind=el.dataset.kind;render();keepState();return;}
+    if(action==='select-category'){state.category=el.dataset.category;render();return;}
+    if(action==='pick-category'){if(!['收入','支出'].includes(state.entryType))state.entryType='支出';state.category=el.dataset.category;go('entry');return;}
+    if(action==='expand-category'){state.categoryGroup=state.categoryGroup===el.dataset.group?'':el.dataset.group;render();return;}
+    if(action==='sample-sms'){state.note='【示例银行】您尾号4321账户10月21日12:08消费人民币32.00元，商户青禾食堂，余额12860.00元。';parseSms();render();return;}
+    if(action==='key'){
+      const field=state.page==='loan'?state.loanInputTarget:'amount',k=el.dataset.key;
+      let v=state[field]||'';
+      if(k==='del')v=v.slice(0,-1);else if(k==='.'&&!v.includes('.'))v=(v||'0')+'.';else if(/^\d+$/.test(k)){const next=v+k;if(/^\d{1,9}(\.\d{0,2})?$/.test(next))v=next;}
+      state[field]=v;const input=root.querySelector(`[data-field="${field}"]`);if(input)input.value=v;
+      if(state.page==='loan')refreshLoanSummary();return;
+    }
+    if(action==='save-entry'||action==='save-again'){
+      const value=cents(state.amount)/100;if(!Number.isFinite(value)||!(value>0)){toast('请填写有效金额，最多两位小数');return;}
+      if(state.entryType==='转账'){
+        if(!state.transferFrom||!state.transferTo||state.transferFrom===state.transferTo){toast('请选择两个不同的转出、转入账户');return;}
+        // 转账用途是独立属性，不作为消费分类，也不把内部转移显示为支出。
+        state.savedRows.unshift({name:state.transferKind,meta:`${state.date.slice(5).replace('T',' ')} · ${state.transferFrom} → ${state.transferTo} · 资金转移${state.note?' · '+state.note:''}`,amount:money(value),icon:transferKinds[state.transferKind],type:'transfer',transferKind:state.transferKind});
+      }else{
+        if(state.account==='待选择账户'){toast('请先选择资金账户');return;}
+        if(!categoryNames(state.entryType).includes(state.category)){toast('请先选择收入或支出分类');return;}
+        state.savedRows.unshift({name:state.category,meta:state.date.slice(5).replace('T',' ')+' · '+state.account,amount:(state.entryType==='收入'?'+':'−')+money(value),icon:categoryIcon(state.category)});
+        recordCategoryUse();
+      }
+      ledgerHome.addRecord({date:state.date,type:state.entryType==='转账'?'transfer':state.entryType==='收入'?'income':'expense',name:state.entryType==='转账'?state.transferKind:state.category,category:state.entryType==='转账'?'转账':state.category,amount:cents(state.amount),account:state.entryType==='转账'?state.transferFrom+' → '+state.transferTo:state.account,note:state.note,glyph:state.entryType==='转账'?transferKinds[state.transferKind]:categoryIcon(state.category)});
+      state.amount='';state.note='';state.recognized=false;
+      if(action==='save-entry')go('home');else{refreshQuickOrder();render();}toast(action==='save-again'?'已保存，可以继续记下一笔':'已保存到本次预览');return;
+    }
+    if(action==='loan-type'){
+      if(state.loanType===el.dataset.type)return;
+      // 每种操作各自保留草稿，避免还款利息和往来方向带入新的借入／借出。
+      state.loanDrafts[state.loanType]=Object.fromEntries(loanDraftFields.map(field=>[field,state[field]]));
+      state.loanType=el.dataset.type;
+      Object.assign(state,state.loanDrafts[state.loanType]||{loanTotal:'',interest:'',loanNote:'',loanDate:state.loanDate,loanDueDate:'',loanFundingAccount:state.loanFundingAccount,loanCounterparty:''});
+      state.loanInputTarget='loanTotal';state.loanInterestOpen=false;render();return;
+    }
+    if(action==='loan-interest'){state.loanInterestOpen=!state.loanInterestOpen;state.loanInputTarget=state.loanInterestOpen?'interest':'loanTotal';render();if(state.loanInterestOpen)root.querySelector('#bl-interest').focus();return;}
+    if(action==='loan-interest-done'){state.loanInterestOpen=false;state.loanInputTarget='loanTotal';render();return;}
+    if(action==='loan-breakdown'){
+      const {total,interest,principal}=loanValues(),collecting=state.loanType==='收款';
+      showSheet(state.loanType+'金额拆分',`<div class="bl-summary-line"><span>${collecting?'收回本金':'偿还本金'}</span><strong>¥ ${money(principal/100)}</strong></div><div class="bl-summary-line"><span>${collecting?'利息收入':'利息支出'}</span><strong>¥ ${money(interest/100)}</strong></div><div class="bl-summary-line total"><span>${collecting?'实际收款合计':'实际付款合计'}</span><strong>¥ ${money(total/100)}</strong></div><p class="bl-note">利息已包含在总额中。本金往来不计入收入和支出。</p><div class="bl-actions">${primary('知道了','close-sheet')}</div>`);return;
+    }
+    if(action==='loan-date-picker'){showSheet('交易时间',`<input id="bl-loan-date-edit" type="datetime-local" value="${esc(state.loanDate)}" aria-label="借贷交易日期时间"><div class="bl-actions">${primary('确定','save-loan-date')}</div>`);return;}
+    if(action==='save-loan-date'){const value=root.querySelector('#bl-loan-date-edit').value;if(!value){toast('请选择交易时间');return;}state.loanDate=value;render();return;}
+    if(action==='loan-due-picker'){showSheet('设置'+loanKinds[state.loanType].due,`<input id="bl-loan-due-edit" type="date" value="${esc(state.loanDueDate)}" aria-label="约定到期日期"><div class="bl-actions">${button('不设置','clear-loan-due','','bl-secondary')}${button('确定','save-loan-due','','bl-primary')}</div>`);return;}
+    if(action==='clear-loan-due'){state.loanDueDate='';render();return;}
+    if(action==='save-loan-due'){const value=root.querySelector('#bl-loan-due-edit').value;if(!value||value<state.loanDate.slice(0,10)){toast('请选择不早于交易日期的到期日');return;}state.loanDueDate=value;render();return;}
+    if(action==='save-loan'||action==='save-loan-again'){
+      const {total,interest,principal,paying}=loanValues(),kind=loanKinds[state.loanType];
+      if(!Number.isFinite(total)||!Number.isFinite(interest)||total<=0||interest>total){toast('请检查总额与包含利息');return;}
+      if(!state.loanCounterparty){toast('请选择'+kind.party+'的应收应付账户');return;}
+      if(!paying&&state.loanDueDate&&state.loanDueDate<state.loanDate.slice(0,10)){toast('到期日不能早于交易日期');return;}
+      const direction=kind.partyFirst?`${state.loanCounterparty} → ${state.loanFundingAccount}`:`${state.loanFundingAccount} → ${state.loanCounterparty}`;
+      state.savedRows.unshift({name:state.loanType,meta:`${direction} · ${state.loanDate.slice(5).replace('T',' ')}${paying?` · 其中本金 ${money(principal/100)} · 利息 ${money(interest/100)}`:''}${!paying&&state.loanDueDate?` · ${kind.due} ${state.loanDueDate}`:''}${state.loanNote?' · '+state.loanNote:''}`,amount:(kind.partyFirst?'+':'−')+money(total/100),icon:kind.icon});
+      ledgerHome.addRecord({date:state.loanDate,type:'loan',name:state.loanType,category:'借贷利息',amount:total,expensePart:paying&&state.loanType==='还款'?interest:0,incomePart:paying&&state.loanType==='收款'?interest:0,account:direction,note:state.loanNote,glyph:kind.icon});
+      state.loanTotal='';state.interest='';state.loanNote='';state.loanCounterparty='';state.loanDueDate='';state.loanInputTarget='loanTotal';state.loanInterestOpen=false;
+      delete state.loanDrafts[state.loanType];
+      if(action==='save-loan')go('home');else render();toast(action==='save-loan-again'?'已保存，可以继续记下一笔':'已保存到本次预览');return;
+    }
+    if(action==='detail'){if(el.dataset.rowName==='运动健身'){go('detail');}else{showSheet('账单详情',`<div class="bl-detail-amount"><h2>${esc(el.dataset.rowName)}</h2><strong>${esc(el.dataset.rowAmount)}</strong></div><p class="bl-note">${esc(el.dataset.rowMeta)}</p><div class="bl-actions">${primary('返回明细','close-sheet')}</div>`);}return;}
+    if(action==='go-refund'){go('refund');return;}
+    if(action==='save-refund'){const amount=Number(state.refundAmount),remain=1000-state.refunds.reduce((s,r)=>s+r.amount,0);if(!(amount>0)||amount>remain){toast('请填写不超过剩余可退金额的退款');return;}const account=root.querySelector('#bl-refund-account').value;state.refunds.unshift({date:'10月21日',amount,account});ledgerHome.addRecord({date:'2026-10-21T12:08',type:'refund',name:'运动课程退款',category:'运动健身',amount:Math.round(amount*100),account,glyph:'rotate-ccw'});go('detail');toast('已添加一笔退款');return;}
+    if(action==='refund-detail'){const r=state.refunds[Number(el.dataset.index)];showSheet('退款详情',`<div class="bl-form-row"><span>退款金额</span><strong>+${money(r.amount)}</strong></div><div class="bl-form-row"><span>实际入账账户</span><span>${r.account}</span></div><div class="bl-form-row"><span>退款日期</span><span>${r.date}</span></div><div class="bl-actions">${primary('返回原账单','close-sheet')}</div>`);return;}
+    if(action==='open-account'){state.accountDetail=el.dataset.name;go('account');return;}
+    if(action==='toggle-money'){state.hideMoney=!state.hideMoney;render();return;}
+    if(action==='report-tab'){state.reportTab=el.dataset.tab;render();return;}
+    if(action==='report-period'){state.reportPeriod=el.dataset.period;render();return;}
+    if(action==='previous-month'){state.month=Math.max(1,state.month-1);render();return;}
+    if(action==='next-month'){state.month=Math.min(12,state.month+1);render();return;}
+    if(action==='report-drill'){const data=ledgerHome.reportData(state.reportPeriod,state.month),items=data.rows.filter(r=>(state.reportTab==='账户'?r.account:r.category)===el.dataset.category);showSheet('组成账单',`<p class="bl-note">${esc(el.dataset.category)} · ${state.reportPeriod==='全部'?'全部时间':periodLabel()}</p><div class="bl-list">${items.map(r=>row(r.name,r.date+' · '+r.account,(r.type==='expense'?'−':['income','refund'].includes(r.type)?'+':'')+money(r.amount/100),r.glyph)).join('')}</div>`);return;}
+    if(action==='book-enter'){state.book=el.dataset.book;go('home');return;}
+    if(action==='sync-book'){state.synced=true;render();toast('演示：账本已同步');return;}
+    if(action==='download-book'){state.downloaded=true;render();toast('演示：已建立本地副本');return;}
+    if(action==='plan-tab'){state.planTab=Number(el.dataset.tab);render();return;}
+    if(action==='open-feature'){
+      const id=el.dataset.feature;
+      if(id==='backup'){go('settings');root.querySelector('[data-action="backup"]').click();return;}
+      if(id==='rules'){state.planTab=1;go('recurring');return;}
+      if(id==='sms'||id==='entry'){state.entryType='支出';state.category='午餐';go('entry');if(id==='sms')root.querySelector('#bl-note-input').focus();return;}
+      if(id==='categories'){state.entryType='支出';state.categoryGroup='餐饮';state.categoryQuery='';}
+      if(id==='recurring')state.planTab=0;
+      go(id);return;
+    }
+    if(action==='event-detail'){
+      const item=eventItems().find(item=>item.id===el.dataset.eventId);if(!item)return;
+      const overdue=item.date<eventToday,cycle=['rule','broadband'].includes(item.flow);
+      showSheet(item.title,`<div class="bl-form-row"><span>日期</span><span>${item.date}</span></div><div class="bl-form-row"><span>${item.kind==='收回'?'借款方':item.kind==='还款'&&item.flow==='loan'?'出借方':'账户'}</span><span>${esc(item.account)}</span></div><div class="bl-form-row"><span>${item.label}</span><strong>¥ ${money(item.amount)}</strong></div><p class="bl-note">${overdue?'日期已过，请先核对是否已经处理。':cycle?'到期后按周期规则生成账单。':'实际金额与发生时间以记账时确认为准。'}</p><div class="bl-actions">${primary(cycle?'查看周期规则':item.kind==='收回'?'去记录收款':'去记录还款','event-open',`data-event-id="${item.id}"`)}</div>`);return;
+    }
+    if(action==='event-open'){
+      const item=eventItems().find(item=>item.id===el.dataset.eventId);if(!item)return;
+      if(item.flow==='rule'){state.planTab=1;go('rule');return;}
+      if(item.flow==='broadband'){state.planTab=1;go('recurring');root.querySelector('[data-action="edit-broadband"]').click();return;}
+      if(item.flow==='transfer'){
+        if(!transferAccounts.includes(item.account))transferAccounts.push(item.account);
+        state.entryType='转账';state.transferKind='转账';state.transferFrom='常用储蓄卡';state.transferTo=item.account;state.amount=String(item.amount);state.note=item.title;state.date=eventToday+'T12:08';state.recognized=false;go('entry');return;
+      }
+      state.loanType=item.loanType;state.loanTotal=String(item.amount);state.interest='';state.loanCounterparty=item.account;state.loanFundingAccount='常用储蓄卡';state.loanNote=item.title;state.loanDate=eventToday+'T12:08';state.loanDueDate='';state.loanInterestOpen=false;state.loanInputTarget='loanTotal';go('loan');return;
+    }
+    if(action==='toggle-rule'){state.ruleEnabled=!state.ruleEnabled;render();return;}
+    if(action==='toggle-notice'){state.notice=!state.notice;render();return;}
+    if(action==='save-rule'){if(!(Number(state.ruleAmount)>0)){toast('请填写有效的周期金额');return;}state.planTab=1;go('recurring');toast('规则已更新，历史账单保持不变');return;}
+    if(action==='rule-history'){go('rule');return;}
+    if(action==='edit-broadband'){showSheet('宽带费用',`<div class="bl-form-row"><span>记账类型</span><span>支出</span></div><div class="bl-form-row"><span>付款账户</span><span>常用储蓄卡</span></div><div class="bl-form-row"><span>重复周期</span><span>每月15日</span></div><div class="bl-form-row"><label for="bl-broadband-amount">每次金额</label><input id="bl-broadband-amount" inputmode="decimal" value="80"></div><p class="bl-note">修改影响后续生成，已生成账单保持不变。</p><div class="bl-actions">${primary('完成预览','close-sheet')}</div>`);return;}
+    if(action==='new-rule'){showSheet('新建周期账',`<input aria-label="周期规则名称" placeholder="名称，例如房租"><div class="bl-form-row"><span>类型</span><select aria-label="周期记账类型"><option>收入</option><option>支出</option><option>转账</option></select></div><div class="bl-form-row"><span>金额</span><input aria-label="周期记账金额" inputmode="decimal" placeholder="0.00"></div><div class="bl-form-row"><span>首次记账日</span><input aria-label="首次记账日" type="date" value="2026-11-01"></div><div class="bl-form-row"><span>重复</span><select aria-label="重复频率"><option>每月</option><option>每周</option><option>每年</option></select></div><div class="bl-actions">${primary('完成预览','close-sheet')}</div>`);return;}
+    if(action==='edit-history'){state.historyIndex=Number(el.dataset.index);showSheet('修改这笔历史账单',`<p class="bl-caption">${10-state.historyIndex}月5日 · 公积金入账</p><div class="bl-form-row"><label for="bl-history-amount">本笔金额</label><input id="bl-history-amount" inputmode="decimal" value="${state.history[state.historyIndex]}"></div><p class="bl-note">只修改当前账单，周期规则不变。</p><div class="bl-actions">${primary('保存这笔账单','save-history')}</div>`);return;}
+    if(action==='save-history'){const value=Number(root.querySelector('#bl-history-amount').value);if(!(value>0)){toast('请填写有效金额');return;}state.history[state.historyIndex]=value;render();toast('历史账单已修改，周期规则未变');return;}
+    if(action==='date-picker'){showSheet('交易时间',`<input id="bl-date-edit" type="datetime-local" value="${esc(state.date)}" aria-label="交易日期时间"><p class="bl-note">按交易发生时间记录。补账时可以修改年份。</p><div class="bl-actions">${primary('确定','save-date')}</div>`);return;}
+    if(action==='save-date'){state.date=root.querySelector('#bl-date-edit').value||state.date;render();return;}
+    if(action==='account-picker'){showSheet('选择资金账户',`<div class="bl-list">${['常用储蓄卡','微信钱包','日常信用卡'].map(n=>row(n,'',icon('chevron-right'),'credit-card','pick-account',`data-name="${n}"`)).join('')}</div>`);return;}
+    if(action==='pick-account'){state.account=el.dataset.name;render();return;}
+    if(action==='tag-picker'){showSheet('选择标签',`<div class="bl-chips">${['日常生活','旅行','学习','家庭'].map(n=>button(n,'pick-tag',`data-tag="${n}"`,'bl-chip')).join('')}</div>`);return;}
+    if(action==='pick-tag'){root.querySelector('.bl-modal-host').innerHTML='';toast('已选择标签：'+el.dataset.tag);return;}
+    if(action==='swap-accounts'){[state.transferFrom,state.transferTo]=[state.transferTo,state.transferFrom];render();return;}
+    if(action==='search-open'){state.modal=state.modal==='search'?'':'search';render();root.querySelector('[data-field="search"]')?.focus();return;}
+    if(action==='home-options'){showSheet('首页选项',`<div class="bl-actions">${button('月预算','open-home-budget','','bl-secondary bl-full')}${button('筛选账单','report-filter','','bl-secondary bl-full')}</div>`);return;}
+    if(action==='open-home-budget'){ledgerHome.handle({dataset:{homeAction:'budget'}});return;}
+    if(action==='report-filter'){showSheet('筛选账单',`<div class="bl-form-row"><span>账本范围</span><select aria-label="账本范围"><option>当前账本</option><option>全部本地账本</option></select></div><div class="bl-form-row"><span>资金账户</span><select aria-label="账户范围"><option>全部账户</option><option>常用储蓄卡</option><option>微信钱包</option></select></div><div class="bl-form-row"><span>交易类型</span><select aria-label="交易类型筛选"><option>全部类型</option><option>支出</option><option>收入</option><option>退款</option></select></div><div class="bl-actions">${primary('应用筛选','apply-filter')}</div>`);return;}
+    if(action==='apply-filter'){root.querySelector('.bl-modal-host').innerHTML='';toast('筛选交互预览');return;}
+    if(action==='month-picker'||action==='custom-period'){showSheet('选择统计期间',`<div class="bl-form-row"><label for="bl-period-start">开始日期</label><input id="bl-period-start" type="date" value="2026-10-01"></div><div class="bl-form-row"><label for="bl-period-end">结束日期</label><input id="bl-period-end" type="date" value="2026-10-31"></div><div class="bl-actions">${primary('确定','close-sheet')}</div>`);return;}
+    if(action==='new-account'){go('accountTypes');return;}
+    if(action==='choose-account-kind'){if(!accountKinds[el.dataset.kind])return;state.accountKind=el.dataset.kind;go('accountForm');return;}
+    if(action==='account-choice'){accountDraft()[el.dataset.draftField]=el.dataset.value;render();return;}
+    if(action==='preview-account-save'){
+      const draft=accountDraft(),error=root.querySelector('#bl-account-error');
+      const fail=message=>{error.textContent=message;error.hidden=false;};
+      if(!draft.name.trim()){fail('请填写账户名称');return;}
+      if(draft.amount!==''&&!/^\d+(\.\d{1,2})?$/.test(draft.amount)){fail('请填写不小于 0、最多两位小数的金额');return;}
+      if(!draft.date){fail('请选择起算日期');return;}
+      if(['credit','debit'].includes(state.accountKind)&&draft.tail&&!/^\d{4}$/.test(draft.tail)){fail('卡号后四位应为四个数字');return;}
+      go('accounts');toast('表单预览完成，尚未创建真实账户');return;
+    }
+    if(action==='opening'||action==='account-options'){
+      showSheet(action==='new-account'?'添加账户':'期初余额与账户',`<div class="bl-form-row"><label for="bl-account-name">账户名称</label><input id="bl-account-name" placeholder="例如 常用储蓄卡" value="${action==='new-account'?'':'常用储蓄卡'}"></div><div class="bl-form-row"><span>账户类型</span><select aria-label="账户类型"><option>储蓄卡</option><option>现金</option><option>网络钱包</option><option>信用卡</option><option>应收应付</option><option>其他资产</option></select></div><div class="bl-form-row"><label for="bl-opening-value">期初余额 / 欠款</label><input id="bl-opening-value" inputmode="decimal" placeholder="0.00"></div><div class="bl-form-row"><label for="bl-opening-date">起算日期</label><input id="bl-opening-date" type="date" value="2026-10-01"></div><p class="bl-note">期初金额不计收入或支出，各账本共用这份账户。</p><div class="bl-actions">${primary('保存账户','demo-account-save')}</div>`);return;
+    }
+    if(action==='demo-account-save'){root.querySelector('.bl-modal-host').innerHTML='';toast('账户表单预览完成');return;}
+    if(action==='new-category'||action==='manage-categories'){const income=state.entryType==='收入';showSheet(income?'添加收入类别':'添加支出类别',`<div class="bl-form-row"><label for="bl-cat-name">类别名称</label><input id="bl-cat-name" placeholder="输入类别名称" maxlength="12"></div>${!income?`<div class="bl-form-row"><span>所属大类</span><select id="bl-cat-parent" aria-label="所属大类">${Object.keys(categories).map(c=>`<option ${state.categoryGroup===c?'selected':''}>${c}</option>`).join('')}</select></div>`:''}<div class="bl-actions">${primary('保存类别','save-category')}</div>`);return;}
+    if(action==='save-category'){
+      const n=root.querySelector('#bl-cat-name').value.trim(),type=state.entryType==='收入'?'收入':'支出',p=root.querySelector('#bl-cat-parent')?.value;
+      if(!n){toast('请填写类别名称');return;}if(categoryNames(type).includes(n)){toast('该类别已存在');return;}
+      if(type==='收入')incomeCategories.push(n);else if(Object.hasOwn(categories,p))categories[p].push(n);else return;
+      state.categoryGroup=type==='收入'?'收入':p;state.categoryQuery='';render();toast('类别已添加，记账使用后会进入常用候选');return;
+    }
+    if(action==='new-book'){showSheet('新建账本',`<input id="bl-book-name" aria-label="账本名称" placeholder="账本名称"><div class="bl-form-row"><span>保存方式</span><select aria-label="账本保存方式"><option>仅保存在本机</option><option>开启 GitHub 同步</option></select></div><p class="bl-note">资金账户可与已有账本共用。</p><div class="bl-actions">${primary('创建账本','create-book')}</div>`);return;}
+    if(action==='create-book'){const name=root.querySelector('#bl-book-name').value.trim();if(!name){toast('请填写账本名称');return;}state.book=name;go('home');toast('已切换到示例新账本');return;}
+    if(action==='sync-settings'){showSheet('GitHub 同步',`<div class="bl-form-row"><span>连接状态</span><span class="bl-badge">已连接 · 示例</span></div><div class="bl-form-row"><span>数据仓库</span><span>besledger-data · 私有</span></div><div class="bl-form-row"><span>同步方式</span><span>加密后上传</span></div><p class="bl-note">每个账本可单独启用同步。退出连接后，本地账目仍可使用。</p><div class="bl-actions">${button('查看账本','go','data-page="books"','bl-primary')}${button('关闭','close-sheet','','bl-secondary')}</div>`);return;}
+    if(action==='backup'){showSheet('备份与恢复',`<div class="bl-list">${row('导出完整备份','包含账户、账单、分类和关联关系',icon('chevron-right'),'download','backup-demo')}${row('从备份恢复','先预览数据，再确认恢复',icon('chevron-right'),'upload','restore-demo')}</div><p class="bl-note">备份可用于更换设备或恢复本地账目。</p>`);return;}
+    if(action==='backup-demo'||action==='restore-demo'){toast('当前展示备份与恢复入口，不读取或生成真实文件');return;}
+    if(action==='edit-original'){state.entryType='支出';state.category='运动健身';state.amount='1000';state.note='运动课程 · 调整套餐';go('entry');return;}
+    if(action==='saved-detail'){toast('这是一条保存在当前预览中的示例记录');return;}
+  });
+  render();
+  window.addEventListener('openai:set_globals',event=>{const s=event.detail?.globals?.widgetState?.modelContent;if(!s||s.revision&&s.revision!=='home-budget-watermark')return;if(s.homeState)ledgerHome.restore(s.homeState);if(pages[s.page])state.page=s.page;if(['mobile','tablet','desktop'].includes(s.device))state.device=s.device;if(['auto','light','dark'].includes(s.appearance))state.appearance=s.appearance;if(['ink','forest','amber'].includes(s.palette))state.palette=s.palette;if(['收入','支出','转账','借贷'].includes(s.entryType))state.entryType=s.entryType;if(transferKinds[s.transferKind])state.transferKind=s.transferKind;render();});
+  if(globalThis.Tweak){
+    const tweak=new globalThis.Tweak({container:root,onChange:()=>{state.modal='';render();keepState();}});
+    tweak.addSelect(state,'device',{label:'设备布局',options:[{label:'手机',value:'mobile'},{label:'iPad',value:'tablet'},{label:'电脑',value:'desktop'}]});
+    tweak.addSelect(state,'page',{label:'预览页面',options:Object.entries(pages).filter(([p])=>!['account','accountForm','refund','features'].includes(p)).map(([value,label])=>({label,value}))});
+    tweak.addSelect(state,'palette',{label:'产品配色',options:[{label:'墨蓝 · 暖灰白',value:'ink'},{label:'森林绿 · 暖白',value:'forest'},{label:'暖琥珀 · 米白',value:'amber'}]});
+    tweak.addSelect(state,'appearance',{label:'外观',options:[{label:'跟随应用',value:'auto'},{label:'浅色',value:'light'},{label:'深色',value:'dark'}]});
+  }
+})();
+</script>

@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "purpose": "虚构短信样例与预期行为草案；解析器尚未实现，不是生产接口定义",
+  "synthetic": true,
+  "context": {
+    "referenceLocalDate": "2026-10-21",
+    "timeZone": "Asia/Shanghai",
+    "accounts": [
+      {
+        "id": "sample-icbc-1234",
+        "bank": "工商银行",
+        "cardLast4": "1234",
+        "label": "示例工行储蓄卡"
+      }
+    ],
+    "defaultAccountId": "sample-icbc-1234",
+    "confirmedMerchantRules": [
+      {
+        "merchant": "示例包点",
+        "category": "餐饮"
+      },
+      {
+        "merchant": "示例文具店",
+        "category": "购物/文具"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "expense-with-balance-and-missing-year",
+      "text": "尾号1234卡9月1日08:09支出(消费财付通-示例包点)6.50元，余额2,800.50元。【工商银行】",
+      "expected": {
+        "direction": "outflow",
+        "kindCandidate": "expense",
+        "amountMinor": 650,
+        "balanceMinor": 280050,
+        "currency": "CNY",
+        "accountId": "sample-icbc-1234",
+        "categoryCandidate": "餐饮",
+        "categoryBasis": "confirmedMerchantRule",
+        "transactionTimeCandidate": "2026-09-01T08:09:00+08:00",
+        "yearSource": "referenceDateCandidate",
+        "requiresConfirmation": ["year"],
+        "note": "财付通为支付渠道；金额为650分，不能取余额；年份仅为候选"
+      }
+    },
+    {
+      "id": "explicit-year-and-known-merchant",
+      "text": "尾号1234卡2026年10月20日18:20支出(消费支付宝-示例文具店)12.80元，余额8,888.88元。【工商银行】",
+      "expected": {
+        "direction": "outflow",
+        "kindCandidate": "expense",
+        "amountMinor": 1280,
+        "balanceMinor": 888888,
+        "currency": "CNY",
+        "accountId": "sample-icbc-1234",
+        "categoryCandidate": "购物/文具",
+        "categoryBasis": "confirmedMerchantRule",
+        "transactionTimeCandidate": "2026-10-20T18:20:00+08:00",
+        "yearSource": "explicitText",
+        "requiresConfirmation": [],
+        "note": "字段无需额外消歧，但仍经用户确认保存；支付宝不能替换银行卡资金账户"
+      }
+    },
+    {
+      "id": "refund-is-not-ordinary-income",
+      "text": "尾号1234卡3月5日00:14收入(退款支付宝-示例商贸公司)18.60元，余额3,210.40元。【工商银行】",
+      "expected": {
+        "direction": "inflow",
+        "kindCandidate": "refund",
+        "amountMinor": 1860,
+        "balanceMinor": 321040,
+        "currency": "CNY",
+        "accountId": "sample-icbc-1234",
+        "categoryCandidate": null,
+        "categoryBasis": "unresolved",
+        "transactionTimeCandidate": "2026-03-05T00:14:00+08:00",
+        "yearSource": "referenceDateCandidate",
+        "requiresConfirmation": ["year", "refundTreatment"],
+        "note": "保留退款性质，不自动归为普通收入或自动关联某笔消费"
+      }
+    },
+    {
+      "id": "cross-year-candidate",
+      "contextOverride": {
+        "referenceLocalDate": "2026-01-02"
+      },
+      "text": "尾号1234卡12月31日23:58支出(消费财付通-示例包点)8.00元，余额1,500.00元。【工商银行】",
+      "expected": {
+        "direction": "outflow",
+        "kindCandidate": "expense",
+        "amountMinor": 800,
+        "balanceMinor": 150000,
+        "currency": "CNY",
+        "accountId": "sample-icbc-1234",
+        "categoryCandidate": "餐饮",
+        "categoryBasis": "confirmedMerchantRule",
+        "transactionTimeCandidate": "2025-12-31T23:58:00+08:00",
+        "yearSource": "previousYearCandidate",
+        "requiresConfirmation": ["year"],
+        "note": "上年日期只作候选；不能排除用户正在补记更早年份"
+      }
+    },
+    {
+      "id": "explicit-account-does-not-match-default",
+      "text": "尾号6789卡10月20日12:05支出(消费财付通-示例未知商户)20.00元，余额2,000.00元。【工商银行】",
+      "expected": {
+        "direction": "outflow",
+        "kindCandidate": "expense",
+        "amountMinor": 2000,
+        "balanceMinor": 200000,
+        "currency": "CNY",
+        "accountId": null,
+        "categoryCandidate": null,
+        "categoryBasis": "unresolved",
+        "transactionTimeCandidate": "2026-10-20T12:05:00+08:00",
+        "yearSource": "referenceDateCandidate",
+        "requiresConfirmation": ["year", "account", "category"],
+        "note": "不能因存在常用账户而把明确尾号6789匹配到1234"
+      }
+    },
+    {
+      "id": "missing-transaction-amount",
+      "text": "尾号1234卡10月20日12:05支出通知，余额2,000.00元。【工商银行】",
+      "expected": {
+        "direction": "outflow",
+        "kindCandidate": "expense",
+        "amountMinor": null,
+        "balanceMinor": 200000,
+        "currency": "CNY",
+        "accountId": "sample-icbc-1234",
+        "categoryCandidate": null,
+        "categoryBasis": "unresolved",
+        "transactionTimeCandidate": "2026-10-20T12:05:00+08:00",
+        "yearSource": "referenceDateCandidate",
+        "requiresConfirmation": ["year", "amount", "category"],
+        "note": "保留草稿并补填交易金额，不能使用余额代替"
+      }
+    },
+    {
+      "id": "invalid-calendar-date",
+      "text": "尾号1234卡2026年2月30日08:09支出(消费财付通-示例包点)6.50元，余额2,800.50元。【工商银行】",
+      "expected": {
+        "direction": "outflow",
+        "kindCandidate": "expense",
+        "amountMinor": 650,
+        "balanceMinor": 280050,
+        "currency": "CNY",
+        "accountId": "sample-icbc-1234",
+        "categoryCandidate": "餐饮",
+        "categoryBasis": "confirmedMerchantRule",
+        "transactionTimeCandidate": null,
+        "yearSource": "explicitText",
+        "requiresConfirmation": ["transactionTime"],
+        "note": "日期无效，应提示修正，不能自动进位到三月"
+      }
+    }
+  ]
+}
