@@ -132,3 +132,12 @@ GitHub 访问凭证与账本解密密钥分离。本地功能不要求 GitHub �
 优先验证短信金额/余额区分、缺年与跨年处理、分类不确定性、本地重启恢复、同步重试去重、双设备冲突和数据格式升级。Playwright 的 WebKit 用于自动化兼容检查，真实 iPad Safari/PWA 与 Android 浏览器仍需实测。
 
 技术依据与链接见 [参考资料](REFERENCES.md)；阶段安排见 [实施计划](IMPLEMENTATION_PLAN.md)。
+
+## 2026-10-21 实施细化
+
+- 已锁定并验证 Node 24.15.0、Vue 3.5.44、Vite 7.3.7、Capacitor 8.4.3、Vitest 5.0.5；完整补丁版本以 package-lock.json 为准。Capacitor 旧补丁存在官方内部代理漏洞，8.4.3 含修复；8.5.3 CLI 的 iOS xcode 依赖带来审计告警，本轮无需 iOS，选用同系列无该告警的 8.4.3。npm audit 已为零。
+- Web 使用 Dexie 密文快照，Android 使用自写薄 SQLite 适配（只接收密文/版本，不实现加密算法），避免引入额外 SQLite 加密插件与原生依赖；两端采用相同备份格式和短事务版本比较。
+- 为保护落盘隐私，暂不保存财务明文索引；解锁后建立内存投影。本地与同步采用版本化完整快照，按主动同步批次上传，增量块与历史压缩尚未实现，容量边界见 SECURITY_AND_RECOVERY.md。
+- 真实私有 GitHub 仓库协议测试已通过，但应用内 OAuth 注册、用户授权和生产跨端闭环仍需单独验证。最小 Device Flow 服务代码已部署，不依赖开发者 gh 凭证或 client secret。
+- 原生发布脚本使用 PowerShell 7；JDK/SDK/Gradle 环境在子进程范围设置并恢复。Gradle Wrapper 使用官方 bin 发行包并锁定 SHA-256。
+- 原生包不注册 Service Worker，Web 和 Android 分别输出 dist 与 dist-android，避免 PWA 缓存覆盖 APK 自带资源。

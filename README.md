@@ -6,9 +6,33 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-2026-10-21 完成本地项目与文档初始化，并持续整理产品设计草案。目前已有记账入口、分类、共用账户、基础借贷、退款、周期账和统计的设计记录，以及技术决策、同步模型和虚构短信样例。已制作包含 16 个页面的会话内交互 UI 预览，使用虚构数据；正式应用、持久化、短信解析和云端同步尚未实现，也没有安装项目运行依赖。
+正式 Vue/TypeScript 应用已开始交付：本地加密账本、共用账户、收支/转账/借贷、短信确认、退款、周期账、日历预算、统计和备份恢复已实现。19 项领域/存储/协议测试、桌面与手机尺寸浏览器流程已通过；真实私有测试仓库协议集成已通过。
 
-当前发布的是设计与实施基线，尚无可用的 APK 或正式 Web 应用。下一阶段目标是完成 Web/PWA 与 Android APK，包括本地记账、GitHub 登录、私有数据仓库创建和加密同步；iPad 原生构建暂缓。详见 [完整交付范围](docs/DELIVERY_SCOPE.md)。
+完整第一版尚未验收完成：GitHub 应用注册与真实用户登录待完成，Android 发布构建和设备验证正在进行。开发者 gh 凭证只用于开发测试，不是最终应用登录。逐项状态见 [实施状态](docs/IMPLEMENTATION_STATUS.md)。
+
+## 开发与构建
+
+需要 Node 24 LTS。以下命令已实际运行：
+
+```powershell
+npm ci
+npm test
+npm run check
+npm run dev
+npm run build
+npm run preview -- --port 4173
+npm run test:e2e -- --project=desktop --project=android-layout
+```
+
+Web 访问 `/BesLedger/` 子路径，产物在 `dist/`；Android 使用 `dist-android/`，避免两个构建相互覆盖。PWA 首次完成资源缓存后可离线打开。浏览器测试使用本机 Edge；WebKit 项目需安装对应 Playwright 浏览器。
+
+```powershell
+npm run android:sync
+# 使用 PowerShell 7，传入独立 JDK 21 与 Android SDK 的绝对路径
+./scripts/build-android.ps1 -JavaDirectory <JDK目录> -SdkDirectory <SDK目录>
+```
+
+首次维护者发布需运行 `scripts/create-signing.ps1` 生成专用签名；已有签名禁止覆盖。详见 [安全与恢复](docs/SECURITY_AND_RECOVERY.md)。生产授权服务地址通过 `VITE_AUTH_SERVICE` 配置；应用注册缺失时不会模拟登录成功。
 
 ## 首要使用场景
 
