@@ -35,7 +35,8 @@ public class SmsInboxPlugin extends Plugin {
 
     private void readSelectedRange(PluginCall call) {
         String sender = call.getString("sender", "");
-        Double start = call.getDouble("start"), end = call.getDouble("end");
+        // 毫秒时间戳由 JSON 解析为 Long，getDouble 不接受 Long，会误判正常日期范围。
+        Long start = call.getLong("start"), end = call.getLong("end");
         if (!SENDERS.contains(sender) || start == null || end == null || start < 0 || end < start || end - start > 31L * 86400000L) {
             call.reject("请选择银行发送方及不超过 31 天的日期范围"); return;
         }

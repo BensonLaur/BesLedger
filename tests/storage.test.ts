@@ -5,6 +5,37 @@ import { Vault, migrate } from '../src/storage/vault';
 import { emptyState, put } from '../src/domain/model';
 import { decrypt, encrypt, importKey } from '../src/crypto/vault';
 describe('加密存储和失败恢复', () => {
+  it('落盘过程中锁定不会被迟到的保存回调重新解锁', async () => {
+    const disk = new WebBackend(crypto.randomUUID());
+    let gated = false;
+    let begin!: () => void, finish!: () => void;
+    const started = new Promise<void>((resolve) => {
+      begin = resolve;
+    });
+    const released = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const vault = new Vault({
+      read: () => disk.read(),
+      compareSwap: async (revision, payload) => {
+        if (gated) {
+          begin();
+          await released;
+        }
+        return disk.compareSwap(revision, payload);
+      },
+    });
+    await vault.create('fictional-test-password');
+    gated = true;
+    const mutation = vault.mutate((s) => put(s, { kind: 'ledger', name: '虚构锁定测试' }));
+    await started;
+    vault.lock();
+    finish();
+    await expect(mutation).rejects.toThrow('锁定');
+    expect(vault.state).toBeUndefined();
+    await vault.unlock('fictional-test-password');
+    expect(Object.values(vault.state!.entities)).toHaveLength(1);
+  });
   it('重启恢复、密文不含明文；错误口令和篡改无法解密', async () => {
     const backend = new WebBackend(crypto.randomUUID()),
       a = new Vault(backend);
