@@ -38,7 +38,7 @@ jobs:
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - run: npm ci
       - run: npm run android:sync
-      - run: bash android/gradlew -p android --no-daemon assembleDebug
+      - run: bash android/gradlew -p android --no-daemon assembleDebug lintDebug
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: besledger-android-debug-verification-only

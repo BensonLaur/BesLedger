@@ -13,12 +13,18 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 import java.util.Set;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @CapacitorPlugin(name = "SmsInbox", permissions = @Permission(alias = "sms", strings = { Manifest.permission.READ_SMS }))
 public class SmsInboxPlugin extends Plugin {
-    private static final Set<String> SENDERS = Set.of("95588", "95533", "95599", "95566", "95555", "95559", "95580");
+    // Set.of 从 API 30 才可用；本应用最低 API 29，静态初始化也必须兼容。
+    private static final Set<String> SENDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+        "95588", "95533", "95599", "95566", "95555", "95559", "95580"
+    )));
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
 
     @PluginMethod
