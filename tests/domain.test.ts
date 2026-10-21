@@ -10,6 +10,28 @@ import { recognize } from '../src/recognition/sms';
 import { quickCategories } from '../src/domain/categories';
 
 describe('金额与资金不变量', () => {
+  it('事件核销只能关联相反资金方向的还款，本金不能重复核销', () => {
+    const s = fixture();
+    const loan = saveEntry(s, entry(s, { type: 'borrow', from: 'person', to: 'cash', amount: 10000 }));
+    expect(() =>
+      saveEntry(s, entry(s, { type: 'repay', from: 'bank', to: 'person', settlesId: loan.id })),
+    ).toThrow('方向');
+    saveEntry(
+      s,
+      entry(s, {
+        type: 'repay',
+        from: 'cash',
+        to: 'person',
+        amount: 11000,
+        interest: 1000,
+        settlesId: loan.id,
+      }),
+    );
+    expect(() =>
+      saveEntry(s, entry(s, { type: 'repay', from: 'cash', to: 'person', settlesId: loan.id })),
+    ).toThrow('超过');
+    expect(() => deleteEntry(s, loan.id)).toThrow('关联还款');
+  });
   it('十进制解析不损失分，拒绝精度截断与安全范围溢出', () => {
     expect(minor('6000.00')).toBe(600000);
     expect(sum([minor('0.10'), minor('0.20')])).toBe(30);
@@ -161,6 +183,13 @@ describe('时间、周期与展示', () => {
   });
 });
 describe('短信字段证据', () => {
+  it('按用途提出分类候选，不从支付渠道推断类别，不混入外币', () => {
+    const accounts = list(fixture(), 'account');
+    expect(recognize('收入代发工资6000.00元', accounts).categoryIds).toEqual(['income.001']);
+    expect(recognize('消费财付通20.00元', accounts).categoryIds).toEqual([]);
+    expect(recognize('消费示例超市20.00元', accounts).categoryIds).toHaveLength(2);
+    expect(recognize('消费USD20.00元', accounts).amount).toBeUndefined();
+  });
   it('支付渠道不会替换银行卡，交易与余额分开，跨年候选需确认', () => {
     const s = fixture();
     const r = recognize(

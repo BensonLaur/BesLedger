@@ -60,6 +60,7 @@ export function accountBalance(state: State, account: Entity<Account>): number {
 }
 export function validateEntry(state: State, input: Entry, entityId?: string): Entry {
   const e = entrySchema.parse(input);
+  if (e.originalId && e.type !== 'refund') throw new Error('只有退款可以关联原支出');
   const ledger = state.entities[e.ledgerId];
   if (!ledger || ledger.deleted || ledger.data.kind !== 'ledger') throw new Error('请选择可用账本');
   if (e.interest > e.amount) throw new Error('包含利息不能大于总额');
@@ -96,6 +97,30 @@ export function validateEntry(state: State, input: Entry, entityId?: string): En
       throw new Error('累计退款不能超过原支出；额外补贴请单独记录收入');
     e.categoryId = original.data.categoryId;
   }
+  if (e.settlesId) {
+    const source = state.entities[e.settlesId];
+    if (
+      !source ||
+      source.deleted ||
+      source.data.kind !== 'entry' ||
+      !['borrow', 'lend'].includes(source.data.type) ||
+      source.data.ledgerId !== e.ledgerId
+    )
+      throw new Error('关联借款不存在或不属于本账本');
+    if (
+      e.type !== (source.data.type === 'borrow' ? 'repay' : 'collect') ||
+      e.from !== source.data.to ||
+      e.to !== source.data.from
+    )
+      throw new Error('关联还款方向与原借款不一致');
+    const settled = sum(
+      list(state, 'entry')
+        .filter((x) => x.id !== entityId && x.data.settlesId === e.settlesId)
+        .map((x) => x.data.amount - x.data.interest),
+    );
+    if (sum([settled, e.amount - e.interest]) > source.data.amount)
+      throw new Error('关联归还本金超过原借款，请核对或单独记账');
+  }
   if (entityId) {
     const refunds = list(state, 'entry').filter(
       (x) => x.data.type === 'refund' && x.data.originalId === entityId,
@@ -124,6 +149,8 @@ export function saveEntry(state: State, input: Entry, entityId?: string, manual 
 export function deleteEntry(state: State, entityId: string): void {
   if (list(state, 'entry').some((e) => e.data.originalId === entityId))
     throw new Error('请先删除关联退款，再删除原单');
+  if (list(state, 'entry').some((e) => e.data.settlesId === entityId))
+    throw new Error('请先处理关联还款或收款，再删除原借款');
   tombstone(state, entityId);
 }
 export function restoreEntity(state: State, entityId: string): void {

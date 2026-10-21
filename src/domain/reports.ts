@@ -12,6 +12,13 @@ export type Filter = {
   accountId?: string;
   keyword?: string;
 };
+export function effectiveCategory(entry: Entry): string {
+  return entry.type === 'repay'
+    ? 'expense.investment.001'
+    : entry.type === 'collect'
+      ? 'income.011'
+      : entry.categoryId;
+}
 export function filterEntries(entries: Entity<Entry>[], filter: Filter): Entity<Entry>[] {
   return entries
     .filter(
@@ -22,7 +29,7 @@ export function filterEntries(entries: Entity<Entry>[], filter: Filter): Entity<
         (!filter.day || e.at.startsWith(filter.day)) &&
         (!filter.from || e.at.slice(0, 10) >= filter.from) &&
         (!filter.through || e.at.slice(0, 10) <= filter.through) &&
-        (!filter.categoryId || e.categoryId === filter.categoryId) &&
+        (!filter.categoryId || effectiveCategory(e) === filter.categoryId) &&
         (!filter.accountId || e.from === filter.accountId || e.to === filter.accountId) &&
         (!filter.keyword || e.note.toLocaleLowerCase().includes(filter.keyword.toLocaleLowerCase())),
     )
@@ -67,11 +74,7 @@ export function groupReport(
       dimension === 'month'
         ? entry.at.slice(0, 7)
         : dimension === 'category'
-          ? entry.type === 'repay'
-            ? 'expense.investment.001'
-            : entry.type === 'collect'
-              ? 'income.011'
-              : entry.categoryId
+          ? effectiveCategory(entry)
           : value.income || entry.type === 'refund'
             ? entry.to
             : entry.from;

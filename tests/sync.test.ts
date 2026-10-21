@@ -9,6 +9,48 @@ import { decode, encode, importKey } from '../src/crypto/vault';
 import { createRelay } from '../services/auth-relay/src/index';
 
 describe('并发与同步边界', () => {
+  it('两端独立生成同一期次能够收敛，自动游标推进不制造规则冲突', () => {
+    const a = fixture(),
+      b = structuredClone(a);
+    b.deviceId = 'device-b';
+    const data = entry(a, { source: { ruleId: 'rule-a', occurrence: '2026-10-20' } });
+    saveEntry(a, data, 'period-a', false);
+    saveEntry(b, { ...data, createdAt: '2026-10-22T12:00:00' }, 'period-a', false);
+    const ab = mergeEntities(a.entities, b.entities),
+      ba = mergeEntities(b.entities, a.entities);
+    expect(ab.conflicts).toEqual([]);
+    expect(ab.entities['period-a']).toEqual(ba.entities['period-a']);
+    const rule = {
+      kind: 'rule' as const,
+      ledgerId: a.preferences.currentLedger,
+      name: '虚构周期',
+      start: '2026-10-01',
+      cursor: '2026-10-21',
+      frequency: 'daily' as const,
+      paused: false,
+      time: '12:00',
+      template: entry(a),
+    };
+    put(a, rule, 'rule-a');
+    put(b, { ...rule, cursor: '2026-10-22' }, 'rule-a');
+    const merged = mergeEntities(a.entities, b.entities);
+    expect(merged.conflicts).toEqual([]);
+    expect(merged.entities['rule-a'].data).toMatchObject({ cursor: '2026-10-22' });
+  });
+  it('删除账本遇到另一端新流水必须确认，选择删除后不再复活', () => {
+    const a = fixture(),
+      b = structuredClone(a);
+    b.deviceId = 'device-b';
+    const id = a.preferences.currentLedger;
+    put(a, a.entities[id].data, id, true);
+    saveEntry(b, entry(b), 'offline-new');
+    const result = mergeEntities(a.entities, b.entities);
+    expect(result.conflicts[0].reason).toContain('未同步记录');
+    resolveConflict(a, result.conflicts[0], 'local');
+    const retry = mergeEntities(b.entities, a.entities);
+    expect(retry.conflicts).toEqual([]);
+    expect(retry.entities['offline-new'].deleted).toBe(true);
+  });
   it('独立记录自动合并，同笔修改与删除保留冲突，显式选择能推进因果版本', () => {
     const a = fixture();
     const e = saveEntry(a, entry(a));

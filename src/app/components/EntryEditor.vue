@@ -93,6 +93,8 @@ function switchType(type: Entry['type']) {
     interest.value = '0';
   }
   tab.value = isLoan.value ? 'loan' : type;
+  if (draft.type !== 'refund') delete draft.originalId;
+  if (!['repay', 'collect'].includes(draft.type)) delete draft.settlesId;
   parsed.value = undefined;
   recognitionPending.value = false;
 }
@@ -309,6 +311,35 @@ async function save(again = false) {
           {{ parsed.type ? typeLabels[parsed.type] : '类型待确认' }}
         </p>
         <p>{{ parsed.at?.replace('T', ' ') || '保留当前时间' }}</p>
+        <div v-if="parsed.categoryIds.length" class="recognition-candidates">
+          <small>分类候选</small>
+          <button
+            v-for="id in parsed.categoryIds"
+            :key="id"
+            type="button"
+            class="secondary"
+            @click="draft.categoryId = id"
+          >
+            {{ categories(state!, draft.ledgerId).find((c) => c.id === id)?.name || id
+            }}{{ draft.categoryId === id ? ' ✓' : '' }}
+          </button>
+        </div>
+        <div v-if="parsed.accountIds.length" class="recognition-candidates">
+          <small>账户候选</small>
+          <button
+            v-for="id in parsed.accountIds"
+            :key="id"
+            type="button"
+            class="secondary"
+            @click="
+              ['income', 'refund', 'collect', 'borrow'].includes(parsed.type || draft.type)
+                ? (draft.to = id)
+                : (draft.from = id)
+            "
+          >
+            {{ accountName(id) }}{{ [draft.from, draft.to].includes(id) ? ' ✓' : '' }}
+          </button>
+        </div>
         <p v-for="warning in parsed.warnings" class="hint">{{ warning }}</p>
         <p v-if="parsed.balance !== undefined" class="hint">
           短信余额 ¥ {{ money(parsed.balance) }} 仅供核对，不会覆盖账户余额。

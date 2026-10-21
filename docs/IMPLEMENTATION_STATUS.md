@@ -58,3 +58,11 @@
 - Android Web 资源构建与 cap sync 通过；Gradle 8.14.3 正在官方网络下载，完整原生编译未结束。
 - WebKit/iPad 尺寸的主要页面、保存编辑、离线重开已通过；时间值断言调整以接受浏览器保留零秒的标准差异，正在复验短信路径。
 - GitHub Pages 已配置 workflow 发布模式，正式地址 https://bensonlaur.github.io/BesLedger/，尚未完成首次部署。
+## 阶段提交与发布
+
+- 主仓库阶段提交 907cd8f3b5ffe757daa72003283ca633f5823b87 已推送，标题与正文为中文，署名取自规定脚本实际输出。
+- GitHub Actions 的 Web 与 Android 构建验证均成功；Android 编译成功产物目前是明确标注的调试验收包，正式长期签名构建继续进行。
+- GitHub Pages 首次发布成功并读取验证 HTML，地址：https://bensonlaur.github.io/BesLedger/。当前尚未配置应用内 GitHub OAuth，不能宣布完整第一版完成。
+- WebKit iPad 尺寸短信复验通过；三种浏览器/尺寸共 6 条端到端路径已分别通过。
+- Android API 36 模拟器已启动且 boot_completed=1；真实物理设备仍未接入。
+- GitHub Actions 专用签名 secrets 已安全配置于 BesLedger 源码仓库，仅用于本项目发布流程。未将签名文件或口令写入 Git。

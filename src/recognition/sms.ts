@@ -20,6 +20,7 @@ export function recognize(
 ): Recognition {
   const raw = text.normalize('NFKC').replace(/(?<=\d),(?=\d{3}(?:\D|$))/g, '');
   const result: Recognition = { accountIds: [], categoryIds: [], rawDate: '', yearBasis: '', warnings: [] };
+  const foreignCurrency = /美元|港币|港元|欧元|英镑|USD|HKD|EUR|GBP/i.test(raw);
   result.type = /退款|退货|冲正/.test(raw)
     ? 'refund'
     : /支出|消费|扣款|支付|付出/.test(raw)
@@ -32,7 +33,8 @@ export function recognize(
   // 余额片段先剔除，绝不把短信里唯一的余额填成交易金额。
   const transactionPart = raw.split(/(?:可用)?余额/)[0];
   const amounts = [...transactionPart.matchAll(/([\d,]+(?:\.\d{1,2})?)\s*(?:元|人民币)/g)];
-  if (result.type && amounts.length === 1) result.amount = minor(amounts[0][1].replaceAll(',', ''));
+  if (result.type && amounts.length === 1 && !foreignCurrency)
+    result.amount = minor(amounts[0][1].replaceAll(',', ''));
   else result.warnings.push(amounts.length > 1 ? '出现多个交易金额，请核对' : '未识别交易金额，请补填');
   const tail = raw.match(/(?:尾号|尾数|\*{2,})(\d{4})/)?.[1];
   const bank = raw.match(/【([^】]*银行)】/)?.[1];
@@ -62,6 +64,33 @@ export function recognize(
   } else result.warnings.push('缺少明确交易时间，保留草稿时间');
   for (const [merchant, category] of Object.entries(merchantRules))
     if (raw.includes(merchant)) result.categoryIds.push(category);
+  if (!result.categoryIds.length) {
+    // 关键词只是候选，不把支付渠道当作消费用途；一词多义时保留所有候选供核对。
+    const rules: [RegExp, string[]][] =
+      result.type === 'income'
+        ? [
+            [/工资|薪水|代发薪/, ['income.001']],
+            [/利息/, ['income.011']],
+            [/奖金/, ['income.002']],
+          ]
+        : result.type === 'expense'
+          ? [
+              [/早餐|包点|包子|豆浆/, ['expense.food.001']],
+              [/餐厅|餐饮|餐费/, ['expense.food.002', 'expense.food.003']],
+              [/加油|石油|石化/, ['expense.transport.003']],
+              [/停车/, ['expense.transport.004']],
+              [/地铁/, ['expense.transport.005']],
+              [/电费|水费|燃气/, ['expense.home.002']],
+              [/话费|通讯费/, ['expense.home.001']],
+              [/药店|药品/, ['expense.health-education.001']],
+              [/超市/, ['expense.food.007', 'expense.shopping.002']],
+            ]
+          : [];
+    for (const [pattern, candidates] of rules) if (pattern.test(raw)) result.categoryIds.push(...candidates);
+    if (result.categoryIds.length) result.warnings.push('分类来自用途关键词，请核对；不是已学习的商户规则');
+  }
+  result.categoryIds = [...new Set(result.categoryIds)];
+  if (foreignCurrency) result.warnings.push('当前仅支持人民币，此短信包含其他币种，不会自动填入金额');
   if (!result.categoryIds.length) result.warnings.push('分类没有明确依据，请选择');
   if (result.type === 'refund') result.warnings.push('退款需选择原支出，不会计作普通收入');
   return result;

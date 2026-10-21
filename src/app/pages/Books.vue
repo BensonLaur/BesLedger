@@ -140,6 +140,8 @@ async function sync(id: string) {
       if (merge.conflicts.length) throw new Error('同步期间本机又有修改，请重新同步后处理冲突');
       s.entities = merge.entities;
       s.bindings[id] = result.binding;
+      if (s.entities[s.preferences.currentLedger]?.deleted)
+        s.preferences.currentLedger = list(s, 'ledger')[0]?.id || '';
     });
     ui.notice = '同步成功，已确认远端完整版本';
   });
