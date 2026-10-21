@@ -6,7 +6,7 @@ import { categoryName } from '../../domain/categories';
 import { money } from '../../domain/money';
 import { state, ui } from '../store';
 import Icon from './Icon.vue';
-const props = defineProps<{ items: Entity<Entry>[] }>();
+const props = defineProps<{ items: Entity<Entry>[]; statistical?: boolean }>();
 const labels: Record<Entry['type'], string> = {
   expense: '支出',
   income: '收入',
@@ -25,6 +25,7 @@ const groups = computed(() => {
     .map(([day, items]) => ({ day, items, totals: totals(items.map((x) => x.data)) }));
 });
 function name(e: Entry) {
+  if (props.statistical && ['repay', 'collect'].includes(e.type)) return `${labels[e.type]}利息`;
   return ['expense', 'income', 'refund'].includes(e.type)
     ? categoryName(state.value!, e.ledgerId, e.categoryId)
     : labels[e.type];
@@ -69,8 +70,13 @@ function account(id: string) {
               : ['income', 'refund', 'collect', 'borrow'].includes(e.data.type)
                 ? '+'
                 : ''
-          }}{{ money(e.data.amount)
-          }}<small v-if="e.data.interest">含利息 {{ money(e.data.interest) }}</small></span
+          }}{{
+            money(
+              statistical && ['repay', 'collect'].includes(e.data.type) ? e.data.interest : e.data.amount,
+            )
+          }}<small v-if="e.data.interest">{{
+            statistical ? '业务总额 ' + money(e.data.amount) : '含利息 ' + money(e.data.interest)
+          }}</small></span
         >
       </button>
     </div>

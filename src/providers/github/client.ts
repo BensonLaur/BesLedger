@@ -136,6 +136,7 @@ export class GitHub {
     text: string,
     sha?: string,
   ): Promise<string> {
+    if (text.length > 25_000_000) throw new Error('单本加密账超过 25 MB 上限，未上传，请先导出备份');
     await this.verifyPrivate(owner, repo, userId);
     const response = await this.request<{ content: { sha: string } }>(
       this.ledgerPath(owner, repo, id),

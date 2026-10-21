@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fixture, entry } from './fixtures';
 import { minor, sum } from '../src/domain/money';
 import { accountBalance, deleteEntry, saveEntry, totals } from '../src/domain/ledger';
-import { list, type Rule } from '../src/domain/model';
+import { list, put, type Rule } from '../src/domain/model';
 import { draftTime } from '../src/domain/time';
 import { generateDue, saveRule } from '../src/domain/recurring';
 import { calendarScale } from '../src/domain/reports';
@@ -10,6 +10,58 @@ import { recognize } from '../src/recognition/sms';
 import { quickCategories } from '../src/domain/categories';
 
 describe('金额与资金不变量', () => {
+  it('信用卡期初欠款与溢缴款走同一资金投影，偿还本金不增加支出', () => {
+    const s = fixture();
+    const credit = put(
+      s,
+      {
+        kind: 'account',
+        name: '虚构信用卡',
+        type: 'credit',
+        opening: -100000,
+        openedAt: '2026-01-01T00:00:00',
+        bank: '',
+        tail: '',
+      },
+      'credit',
+    );
+    saveEntry(s, entry(s, { type: 'transfer', from: 'bank', to: 'credit', amount: 102000 }));
+    expect(
+      accountBalance(
+        s,
+        list(s, 'account').find((a) => a.id === credit.id)!,
+      ),
+    ).toBe(2000);
+    expect(totals(list(s, 'entry').map((e) => e.data))).toEqual({ income: 0, expense: 0, net: 0 });
+  });
+  it('借出收回含息总额后应收归零，仅实际利息计收入', () => {
+    const s = fixture();
+    const loan = saveEntry(s, entry(s, { type: 'lend', from: 'cash', to: 'person', amount: 100000 }));
+    saveEntry(
+      s,
+      entry(s, {
+        type: 'collect',
+        from: 'person',
+        to: 'cash',
+        amount: 102000,
+        interest: 2000,
+        settlesId: loan.id,
+      }),
+    );
+    expect(
+      accountBalance(
+        s,
+        list(s, 'account').find((a) => a.id === 'person')!,
+      ),
+    ).toBe(0);
+    expect(
+      accountBalance(
+        s,
+        list(s, 'account').find((a) => a.id === 'cash')!,
+      ),
+    ).toBe(102000);
+    expect(totals(list(s, 'entry').map((e) => e.data)).income).toBe(2000);
+  });
   it('事件核销只能关联相反资金方向的还款，本金不能重复核销', () => {
     const s = fixture();
     const loan = saveEntry(s, entry(s, { type: 'borrow', from: 'person', to: 'cash', amount: 10000 }));

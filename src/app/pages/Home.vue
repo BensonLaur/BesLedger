@@ -91,7 +91,7 @@ async function saveBudget() {
       put(
         s,
         { kind: 'budget', ledgerId: currentLedgerId.value, month: ui.month, amount, enabled: true },
-        budget.value?.id,
+        budget.value?.id || `budget:${currentLedgerId.value}:${ui.month}`,
       ),
     );
     budgetOpen.value = false;

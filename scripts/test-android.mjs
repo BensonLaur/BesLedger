@@ -18,6 +18,7 @@ async function connect() {
   const webview = await device.webView({ pkg });
   const page = await webview.page();
   page.setDefaultTimeout(15000);
+  await page.getByRole('heading').first().waitFor();
   return { browser: device, page };
 }
 let { browser, page } = await connect();
@@ -77,7 +78,9 @@ try {
     'PASS: Android API 36 / WebView: native encrypted SQLite, entry save, process restart and offline balance',
   );
 } finally {
-  adb('shell', 'svc', 'wifi', 'enable');
-  adb('shell', 'svc', 'data', 'enable');
-  await browser.close();
+  try {
+    adb('shell', 'svc', 'wifi', 'enable');
+    adb('shell', 'svc', 'data', 'enable');
+  } catch { console.warn('Isolated emulator unavailable during network cleanup'); }
+  await browser.close().catch(() => undefined);
 }

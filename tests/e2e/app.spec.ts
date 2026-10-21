@@ -74,3 +74,70 @@ test('短信确认与日期不被分类选择重置', async ({ page }) => {
   await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('6.50');
   await expect(editor.getByLabel('发生时间')).toHaveValue(/^2026-10-20T08:09(?::00)?$/);
 });
+test('四种借贷草稿独立保留，预算取消不生效且关闭保留金额', async ({ page }) => {
+  await initialize(page);
+  await page.getByRole('button', { name: '预算 关' }).click();
+  await page.getByLabel('预算金额（元）').fill('500');
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.getByRole('button', { name: '预算 关' })).toBeVisible();
+  await page.getByRole('button', { name: '预算 关' }).click();
+  await page.getByLabel('预算金额（元）').fill('800');
+  await page.getByRole('button', { name: '启用预算' }).click();
+  await page.getByRole('button', { name: '预算 开' }).click();
+  await page.getByRole('button', { name: '预算 关' }).click();
+  await expect(page.getByLabel('预算金额（元）')).toHaveValue('800.00');
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
+  const editor = page.getByRole('dialog', { name: '记一笔', exact: true });
+  await editor.getByRole('button', { name: '借贷', exact: true }).click();
+  await editor.getByLabel('金额', { exact: true }).fill('100');
+  await editor.getByRole('button', { name: '还款', exact: true }).click();
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('');
+  await editor.getByLabel('金额', { exact: true }).fill('110');
+  await editor.getByRole('button', { name: '借入', exact: true }).click();
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('100');
+  await editor.getByRole('button', { name: '还款', exact: true }).click();
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('110');
+});
+test('借还总额与统计利息同源，资金账户余额保持准确', async ({ page }) => {
+  await initialize(page);
+  await createAccount(page);
+  await page.getByRole('button', { name: '添加账户', exact: true }).click();
+  const accountForm = page.getByRole('dialog', { name: '添加共用账户' });
+  await accountForm.getByRole('button', { name: '应收应付', exact: true }).click();
+  await accountForm.getByLabel('账户名称').fill('虚构往来');
+  await accountForm.getByLabel('起算日期时间').fill('2026-01-01T00:00');
+  await accountForm.getByRole('button', { name: '保存账户' }).click();
+  await expect(accountForm).toBeHidden();
+  await page.goto('./#/');
+  for (const [type, amount, source, destination] of [
+    ['借入', '100', '虚构往来', '虚构现金'],
+    ['还款', '110', '虚构现金', '虚构往来'],
+  ]) {
+    await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
+    const form = page.getByRole('dialog', { name: '记一笔', exact: true });
+    await form.getByRole('button', { name: '借贷', exact: true }).click();
+    await form.getByRole('button', { name: type, exact: true }).click();
+    await form.getByLabel('金额', { exact: true }).fill(amount);
+    if (type === '还款') {
+      await form.getByRole('button', { name: /包含利息/ }).click();
+      await form.getByLabel('包含利息（已计入总额）').fill('10');
+      await expect(form.getByText('本金 ¥ 100.00 · 包含利息 ¥ 10.00')).toBeVisible();
+    }
+    await form.locator('.account-direction > button').first().click();
+    await page.getByRole('dialog', { name: '选择资金账户' }).getByRole('button', { name: source }).click();
+    await form.locator('.account-direction > button').last().click();
+    await page
+      .getByRole('dialog', { name: '选择资金账户' })
+      .getByRole('button', { name: destination })
+      .click();
+    await form.getByRole('button', { name: '保存账目' }).click();
+    await expect(form).toBeHidden();
+  }
+  await page.goto('./#/accounts');
+  await expect(page.getByText('余额 ¥ 990.00', { exact: true })).toBeVisible();
+  await page.goto('./#/statistics');
+  await expect(page.locator('.entry-row')).toHaveCount(1);
+  await expect(page.locator('.entry-row').getByText('还款利息', { exact: true })).toBeVisible();
+  await expect(page.locator('.entry-row .entry-value')).toHaveText(/−10\.00\s*业务总额 110\.00/);
+});

@@ -26,7 +26,7 @@ async function poll(runId: number) {
   if (!code.value || generation !== runId) return;
   try {
     if (Date.now() > started + code.value.expires_in * 1000) throw new Error('授权码已过期，请重新连接');
-    const result = await pollAuthorization(code.value);
+    const result = await pollAuthorization({ ...code.value, interval });
     if (generation !== runId) return;
     if (result.github) {
       const user = await result.github.user();

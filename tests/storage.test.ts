@@ -4,7 +4,43 @@ import { WebBackend } from '../src/storage/backend';
 import { Vault, migrate } from '../src/storage/vault';
 import { emptyState, put } from '../src/domain/model';
 import { decrypt, encrypt, importKey } from '../src/crypto/vault';
+import { fixture, entry } from './fixtures';
+import { saveEntry, deleteEntry, accountBalance } from '../src/domain/ledger';
+import { list } from '../src/domain/model';
 describe('加密存储和失败恢复', () => {
+  it('备份恢复保留账户期初、退款关系、周期来源与删除标记', async () => {
+    const a = new Vault(new WebBackend(crypto.randomUUID()));
+    await a.create('fictional-backup-password');
+    await a.mutate((s) => {
+      const initial = fixture();
+      s.entities = initial.entities;
+      s.preferences = initial.preferences;
+      const original = saveEntry(s, entry(s, { amount: 50000 }), 'backup-original');
+      saveEntry(
+        s,
+        entry(s, { type: 'refund', amount: 10000, to: 'bank', originalId: original.id }),
+        'backup-refund',
+      );
+      const period = saveEntry(
+        s,
+        entry(s, { source: { ruleId: 'rule-kept', occurrence: '2026-10-20' } }),
+        'backup-period',
+        false,
+      );
+      deleteEntry(s, period.id);
+    });
+    const b = new Vault(new WebBackend(crypto.randomUUID()));
+    await b.restore(await a.exportBackup(), 'fictional-backup-password', 'fictional-new-password');
+    expect(b.state!.entities).toEqual(a.state!.entities);
+    expect(b.state!.entities['backup-period'].deleted).toBe(true);
+    expect(b.state!.entities['backup-refund'].data).toMatchObject({ originalId: 'backup-original' });
+    expect(
+      accountBalance(
+        b.state!,
+        list(b.state!, 'account').find((x) => x.id === 'bank')!,
+      ),
+    ).toBe(210000);
+  });
   it('落盘过程中锁定不会被迟到的保存回调重新解锁', async () => {
     const disk = new WebBackend(crypto.randomUUID());
     let gated = false;

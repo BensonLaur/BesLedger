@@ -46,6 +46,16 @@ const quickItems = computed(() =>
 const category = computed(() => allCategories.value.find((c) => c.id === draft.categoryId));
 const isLoan = computed(() => ['borrow', 'lend', 'repay', 'collect'].includes(draft.type));
 const twoAccounts = computed(() => isLoan.value || draft.type === 'transfer');
+const interestSummary = computed(() => {
+  try {
+    const total = minor(amount.value),
+      included = minor(interest.value || '0');
+    if (total <= 0 || included < 0 || included > total) return '';
+    return `本金 ¥ ${money(total - included)} · 包含利息 ¥ ${money(included)}`;
+  } catch {
+    return '';
+  }
+});
 const filteredCategories = computed(() =>
   allCategories.value.filter((c) => `${c.group}${c.name}`.includes(categorySearch.value)),
 );
@@ -72,6 +82,8 @@ const typeLabels: Record<Entry['type'], string> = {
 };
 const loanDrafts = new Map<string, { data: Entry; amount: string; interest: string }>();
 function switchType(type: Entry['type']) {
+  if (type === draft.type) return;
+  const switchingLoan = isLoan.value && ['borrow', 'lend', 'repay', 'collect'].includes(type);
   if (isLoan.value)
     loanDrafts.set(draft.type, {
       data: structuredClone(toRaw(draft)),
@@ -84,6 +96,12 @@ function switchType(type: Entry['type']) {
     amount.value = saved.amount;
     interest.value = saved.interest;
   } else {
+    if (switchingLoan) {
+      amount.value = '';
+      draft.note = '';
+      draft.amount = 0;
+      delete draft.settlesId;
+    }
     draft.type = type;
     draft.from = '';
     draft.to = '';
@@ -93,6 +111,7 @@ function switchType(type: Entry['type']) {
     interest.value = '0';
   }
   tab.value = isLoan.value ? 'loan' : type;
+  showInterest.value = interest.value !== '0' && interest.value !== '0.00';
   if (draft.type !== 'refund') delete draft.originalId;
   if (!['repay', 'collect'].includes(draft.type)) delete draft.settlesId;
   parsed.value = undefined;
@@ -382,7 +401,8 @@ async function save(again = false) {
         >约定{{ draft.type === 'borrow' ? '还款' : '收回' }}日（可选）<input v-model="draft.due" type="date"
       /></label>
       <template v-if="['repay', 'collect'].includes(draft.type)"
-        ><button type="button" class="text-button" @click="showInterest = !showInterest">
+        ><p v-if="interestSummary" class="hint">{{ interestSummary }}</p>
+        <button type="button" class="text-button" @click="showInterest = !showInterest">
           包含利息{{ showInterest ? ' ▴' : ' ▾' }}</button
         ><label v-if="showInterest"
           >包含利息（已计入总额）<input v-model="interest" inputmode="decimal"

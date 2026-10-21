@@ -232,6 +232,9 @@ const deletedBooks = computed(() =>
           ? '最近确认：' + state!.bindings[book.id].lastChecked!.slice(0, 16).replace('T', ' ') + ' UTC'
           : '尚未确认远端副本'
       }}</small>
+      <small v-if="state!.bindings[book.id]" class="muted"
+        >绑定：{{ state!.bindings[book.id].owner }}/{{ state!.bindings[book.id].repo }}</small
+      >
       <div class="book-actions">
         <button
           class="text-button"

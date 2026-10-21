@@ -92,7 +92,15 @@ export class Vault {
     return this.key;
   }
   private async archive(state: State, key: CryptoKey, header: KeyHeader): Promise<Archive> {
-    return { format: 'BesLedger.vault', version: 1, header, data: await encrypt(state, key, 'local-state') };
+    const archive: Archive = {
+      format: 'BesLedger.vault',
+      version: 1,
+      header,
+      data: await encrypt(state, key, 'local-state'),
+    };
+    if (JSON.stringify(archive).length > 50_000_000)
+      throw new Error('本机加密空间达到 50 MB 上限，请先备份并整理已同步副本');
+    return archive;
   }
   async mutate<T>(operation: (state: State) => T): Promise<T> {
     const task = this.queue.then(async () => {

@@ -103,7 +103,7 @@ onMounted(() => {
     <AccountForm v-if="ui.accountForm" />
     <RuleForm v-if="ui.ruleForm" />
     <SmsPicker v-if="ui.smsPicker" />
-    <Modal v-if="ui.quick" title="快捷记账" @close="ui.quick = false"
+    <Modal v-if="ui.quick" class="quick-overlay" title="快捷记账" @close="ui.quick = false"
       ><div class="quick-grid">
         <button @click="newEntry()"><Icon name="receipt" :size="28" />短信记账</button
         ><button @click="newEntry('borrow')"><Icon name="users" :size="28" />借贷</button

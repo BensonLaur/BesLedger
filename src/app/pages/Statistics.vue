@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { accounts, currentEntries, currentLedgerId, state, ui } from '../store';
 import { categoryName } from '../../domain/categories';
 import { groupReport, filterEntries } from '../../domain/reports';
-import { totals } from '../../domain/ledger';
+import { totals, contribution } from '../../domain/ledger';
 import { money } from '../../domain/money';
 import EntryList from '../components/EntryList.vue';
 const dimension = ref<'category' | 'account' | 'month'>('category'),
@@ -34,18 +34,19 @@ const max = computed(() =>
 const drill = computed(() =>
   filtered.value.filter(
     (e) =>
-      !selected.value ||
-      (dimension.value === 'month'
-        ? e.data.at.startsWith(selected.value)
-        : dimension.value === 'account'
-          ? (e.data.type === 'income' || e.data.type === 'collect' || e.data.type === 'refund'
-              ? e.data.to
-              : e.data.from) === selected.value
-          : (e.data.type === 'repay'
-              ? 'expense.investment.001'
-              : e.data.type === 'collect'
-                ? 'income.011'
-                : e.data.categoryId) === selected.value),
+      (contribution(e.data).income !== 0 || contribution(e.data).expense !== 0) &&
+      (!selected.value ||
+        (dimension.value === 'month'
+          ? e.data.at.startsWith(selected.value)
+          : dimension.value === 'account'
+            ? (e.data.type === 'income' || e.data.type === 'collect' || e.data.type === 'refund'
+                ? e.data.to
+                : e.data.from) === selected.value
+            : (e.data.type === 'repay'
+                ? 'expense.investment.001'
+                : e.data.type === 'collect'
+                  ? 'income.011'
+                  : e.data.categoryId) === selected.value)),
   ),
 );
 function label(id: string) {
@@ -148,6 +149,6 @@ function label(id: string) {
       <h2>{{ selected ? label(selected) : '当前范围' }} · 明细</h2>
       <button v-if="selected" class="text-button" @click="selected = ''">清除选择</button>
     </div>
-    <EntryList :items="drill" />
+    <EntryList :items="drill" statistical />
   </section>
 </template>

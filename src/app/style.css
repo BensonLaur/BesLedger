@@ -2005,3 +2005,27 @@ svg {
     }
   }
 }
+
+.recognition-candidates {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.recognition-candidates .secondary {
+  padding: 6px 10px;
+  font-size: 12px;
+  min-height: 34px;
+}
+@media (min-width: 731px) {
+  .quick-overlay {
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 88px;
+    padding-right: 38px;
+  }
+  .quick-overlay .modal {
+    max-width: 440px;
+  }
+}
