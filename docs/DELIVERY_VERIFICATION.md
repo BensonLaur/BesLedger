@@ -30,7 +30,13 @@ APK 为 minSdk 29、target 36，无 DEBUGGABLE，APK v2 签名验证通过；证
 
 ### 发布与归档复核
 
-四个旧 Release 的说明、元数据、15 个附件与原校验文件已完整归档，附件大小与可用 GitHub SHA-256 核对通过，归档 ZIP 完整性通过。新附件公开读回和四项删除结果在发布结束后追加；仅允许清理指定 Release，保留标签、提交、私有仓库与签名材料。
+源码提交 `a841e364a9d835fb6d660b877faaabd76a9fdf06` 已推送，`v0.1.2` 指向该提交。[Pages 构建与发布 39836711070](https://github.com/BensonLaur/BesLedger/actions/runs/39836711070) 成功；Cloudflare 备用部署为 `20d9bb60`。两个公开站点逐项下载的 15 个生产文件均与本地 `dist` 的 SHA-256 一致；真实浏览器新建虚构本地账本、导航、连接说明、Service Worker 接管后的离线刷新和解锁均通过，无页面运行错误。
+
+[Web/Android 工程验证 39836711250](https://github.com/BensonLaur/BesLedger/actions/runs/39836711250) 全部成功，包含核心测试、生产 Web 构建、Android 构建与 Lint，以及 Linux API 36 隔离模拟器的原生 SQLite 同步密钥/重启流程；与本机 Windows 验证相互补充。后续发布记录提交仅更新文档，不改变已验收的应用产物。
+
+新版 5 个附件均通过公开链接匿名下载（使用本机已启用的代理），大小与 SHA-256 同时匹配本地产物及 GitHub 元数据；读回的归档 ZIP 完整性通过。四个旧 Release 的说明、元数据、15 个附件与原校验文件已完整归档，原附件大小与可用 GitHub SHA-256 均已核对。
+
+确认新版可用后，已逐项删除 `v0.1.0-preview.1`、`v0.1.0`、`web-20261023`、`v0.1.1` 四个 Release 记录及其附件。四个源码标签的对象 SHA 与清理前逐一相同；Releases 列表仅保留最新版 `v0.1.2`。未删除提交、源码仓库、私有仓库、账目或签名材料，历史说明和附件从 [归档页](RELEASE_ARCHIVE.md) 追溯。
 
 ---
 

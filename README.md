@@ -8,7 +8,7 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 本轮统一版本为 **0.1.2**：恢复原型的五项底部导航、分类图标与数字键盘，账户创建改为分步填写，“我的”清楚区分本地解锁、GitHub 登录和账本同步。保留本地加密记账、登录保持、设备保存同步密钥及跨端同步。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.2 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-release.apk)（Android 10 起）。[0.1.2 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 10 已验签，与原正式预览包及 0.1.0 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/SHA256SUMS.txt)。旧发布说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.2 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-release.apk)（Android 10 起）。[0.1.2 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 10 已验签，与原正式预览包、0.1.0 和 0.1.1 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/SHA256SUMS.txt)。原四个阶段性 Release 已归档清理，源码标签保留；旧说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
 
 Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
