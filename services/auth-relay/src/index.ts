@@ -99,7 +99,8 @@ export function createRelay(transport: typeof fetch = fetch) {
           },
           body: params,
           signal: AbortSignal.timeout(15000),
-          redirect: 'error',
+          // Workers 不实现 error 模式；manual 保证凭证不随重定向转发，下方将 3xx 作为失败。
+          redirect: 'manual',
         });
         if (!upstream.ok && upstream.status !== 400 && upstream.status !== 401)
           return Response.json({ error: 'github_unavailable' }, { status: 502, headers });

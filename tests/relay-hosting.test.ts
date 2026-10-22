@@ -52,7 +52,7 @@ it('新平台独立限制不同访客，保持固定 GitHub 上游和禁止重�
   const calls: string[] = [];
   const relay = createRelay(async (url, init) => {
     calls.push(String(url));
-    expect(init?.redirect).toBe('error');
+    expect(init?.redirect).toBe('manual');
     expect(String(init?.body)).toBe('client_id=Iv1.fictional&scope=offline_access');
     return Response.json({ user_code: 'TEST-CODE' });
   });
@@ -62,4 +62,17 @@ it('新平台独立限制不同访客，保持固定 GitHub 上游和禁止重�
   expect((await relay.fetch(request('/device', '192.0.2.2'), env)).status).toBe(200);
   expect((await relay.fetch(request('/unrelated', '192.0.2.2'), env)).status).toBe(404);
   expect(new Set(calls)).toEqual(new Set(['https://github.com/login/device/code']));
+});
+it('使用 Workers 支持的手动模式拒绝上游重定向，不透传目标地址或凭证', async () => {
+  let calls = 0;
+  const relay = createRelay(async (_url, init) => {
+    calls++;
+    expect(init?.redirect).toBe('manual');
+    return new Response(null, { status: 307, headers: { Location: 'https://untrusted.example' } });
+  });
+  const response = await relay.fetch(request('/device'), env);
+  expect(response.status).toBe(502);
+  expect(await response.json()).toEqual({ error: 'github_unavailable' });
+  expect(response.headers.get('Location')).toBeNull();
+  expect(calls).toBe(1);
 });
