@@ -1,6 +1,12 @@
 # 实施状态
 
-追加任务（2026-10-23）：Web/PWA 中转改用 Cloudflare Pages Functions，生产地址 https://besledger-github-auth.pages.dev。Vercel 因短信验证不可达取消；Cloudflare 账号已注册并授权，部署凭证由 Windows Credential Manager 保护。单独 Worker 已上传，但 workers.dev 在当前网络解析异常、连接超时，改为同账号免费的 Pages Functions。首次 Pages 部署 1697998a 已成功，当前网络匿名健康检查、固定 App 身份及三项跨域预检通过；65 项核心测试通过、1 项默认集成跳过，Wrangler 依赖审计 0 漏洞。仓库发布变量已切换，接下来发布新版 Web 并做真实浏览器授权、续期和同步，尚未以服务探针代替完整验收。
+追加任务（2026-10-23）已完成真实验收：Web/PWA 中转为 https://besledger-github-auth.pages.dev，免费 Cloudflare Pages Functions 统一提供服务，普通用户无需托管账号、手机号验证、部署或配置地址。Vercel 因短信验证不可达取消；单独 Worker 的 workers.dev 在当前网络解析异常，因此使用 pages.dev。部署凭证由 Windows Credential Manager 保护，只授予用户/账号读取、Workers 脚本和 Pages 管理。
+
+两套独立 Edge 存储从公开 Cloudflare Web 通过新中转真实登录，自动准备既有私有存储，完成虚构账目上传、发现下载和双向修改（21.23 → 22.34 → 23.45）。仅将隔离测试凭证的到期元数据提前，实际调用生产 /refresh 后访问与刷新令牌均轮换并加密落盘。锁定/解锁、关闭浏览器进程后离线重开、联网再次同步、线上 PWA 更新后保持登录、主动退出后刷新不复活均通过。本轮云端文件经过仓库身份、私有性、标记、账本名称与 SHA 校验后清理，读回 404；仓库和标记保留，两个客户端均已退出并关闭。
+
+当前 66 项核心测试通过、1 项真实集成入口默认跳过；12 条主要浏览器流程与 3 条模拟授权流程重新通过。首次未受 Service Worker 控制的页面更新不刷新的问题已修复，真实 Worker 验证更新后本地加密账本保留。CI 发现一个既有篡改测试以固定字符替换随机首字符的偶发误判，现已改为翻转字节，并阻止失败断言输出临时测试密钥；该次失败日志已清理，生产加密格式未改。Wrangler 依赖审计 0 漏洞。
+
+最终代码 fc6b3a6 的 Pages 39819827133、Web/Android/完整 Lint 39819827294 均成功；正式网址与 Cloudflare 备用网址已发布相同生产应用，新中转已内置。
 
 更新：2026-10-22。0.1.0 正式交付版已发布，必需功能和可用环境中的验收完成。Web/PWA 与长期签名 Android APK 可下载；真实 GitHub App 授权、自动私有建库、Web/Android 双向同步和安全保持登录通过。物理 Android/iPad 未接入，网络及设备边界见逐项验收记录。所有阶段提交标题和正文均为中文。
 
@@ -16,16 +22,18 @@
 ## 当前交付物
 
 - [Web/PWA](https://bensonlaur.github.io/BesLedger/)。
+- [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/) 与 [2026-10-23 Web 更新包](https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023)。两个来源的本地存储互相独立；已有用户继续原网址更新，换网址需加密备份或同步恢复。
+- 最新 Web 包 BesLedger-web-20261023-pwa.zip：199,202 字节，SHA-256 1fe4f0fd9614696f8c39911e23e8f8d909bb8c4d29a14eaa17a57974418166a9；应用构建源码 dc338f9fe9d683c1f8657a3e96a02b7167bed147。Cloudflare Web 部署 be5c84a1，中转含双来源配置的部署 9dcc341b。15 个产物条目已检查，无实际凭证、私钥或源码映射。
 - [0.1.0 正式版本](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0)：APK、Web 生产 ZIP、SHA256SUMS.txt、signature.txt；旧 preview.1 只保留历史。
 - 构建源码：8b3e5587b51ff602a4011226e024d8fc3f471b2c。APK 0.1.0 / versionCode 8，8,364,607 字节，Android 10/API 29 起、target 36。
 - APK SHA-256：63b6f1c06d6ed47bb7b4f9a9aeff5e1b651956e3891e821583809cd4f06a1e3e。
-- Web ZIP：199,210 字节；SHA-256 3b950318d56f21cfeece43964dd748f24915907bf9253ea50f931b4c33af7059。
+- 原 0.1.0 Web ZIP：199,210 字节；SHA-256 3b950318d56f21cfeece43964dd748f24915907bf9253ea50f931b4c33af7059。仅保留原发布记录，Web 下载使用上方更新包。
 - 发布后 GitHub 资产大小与 digest 均与本机一致。相同附件在 artifacts/v8-final/，Web CI 目录为 artifacts/v8-web/，均被忽略。
 - 专用 RSA-3072、APK v2 验签通过、无 DEBUGGABLE。证书 SHA-256：b54b12f342a892713a8764ae2544e68de234309a266e7a70c6fba87000a22716。
 
 ## 已完成的验证
 
-- 核心 Vitest 63 项通过，默认真实集成入口 1 项跳过；12 条浏览器主要流程和 3 条授权流程通过。后者模拟 GitHub 响应，真实授权另行验收，不混淆证据。
+- 原 0.1.0 首次交付时核心 Vitest 63 项通过，默认真实集成入口 1 项跳过；12 条浏览器主要流程和 3 条授权流程通过。当前新增的中转检查与重新验收结果见本文开头；模拟授权与真实授权证据不混淆。
 - 两套独立 Edge 存储真实 GitHub App Device Flow 登录，私有建库、首次上传、发现下载、修改回传、离线并发冲突、删除/编辑冲突、删除传播与显式恢复通过。
 - All repositories 实际自动创建 BesLedger-Data（private，ID 1429836113），标记及重复准备复用通过。Android 新客户端登录后自动发现，不输入名称。
 - Android API 36 实际 SQLite 与独立 Web 浏览器双向修改虚构流水收敛；原生直接向 GitHub 取得设备码、换取令牌和实际续期，访问及刷新令牌均轮换并加密落盘。
@@ -65,7 +73,7 @@
 - 使用绑定仓库 ID/owner ID 的专用标记或旧加密目录识别存储，不依赖名称前缀。同名未知用途或公开仓库不覆盖；已有绑定不可见时不切换成新空库。
 - 本轮默认仓库中的新建虚构验收账本已按身份、私有性和 SHA 校验后清理，GET 确认 404；保留私有仓库、README 和标记供正常使用。其他独立虚构测试仓库保留，Git 历史密文不宣称擦除。测试客户端均主动退出。
 
-Web 授权中转复用 https://besledger-github-auth.bensonlaur.chatgpt.site，project_id appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；v3 部署成功，服务源码 886ae9fac46760b0ea285bb112d030299108b79c，环境 revision 3。当前桌面浏览器真实授权通过，但模拟器直连网络被托管边缘 403/CORS 拦截；versionCode 8 改用 CapacitorHttp 直连 GitHub并关闭桥接参数日志，实际授权与续期通过。Web/PWA 仍有中转可达性限制，见 DEPLOYMENT.md；未更换请求身份或修改系统代理绕过限制。
+历史 Web 中转为 https://besledger-github-auth.bensonlaur.chatgpt.site，project_id appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；v3 部署源码 886ae9fac46760b0ea285bb112d030299108b79c、环境 revision 3。它曾在桌面通过、在其他网络被边缘 403/CORS 拦截。当前 Web 已统一切换本文开头的 Cloudflare Pages Functions；旧站不自动回退。Android versionCode 8 保持 CapacitorHttp 直连 GitHub，桥接参数日志关闭。没有修改系统代理、DNS 或伪造请求身份绕过拦截。
 
 ## 有效命令与后续维护
 

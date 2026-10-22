@@ -26,12 +26,16 @@ npx wrangler login --device --browser=false --use-keyring --scopes account:read 
 
 ## 配置与验证
 
-pages/wrangler.jsonc 固定公开 GitHub App 身份和生产 Web 来源，只允许已发布的 GitHub Pages 来源发起授权请求。无 Client Secret、App 私钥或财务数据配置项；不建立数据库、KV、R2 或付费绑定，不记录请求正文和令牌，不上传源码映射。public/_routes.json 仅允许五个固定路径进入函数，其余请求由静态托管处理。
+pages/wrangler.jsonc 固定公开 GitHub App 身份，只允许已发布的两个 Web 来源：https://bensonlaur.github.io 与 https://besledger-bensonlaur.pages.dev。无 Client Secret、App 私钥或财务数据配置项；不建立数据库、KV、R2 或付费绑定，不记录请求正文和令牌，不上传源码映射。public/_routes.json 仅允许五个固定路径进入函数，其余请求由静态托管处理。
 
 服务只转发 GitHub 的设备码、换取令牌和续期三个固定端点，拒绝上游重定向，不记录请求正文或令牌。访问令牌和刷新令牌会短暂经过服务，账目与恢复密钥不会进入服务。
+
+Workers 运行时使用 redirect=manual 并拒绝上游 3xx，不使用该运行时不支持的 redirect=error。此兼容问题已由真实设备码请求定位并修复，回归测试确认不跟随重定向。
 
 部署后先验证匿名 GET /health、正式来源的 OPTIONS 预检和真实 Device Flow，再更新源码仓库的 BESLEDGER_AUTH_SERVICE，发布 Web/PWA。scripts/check-auth-service.mjs 会在 Pages 发布前核对公开可达性、App 身份和三项跨域预检；这不是持续监控，也不替代真实浏览器登录和跨端同步验收。
 
 与 GitHub 之间的网络、免费额度和各地区网络条件仍可能影响可用性。出现故障应由维护者修复服务；普通用户不需要自建中转。保持相同 GitHub App 身份后，更换中转地址不会主动清除本机已有登录。
+
+2026-10-23 已完成两套独立 Edge 存储通过生产服务的真实登录、自动发现私有存储、加密上传下载、双向修改及实际 refresh token 轮换；锁定、关闭浏览器后离线重开保留登录，主动退出后刷新不复活。所有账目为虚构；本轮云端文件已按身份与 SHA 校验清理，私有仓库与标记保留。
 
 官方依据：[账号注册](https://developers.cloudflare.com/fundamentals/account/create-account/)、[Pages Functions 免费额度](https://developers.cloudflare.com/pages/functions/pricing/)、[Wrangler 登录及系统密钥链](https://developers.cloudflare.com/workers/wrangler/commands/general/#login)。实际部署地址和验收结果见 [部署说明](../../docs/DEPLOYMENT.md)。

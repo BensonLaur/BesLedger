@@ -2,6 +2,8 @@
 
 当前结论：0.1.0 已发布，GitHub App 的真实授权、自动建库、Web 与 Android 原生双向同步及登录保持已通过。用户最新明确选择 All repositories，不再要求普通用户手工建库或输入名称。此范围具备其他仓库内容读写能力，应用行为约束不能宣称平台隔离。以下区分历史测试、当前版本及尚未接入的物理设备。
 
+2026-10-23 追加 Web/PWA 登录可达性修复已完成生产服务与真实浏览器验收，详见本页末尾。最新 Web 更新包与原 Android 0.1.0 分开发布，原版本资产不覆盖。
+
 ## 交付与设备矩阵
 
 | 环境 | 已通过 | 未覆盖 |
@@ -57,7 +59,7 @@ Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 发布包使�
 
 ## 测试性质与边界
 
-- 核心 Vitest 当前 63 项通过。历史协议集成使用两个独立 Vault 和 fake-indexeddb 连接真实私有仓库，不等同于浏览器登录；最新版真实浏览器 App 验收另列如下。默认集成测试 1 项跳过，入口只接受实际授权的 GitHub App 用户令牌，拒绝开发者 gh/PAT/OAuth 凭证。
+- 核心 Vitest 在原 0.1.0 交付时为 63 项通过，本次 Web 更新为 66 项通过。历史协议集成使用两个独立 Vault 和 fake-indexeddb 连接真实私有仓库，不等同于浏览器登录；最新版真实浏览器 App 验收另列如下。默认集成测试 1 项跳过，入口只接受实际授权的 GitHub App 用户令牌，拒绝开发者 gh/PAT/OAuth 凭证。
 - 浏览器端到端 12 条主要路径与 3 条授权路径通过，覆盖三种引擎/尺寸组合。授权自动化使用模拟 GitHub 响应，真实授权证据为下文独立验收。
 - 原生脚本实际连接本任务的 Android 模拟器，存储走 SQLite，而不是将桌面 Web 结果记作原生结果。
 - 短信权限在普通 adb 安装的模拟器上具有 RESTRICTION_INSTALLER_EXEMPT，由系统普通运行时弹窗授予；未手工加入受限权限白名单，未要求默认短信应用。不同安装器/手机仍可能拒绝。
@@ -87,3 +89,16 @@ Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 发布包使�
 - 原生访问 Web 授权中转曾被托管平台边缘 403/CORS 阻止，versionCode 8 改用原生 HTTP 直连固定 GitHub 端点并成功验收。Web/PWA 仍需要中转可达：当前桌面浏览器已实际通过，受拦截网络可能不能登录；部署替代服务的说明见 DEPLOYMENT.md。未通过修改代理或请求身份绕过边缘限制。
 
 剩余验证范围：物理 Android/iPad、不同厂商短信权限和安装器、全新 GitHub 账号，以及更多银行短信模板。当前不承诺商店审核通过、任何网络下均可授权、关闭应用后的准时后台推送或无限账本容量。
+
+## 2026-10-23 Web/PWA 登录中转交付
+
+- 生产中转：https://besledger-github-auth.pages.dev。Cloudflare Pages Functions 免费方案，无数据库或付费绑定；普通用户无需 Cloudflare 账号、手机号、部署或地址配置。只允许 GitHub Pages 正式来源及 Cloudflare 备用 Web 来源。
+- 正式 Web：https://bensonlaur.github.io/BesLedger/；备用：https://besledger-bensonlaur.pages.dev/BesLedger/。浏览器已核对正式站点内置新中转和原 GitHub App 身份。两个网址本地存储独立；既有用户在原网址更新即可，切换网址需恢复数据并首次登录。
+- 两套独立 Edge 持久化目录通过新中转完成实际 Device Flow，自动找到私有 BesLedger-Data，未输入仓库名称。A 上传虚构支出 21.23，B 解密下载并改为 22.34，A 拉取后再改为 23.45，B 拉取一致；API 读回仓库 private、数字 ID 和标记，并核对远端密文不包含账本名称。
+- 仅调整测试凭证到期元数据，生产 /refresh 实际返回新访问令牌与刷新令牌；二者轮换、到期时间更新、独立凭证库加密保存。刷新/解锁、锁定/解锁、关闭浏览器进程后离线重开保留登录和流水，联网继续同步；非模拟授权结果。
+- 线上 PWA 从前一构建更新至 index-BrgZwcyu.js 后，登录与账目保留且同步成功。首次页面尚未被 Worker 控制但新 Worker 已激活时，更新按钮现在显式刷新；本机真实 HTTP/Service Worker 生命周期验收确认加密账本仍可解锁。
+- 验收后仅删除身份确认的本轮虚构云端文件，SHA 比较删除并读回 404；保留私有仓库与标记。两端主动退出，凭证 payload 为 null，刷新解锁仍需登录；随后关闭测试浏览器。历史虚构密文仍保留在 Git，不宣称历史擦除。
+- 当前核心 66 项、浏览器主要流程 12 条、模拟授权流程 3 条通过；真实集成默认入口 1 项跳过，实际验收另行完成。Wrangler 依赖审计 0 漏洞。CI 的随机篡改测试误判已修复，生产加密算法和数据格式未改变。
+- 最终代码 fc6b3a62ab362866a8e8ea920949b0cab226f5b6 的 [Pages 发布 39819827133](https://github.com/BensonLaur/BesLedger/actions/runs/39819827133) 和 [Web/Android 构建与 Lint 39819827294](https://github.com/BensonLaur/BesLedger/actions/runs/39819827294) 均成功。
+
+[Web 更新包 web-20261023](https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023)：BesLedger-web-20261023-pwa.zip，199,202 字节，SHA-256 `1fe4f0fd9614696f8c39911e23e8f8d909bb8c4d29a14eaa17a57974418166a9`。应用构建源码 `dc338f9fe9d683c1f8657a3e96a02b7167bed147`，后续测试修复不改变生产产物。ZIP 共 15 项，与 dist 一致，通过实际测试凭证精确匹配、令牌/私钥模式、禁止文件与源码映射检查。Android 继续使用本页已验签的 versionCode 8，不因 Web 中转迁移要求重装。

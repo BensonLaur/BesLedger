@@ -2,6 +2,8 @@
 
 当前阶段 Web：https://bensonlaur.github.io/BesLedger/。源码：https://github.com/BensonLaur/BesLedger。
 
+2026-10-23 Web 更新：https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023。此更新修复登录中转及 PWA 首次更新，Android 仍使用下述已验收的 0.1.0 APK。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/，部署在同一维护者 Cloudflare 免费账号；普通用户无需注册托管账号。
+
 可下载的 [0.1.0 正式交付版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0) 包含长期签名 APK（versionCode 8）、Web/PWA 生产 ZIP、SHA256SUMS.txt 和公开验签结果。构建源码为 8b3e5587b51ff602a4011226e024d8fc3f471b2c，真实 GitHub App 授权、自动私有建库、Android 原生与 Web 双向同步及续期已通过。文件大小、哈希、设备证据及未覆盖范围见 DELIVERY_VERIFICATION.md；旧 preview.1 仅保留历史。
 
 ## Web/PWA
@@ -10,17 +12,21 @@
 
 首次联网访问完成 Service Worker 缓存后可离线重开。更新可用时先保存草稿，再点击重新加载；本地解锁空间独立于应用缓存。清理浏览器站点数据会删除本机账本，请先导出加密备份。
 
+GitHub Pages 与 Cloudflare 备用网址具有不同浏览器来源，本地账本和登录不会自动互通。已有用户继续使用原网址即可取得中转修复；不要通过清空站点数据强制更新。需要换网址时先导出加密备份，或在新网址登录后输入原设备同步恢复密钥下载；新来源首次 GitHub 登录属于新客户端，之后仍安全保持登录。
+
+维护者更新备用站点时，先设置上述四个公开 VITE_ 构建变量并运行 npm run build，将 dist 的内容复制到一个新建暂存目录的 public/BesLedger/，在 public/_redirects 写入 `/ /BesLedger/ 302`。暂存目录的 wrangler.jsonc 使用 name=besledger-bensonlaur、pages_build_output_dir=./public、compatibility_date=2026-10-21、send_metrics=false，再运行仓库 services/auth-relay/node_modules/wrangler/bin/wrangler.js 的 pages deploy，指定 --cwd 暂存目录、--project-name besledger-bensonlaur、--branch main、--upload-source-maps=false。只上传公开构建目录，禁止指向仓库根目录。当前项目已存在，不重复创建。
+
 ## GitHub App 注册与配置
 
 2026-10-22 改用公开的 [BesLedger Sync](https://github.com/apps/besledger-sync) GitHub App。App ID 为 5426577，公开 Client ID 为 Iv23liqKVYOk5K5MFB1j。仅 Contents 写入、Repository creation 写入、Metadata 只读；按用户最新决定，默认选择 All repositories 以实现首次自动建库。范围包含其他私有仓库的内容读写，必须如实说明。维护者注册步骤见 GITHUB_APP_SETUP.md，普通用户无需注册应用。
 
 开启 Device Flow 和 Expire user access tokens，关闭 Webhook。本版只请求 offline_access，登录及续期均不需要 Client Secret 或 App 私钥。Web 服务配置 GITHUB_CLIENT_ID、GITHUB_APP_ID、GITHUB_APP_SLUG，以及固定来源 ALLOWED_ORIGINS；Android 使用原生网络直连 GitHub 授权端点，不依赖该中转。旧 OAuth App 的 repo 授权不再使用，用户已确认撤销旧 BesLedger。
 
-2026-10-23：Web/PWA 的共享中转已迁到 Cloudflare Pages Functions，地址 https://besledger-github-auth.pages.dev，由维护者统一部署并内置到发布包。普通用户无需托管账号、手机号验证、部署或配置服务。当前网络匿名健康检查和三项跨域预检已通过；真实浏览器迁移验收进度见 IMPLEMENTATION_STATUS.md。现有 GitHub App 身份保持不变，迁移本身不清除已保存登录。
+2026-10-23：Web/PWA 的共享中转已迁到 Cloudflare Pages Functions，地址 https://besledger-github-auth.pages.dev，由维护者统一部署并内置到发布包。普通用户无需托管账号、手机号验证、部署或配置服务。当前网络匿名健康检查、三项跨域预检，以及两套独立浏览器的真实登录、续期、双向同步、锁定/离线重开和主动退出均已通过。现有 GitHub App 身份保持不变，迁移本身不清除已保存登录。
 
 授权服务源码在 services/auth-relay/src/index.ts，Pages 入口与配置在 services/auth-relay/pages/，维护命令见 services/auth-relay/README.md。使用锁定的 Wrangler 4.152.0，凭证通过 Windows Credential Manager 加密保护，授权限于用户/账号读取、Workers 脚本及 Pages 管理。免费额度为每天共用 100,000 次函数请求，不引入数据库或付费绑定。
 
-历史原因：Sites 域名在部分网络被托管边缘返回 403；Vercel 因注册短信不可达未部署；Cloudflare 单独 Worker 的 workers.dev 在当前网络解析异常，改用 Pages Functions 的 pages.dev。没有要求用户修改代理、关闭浏览器安全检查或自行搭服务。旧 Sites 仅保留历史，不作为新版本默认或自动回退端点。
+历史原因：Sites 域名在部分网络被托管边缘返回 403；Vercel 因注册短信不可达未部署；Cloudflare 单独 Worker 的 workers.dev 在当前网络解析异常，改用 Pages Functions 的 pages.dev。没有要求用户修改代理、关闭浏览器安全检查或自行搭服务。旧 Sites 与单独 Worker 仅保留历史，不作为新版本默认或自动回退端点。2026-10-23 凌晨 GitHub Actions 曾因平台故障排队，因此同时发布完整 Cloudflare 备用站；GitHub Pages 后续发布已恢复。网络、GitHub 上游和免费额度仍有可用性边界，不承诺所有地区永久可达。
 
 源码仓库变量 BESLEDGER_AUTH_SERVICE 使用上述 HTTPS 地址，并设置 BESLEDGER_GITHUB_APP_ID、BESLEDGER_GITHUB_APP_CLIENT_ID、BESLEDGER_GITHUB_APP_SLUG。Pages 和 Android 构建映射为 VITE_AUTH_SERVICE、VITE_GITHUB_APP_ID、VITE_GITHUB_APP_CLIENT_ID、VITE_GITHUB_APP_SLUG。开发可在被忽略的 .env.local 中配置这四个公开值；秘密不得使用 VITE_ 前缀。
 
