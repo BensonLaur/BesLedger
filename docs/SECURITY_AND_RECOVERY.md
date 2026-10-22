@@ -60,7 +60,7 @@ Device Flow 只请求 offline_access；支持 GitHub App 短期访问令牌与 r
 
 在账本卡片点击“同步密钥”→“忘记此设备密钥”，只移除该绑定的本机副本，账目和云端数据不删除。更换保存的密钥时，在原设备密钥输入框填写后再次同步，验证成功才替换；该操作不轮换云端账本的加密密钥。退出 GitHub 只退出账号，已保存的账本同步密钥仍受本地口令保护。
 
-GitHub App 用户令牌也具有读取公开资源的隐式能力；“限定专用仓库”指私有仓库访问和写入范围，不声称 GitHub 禁止读取互联网公开资料。客户端不枚举或读取无关公开仓库。
+GitHub App 用户令牌也具有读取公开资源的隐式能力。当前默认 All repositories 不提供专用仓库的平台隔离；只有用户主动选择 Only select repositories 才按所选范围限制私有仓库访问。客户端不枚举或读取无关公开仓库。
 
 官方依据：[App 权限边界](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app)、[GitHub App Device Flow](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app)、[令牌续期](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens)、[创建用户仓库](https://docs.github.com/en/rest/repos/repos#create-a-repository-for-the-authenticated-user)。
 

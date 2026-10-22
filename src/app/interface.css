@@ -1037,3 +1037,99 @@ textarea {
     background: #cce2f5;
   }
 }
+
+/* 登录、解锁和同步分别呈现；长账号名也不能撑开手机布局。 */
+.connection-compact {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+.connection-summary {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 16px 0;
+  min-height: 76px;
+}
+.connection-summary > span {
+  min-width: 0;
+  flex: 1;
+}
+.connection-summary strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.connection-summary small {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-top: 3px;
+  font-size: 12px;
+}
+.connection-summary:active {
+  background: var(--soft);
+}
+.connection-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.connection-details .section-heading {
+  flex-wrap: wrap;
+}
+.connection-details .actions {
+  flex-wrap: wrap;
+}
+.connection-details .tag {
+  white-space: normal;
+}
+.connection-details details,
+.help-details {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 16px 0;
+}
+.help-details summary {
+  min-height: 44px;
+  padding: 10px 0;
+  cursor: pointer;
+  color: var(--ink);
+}
+.help-details p {
+  font-size: 12px;
+}
+.settings-sync-group .settings-actions {
+  margin-bottom: 0;
+}
+.settings-sync-group > .connection-compact {
+  padding: 0;
+}
+.book-card > small {
+  overflow-wrap: anywhere;
+}
+
+.my-groups > .card {
+  background: transparent;
+  padding: 0;
+}
+.my-groups > .card > h2 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.my-groups .settings-actions {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 0 18px;
+}
+.my-groups .settings-sync-group .settings-actions {
+  border-radius: 16px 16px 0 0;
+}
+.my-groups .settings-sync-group > .connection-compact {
+  background: var(--surface);
+  border-radius: 0 0 16px 16px;
+  padding: 0 18px;
+}
+.my-groups .connection-summary {
+  border-top: 1px solid var(--line);
+}

@@ -79,12 +79,10 @@ test('所有账户类型在小屏和深浅色均不横向滚动，切换保留�
       }
       await chooser.getByRole('button', { name: '现金 随身现金、备用金' }).click();
       await expect(page.getByLabel('账户名称')).toHaveValue('虚构现金');
-      await page
-        .getByRole('dialog')
-        .screenshot({
-          path: `artifacts/account-form-${info.project.name}-${width}-${scheme}.png`,
-          animations: 'disabled',
-        });
+      await page.getByRole('dialog').screenshot({
+        path: `artifacts/account-form-${info.project.name}-${width}-${scheme}.png`,
+        animations: 'disabled',
+      });
       await page.getByRole('button', { name: '返回', exact: true }).click();
       await chooser.getByRole('button', { name: '返回', exact: true }).click();
     }
@@ -194,4 +192,29 @@ test('分类图标和选中名称一致，数字键盘精度、连续保存和�
   await expect(page.getByText('−12.34', { exact: true })).toBeVisible();
   if (new URL(page.url()).hash !== '#/accounts') await page.goto('./#/accounts');
   await expect(page.getByRole('button', { name: '虚构现金，余额 ¥ 987.66' })).toBeVisible();
+});
+
+test('我的首屏区分本地解锁与未连接，帮助按需展开且密钥用途明确', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await initialize(page);
+  await page.goto('./#/settings');
+  await expect(page.getByText('本地已解锁 · 只在本机记账也可以')).toBeVisible();
+  await expect(page.locator('.connection-summary')).toContainText('未连接 GitHub');
+  await expect(page.locator('.connection-details')).toHaveCount(0);
+  await page.locator('.connection-summary').click();
+  await expect(page.getByText(/授权范围包含你账号内其他仓库/)).toBeVisible();
+  await page
+    .getByRole('dialog', { name: 'GitHub 连接' })
+    .getByRole('button', { name: '关闭', exact: true })
+    .click();
+  await page.getByRole('button', { name: /查看本机恢复密钥/ }).click();
+  await expect(page.getByRole('dialog', { name: '本机恢复密钥' })).toContainText(
+    '不一定能解密从其他设备下载的账本',
+  );
+  await page.getByRole('button', { name: '我已妥善保存' }).click();
+  await page.getByText('记账、登录与同步有什么区别？', { exact: true }).click();
+  await expect(
+    page.getByText('记住登录和密钥不会自动上传。修改后点击账本的“同步”，另一设备再同步获取更新。'),
+  ).toBeVisible();
+  await noOverflow(page);
 });

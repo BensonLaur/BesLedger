@@ -1,4 +1,4 @@
-import { computed, reactive, shallowRef } from 'vue';
+import { computed, reactive, ref, shallowRef } from 'vue';
 import { Vault, type SyncKeyLease } from '../storage/vault';
 import { backend } from '../storage/backend';
 import { list, type Entry, type State } from '../domain/model';
@@ -31,14 +31,30 @@ export const ui = reactive({
   smsPicker: false,
   smsQueue: [] as string[],
   loginRecovery: false,
+  loginProblem: '',
 });
+export const online = ref(navigator.onLine);
+window.addEventListener('online', () => {
+  online.value = true;
+});
+window.addEventListener('offline', () => {
+  online.value = false;
+});
+export const cloudState = reactive({ phase: 'idle' as 'idle' | 'preparing' | 'ready' | 'error', error: '' });
 export const auth = shallowRef<Login>();
 export const githubSession = new GitHubSession(
   credentialBackend(),
   refreshAuthorization,
   (login, message) => {
+    if (login?.user.id !== auth.value?.user.id) {
+      cloudState.phase = 'idle';
+      cloudState.error = '';
+    }
     auth.value = login;
-    if (login) ui.loginRecovery = false;
+    if (login) {
+      ui.loginRecovery = false;
+      ui.loginProblem = '';
+    } else if (message) ui.loginProblem = message;
     if (message) ui.notice = message;
   },
 );

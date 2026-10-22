@@ -3,6 +3,7 @@ import base from './playwright.config';
 
 export default defineConfig({
   ...base,
+  outputDir: './test-results/auth',
   testIgnore: [],
   testMatch: ['**/auth.spec.ts', '**/sync-keys.spec.ts'],
   use: { ...base.use, baseURL: 'http://127.0.0.1:4174/BesLedger/' },

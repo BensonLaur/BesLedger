@@ -71,7 +71,7 @@ async function restore() {
     <span class="entry-icon"><Icon name="book" :size="26" /></span>
     <div>
       <h2>Bes记账</h2>
-      <p>自己的账，自己掌握。</p>
+      <p>本地已解锁 · 只在本机记账也可以</p>
     </div>
   </div>
   <section class="settings-shortcuts">
@@ -86,11 +86,20 @@ async function restore() {
       /></RouterLink>
     </div>
   </section>
-  <div class="settings-grid">
-    <GitHubConnection />
+  <div class="settings-grid my-groups">
+    <section class="card settings-sync-group">
+      <h2>数据与同步</h2>
+      <div class="settings-actions">
+        <RouterLink to="/books"
+          ><Icon name="book" /><span>账本管理<small>选择上传、下载或同步哪本账</small></span
+          ><Icon name="right"
+        /></RouterLink>
+      </div>
+      <GitHubConnection compact />
+    </section>
     <section class="card">
       <h2>数据保护</h2>
-      <p>本机只保存加密账目。浏览器清理、设备损坏或忘记口令都可能造成数据不可用，请定期备份。</p>
+      <p class="hint">备份和恢复密钥请分别保存在应用之外。</p>
       <div class="settings-actions">
         <button @click="exportBackup">
           <Icon name="download" /><span>导出完整加密备份<small>账户、账目、退款和周期账一起备份</small></span
@@ -99,22 +108,39 @@ async function restore() {
           <Icon name="upload" /><span>校验并恢复备份<small>先检查备份内容，再确认恢复</small></span
           ><Icon name="right" /></button
         ><button @click="recovery = vault.recovery">
-          <Icon name="shield" /><span>查看恢复密钥<small>请与备份文件分开保存</small></span
-          ><Icon name="right" /></button
-        ><RouterLink to="/books"
-          ><Icon name="book" /><span>账本管理<small>本地账本与可选云端同步</small></span
-          ><Icon name="right"
-        /></RouterLink>
+          <Icon name="shield" /><span>查看本机恢复密钥<small>用于恢复这台设备的本地空间</small></span
+          ><Icon name="right" />
+        </button>
       </div>
     </section>
     <section class="card">
-      <h2>记账与隐私</h2>
-      <button v-if="Capacitor.isNativePlatform()" class="secondary" @click="ui.smsPicker = true">
-        从银行短信导入</button
-      ><button class="text-button full" @click="recycleOpen = true">回收站 · 找回已删除的账目</button>
-      <p>所有短信在本机识别。账户余额为本机已知范围；GitHub 连接不等于账本同步。</p>
-      <p>日期使用中国标准时间。周期账在打开应用时补生成，不承诺关闭应用后准时推送。</p>
-      <p>Android 可按日期和银行范围申请短信读取；系统拒绝时继续使用备注粘贴。此权限未获应用商店审核批准。</p>
+      <h2>隐私与帮助</h2>
+      <div class="settings-actions">
+        <button @click="recycleOpen = true">
+          <Icon name="delete" /><span>回收站<small>找回已删除的账目</small></span
+          ><Icon name="right" /></button
+        ><button v-if="Capacitor.isNativePlatform()" @click="ui.smsPicker = true">
+          <Icon name="receipt" /><span>从银行短信导入<small>勾选后识别，再由你确认</small></span
+          ><Icon name="right" />
+        </button>
+      </div>
+      <details class="help-details">
+        <summary>记账、登录与同步有什么区别？</summary>
+        <p>资金账户是现金、银行卡等；账本用来整理账目；GitHub 账号只提供可选同步。</p>
+        <p>
+          锁定本地空间后需输入本地口令，GitHub 登录和已记住的同步密钥仍会保留。退出 GitHub
+          只退出登录；忘记某本账的同步密钥也不会删除账目。
+        </p>
+        <p>记住登录和密钥不会自动上传。修改后点击账本的“同步”，另一设备再同步获取更新。</p>
+      </details>
+      <details class="help-details">
+        <summary>短信与数据保护</summary>
+        <p>所有短信在本机识别。读取权限被拒绝时，可继续在备注粘贴。原始短信不会发送给登录服务。</p>
+        <p>账户余额只包含本机已有账目。周期账在打开应用时补生成，关闭后的准时提醒尚不支持。</p>
+        <p>
+          卸载、清除应用或站点数据会丢失本地账目，请先导出备份并独立保存恢复密钥。系统权限与安装渠道可能不同，尚未完成应用商店审核。
+        </p>
+      </details>
       <p class="hint">BesLedger 0.1.2 · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
@@ -141,8 +167,10 @@ async function restore() {
     </div>
     <p v-if="ui.error" class="field-error">{{ ui.error }}</p></Modal
   >
-  <Modal v-if="recovery" title="恢复密钥" @close="recovery = ''"
-    ><p>这串字符能够解密你的账目。请保存到独立的密码管理器或离线介质。</p>
+  <Modal v-if="recovery" title="本机恢复密钥" @close="recovery = ''"
+    ><p>
+      这是当前设备本地空间的恢复密钥，请独立保存。它不一定能解密从其他设备下载的账本；那些账本需要各自原设备的同步恢复密钥。
+    </p>
     <code class="recovery-key">{{ recovery }}</code
     ><button class="primary full" @click="recovery = ''">我已妥善保存</button></Modal
   >

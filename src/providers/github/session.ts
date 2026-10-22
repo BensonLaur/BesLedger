@@ -73,7 +73,7 @@ export class GitHubSession {
     if (decoded && typeof decoded === 'object' && 'version' in decoded && decoded.version === 1) {
       if (!(await this.disk.compareSwap(row.revision, null))) return this.read(key);
       this.notify();
-      this.changed(undefined, '已清除旧 OAuth 本机凭证，请改用仅访问专用仓库的 GitHub App；账目保持不变');
+      this.changed(undefined, '已清除旧 OAuth 本机凭证，请改用 BesLedger Sync 登录；账目保持不变');
       return undefined;
     }
     const parsed = sessionSchema.safeParse(decoded);

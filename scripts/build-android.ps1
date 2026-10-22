@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$JavaDirectory, [Parameter(Mandatory=$true)][string]$SdkDirectory)
+param([Parameter(Mandatory=$true)][string]$JavaDirectory, [Parameter(Mandatory=$true)][string]$SdkDirectory, [string]$GradleCacheDirectory = '')
 $ErrorActionPreference = 'Stop'
 $projectDirectory = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $signingDirectory = Join-Path $projectDirectory 'private/signing'
@@ -10,7 +10,7 @@ try {
     $env:JAVA_HOME = (Resolve-Path -LiteralPath $JavaDirectory).Path
     $env:ANDROID_HOME = (Resolve-Path -LiteralPath $SdkDirectory).Path
     $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
-    $env:GRADLE_USER_HOME = Join-Path $projectDirectory '.tools/gradle-cache'
+    $env:GRADLE_USER_HOME = if ($GradleCacheDirectory) { [IO.Path]::GetFullPath($GradleCacheDirectory) } else { Join-Path $projectDirectory '.tools/gradle-cache' }
     $env:BESLEDGER_KEYSTORE = Join-Path $signingDirectory 'besledger-release.jks'
     $env:BESLEDGER_STORE_PASSWORD = $credential.GetNetworkCredential().Password
     $env:BESLEDGER_KEY_PASSWORD = $env:BESLEDGER_STORE_PASSWORD

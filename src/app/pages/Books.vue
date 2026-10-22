@@ -2,6 +2,8 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 import {
   auth,
+  cloudState,
+  online,
   conflicts,
   currentLedgerId,
   ledgers,
@@ -21,6 +23,15 @@ import { type Repository } from '../../providers/github/client';
 import GitHubConnection from '../components/GitHubConnection.vue';
 import Modal from '../components/Modal.vue';
 import Icon from '../components/Icon.vue';
+const operationErrors = ref<Record<string, string>>({}),
+  operating = ref('');
+function checkedTime(value: string) {
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
 const bookName = ref(''),
   creating = ref(false),
   renameId = ref(''),
@@ -118,7 +129,11 @@ async function getRepos() {
   });
 }
 async function prepareCloud() {
-  await run(async () => {
+  const startingLogin = auth.value;
+  if (!startingLogin) return;
+  cloudState.phase = 'preparing';
+  cloudState.error = '';
+  const okay = await run(async () => {
     const login = auth.value;
     if (!login) return;
     const repo = await login.github.prepareRepository(knownRepositories());
@@ -128,6 +143,9 @@ async function prepareCloud() {
     await discoverContents();
     ui.notice = '云端私有存储已准备好，选择要同步的账本即可';
   });
+  if (auth.value !== startingLogin) return;
+  cloudState.phase = okay ? 'ready' : 'error';
+  cloudState.error = okay ? '' : ui.error;
 }
 async function createRepo() {
   await run(async () => {
@@ -176,7 +194,9 @@ async function forgetKey() {
   });
 }
 async function sync(id: string) {
-  await run(async () => {
+  operationErrors.value[id] = '';
+  operating.value = id;
+  const okay = await run(async () => {
     if (!auth.value) throw new Error('请先登录 GitHub');
     const login = auth.value;
     const previous = state.value!.bindings[id],
@@ -198,6 +218,7 @@ async function sync(id: string) {
       recovery.value = '';
       conflicts.value = result.conflicts;
       conflictLedger.value = id;
+      operationErrors.value[id] = '有冲突，尚未完成同步。双方内容已保留。';
       ui.notice = '发现冲突，已保留双方版本，尚未上传';
       return;
     }
@@ -212,9 +233,13 @@ async function sync(id: string) {
     recovery.value = '';
     ui.notice = '同步成功，已确认远端完整版本';
   });
+  operating.value = '';
+  if (!okay) operationErrors.value[id] = ui.error;
 }
 async function download(id: string) {
-  await run(async () => {
+  operationErrors.value[id] = '';
+  operating.value = id;
+  const okay = await run(async () => {
     if (!auth.value) throw new Error('请先登录 GitHub');
     const login = auth.value;
     const binding = state.value!.bindings[id];
@@ -228,6 +253,7 @@ async function download(id: string) {
       recovery.value = '';
       conflicts.value = result.conflicts;
       conflictLedger.value = id;
+      operationErrors.value[id] = '有冲突，尚未完成下载。双方内容已保留。';
       return;
     }
     const contentDigest = await digest(entities);
@@ -241,6 +267,8 @@ async function download(id: string) {
     recovery.value = '';
     ui.notice = entities[id].deleted ? '此云端账本已删除，删除标记已同步' : '账本已校验并下载，可离线编辑';
   });
+  operating.value = '';
+  if (!okay) operationErrors.value[id] = ui.error;
 }
 async function chooseConflict(id: string, choice: 'local' | 'remote') {
   await run(async () => {
@@ -287,6 +315,7 @@ const deletedBooks = computed(() =>
     </div>
     <button class="primary" @click="creating = true"><Icon name="plus" />新建账本</button>
   </div>
+  <p class="scope-note">登录不会上传账本。修改后点击“同步”，另一设备再同步获取更新。</p>
   <div class="book-grid">
     <article
       v-for="book in ledgers"
@@ -296,19 +325,31 @@ const deletedBooks = computed(() =>
     >
       <div class="section-heading">
         <span class="entry-icon"><Icon name="book" /></span
-        ><span class="tag">{{ status[book.id] || '检查中' }}</span>
+        ><span class="tag">{{
+          operating === book.id
+            ? '正在同步'
+            : conflictLedger === book.id && conflicts.length
+              ? '待同步 · 有冲突'
+              : operationErrors[book.id]
+                ? '同步未完成'
+                : status[book.id] === '已同步' && (!online || cloudState.phase === 'error')
+                  ? '上次已同步'
+                  : status[book.id] || '检查中'
+        }}</span>
       </div>
       <button class="book-name" @click="selectBook(book.id)">
         {{ book.data.name
         }}<small>{{ currentLedgerId === book.id ? '当前账本' : '切换到此账本' }}</small></button
       ><small class="muted">{{
         state!.bindings[book.id]?.lastChecked
-          ? '最近确认：' + state!.bindings[book.id].lastChecked!.slice(0, 16).replace('T', ' ') + ' UTC'
-          : '尚未确认远端副本'
+          ? '最近确认：' + checkedTime(state!.bindings[book.id].lastChecked!)
+          : '仅在此设备保存'
       }}</small>
       <small v-if="state!.bindings[book.id]" class="muted"
         >绑定：{{ state!.bindings[book.id].owner }}/{{ state!.bindings[book.id].repo }}</small
       >
+      <small v-if="operationErrors[book.id]" class="field-error">{{ operationErrors[book.id] }}</small>
+      <small v-if="!online && state!.bindings[book.id]" class="muted">当前离线，以上为最近确认的状态</small>
       <small v-if="savedKeys[book.id]" class="muted">同步密钥已在此设备加密保存</small>
       <div class="book-actions">
         <button
@@ -338,7 +379,8 @@ const deletedBooks = computed(() =>
       </div>
     </article>
     <article v-for="[id, binding] in cloudOnly" :key="id" class="book-card cloud-book">
-      <span class="tag">仅云端</span>
+      <span class="tag">{{ operating === id ? '正在下载' : '仅云端' }}</span>
+      <p v-if="operationErrors[id]" class="field-error">{{ operationErrors[id] }}</p>
       <h3>加密账本 · {{ id.slice(-8) }}</h3>
       <p class="hint">{{ binding.owner }}/{{ binding.repo }}</p>
       <button class="primary" :disabled="!auth || ui.busy" @click="download(id)">解密并下载</button>
@@ -361,7 +403,11 @@ const deletedBooks = computed(() =>
     <GitHubConnection />
     <section v-if="auth" class="card">
       <h2>云端私有存储</h2>
-      <p v-if="selectedRepo" class="hint">已准备：{{ selectedRepo }}</p>
+      <p v-if="cloudState.phase === 'preparing'" class="hint">正在准备私有存储…</p>
+      <p v-else-if="cloudState.phase === 'error'" class="warning-panel">
+        {{ cloudState.error }} · 原账目与绑定已保留
+      </p>
+      <p v-else-if="selectedRepo" class="hint">已准备：{{ selectedRepo }}</p>
       <p class="hint">应用自动准备存储，无需输入仓库名称。只有你选择同步的账本密文会上传。</p>
       <button class="secondary" :disabled="ui.busy" @click="prepareCloud">重新检查云端存储</button>
       <details class="section">
@@ -418,7 +464,7 @@ const deletedBooks = computed(() =>
           maxlength="100"
           placeholder="例如：日常生活"
       /></label>
-      <p class="hint">创建即获得稳定身份，不需要 GitHub 登录。</p>
+      <p class="hint">本地记账无需 GitHub。即使名字相同，不同账本也不会自动合并。</p>
       <button class="primary full" :disabled="ui.busy">保存</button>
     </form></Modal
   >

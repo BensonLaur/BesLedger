@@ -2,11 +2,9 @@
 
 当前阶段 Web：https://bensonlaur.github.io/BesLedger/。源码：https://github.com/BensonLaur/BesLedger。
 
-当前下载为 [0.1.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.1)：长期签名 Android versionCode 9 与 Web/PWA，新增设备安全保存同步密钥。与已发布正式预览包/0.1.0 同包名同证书，可直接覆盖升级；不要先卸载或清空数据。旧版先导出完整加密备份，在 Android 系统分享中保存到应用外，再独立保存恢复密钥。下方旧版资产信息仅供追溯。
+当前统一下载入口为 [0.1.2](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2)：长期签名 Android versionCode 10、对应 Web/PWA、SHA-256、签名说明及历史发布归档。包名与原签名不变，可直接覆盖升级；先独立保存加密备份及恢复密钥，不先卸载或清空数据。
 
-2026-10-23 Web 更新：https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023。此更新修复登录中转及 PWA 首次更新，Android 仍使用下述已验收的 0.1.0 APK。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/，部署在同一维护者 Cloudflare 免费账号；普通用户无需注册托管账号。
-
-可下载的 [0.1.0 正式交付版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0) 包含长期签名 APK（versionCode 8）、Web/PWA 生产 ZIP、SHA256SUMS.txt 和公开验签结果。构建源码为 8b3e5587b51ff602a4011226e024d8fc3f471b2c，真实 GitHub App 授权、自动私有建库、Android 原生与 Web 双向同步及续期已通过。文件大小、哈希、设备证据及未覆盖范围见 DELIVERY_VERIFICATION.md；旧 preview.1 仅保留历史。
+旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1 的说明、附件和校验信息见 [历史归档](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/；两个站点各自保存本地数据，已有用户继续使用原网址。
 
 ## Web/PWA
 
@@ -44,6 +42,7 @@ package ID：com.bensoftware.besledger；Android 10/API 29 起，compile/target 
 
 ```powershell
 ./scripts/build-android.ps1 -JavaDirectory <独立JDK绝对路径> -SdkDirectory <AndroidSDK绝对路径>
+# 可选 -GradleCacheDirectory <缓存目录>；Windows 缓存目录移动失败或空间不足时使用独立目录
 ```
 
 本机网络下载 Gradle 极慢时，已用 GitHub Actions 的同一版本组合完成真实构建。手动运行 android-release.yml，产物 besledger-signed-release 包含发布 APK、SHA256SUMS.txt 与 signature.txt。发布使用长期专用签名，不使用调试签名。
@@ -62,3 +61,13 @@ package ID：com.bensoftware.besledger；Android 10/API 29 起，compile/target 
 - scripts/test-android-lifecycle.mjs：只连接该模拟器，测试实际软键盘下保存按钮、返回键与未保存草稿、前后台恢复。原生自动化需调试验收包；正式包另行执行验签、安装和启动检查。
 
 短信权限受系统和安装渠道限制，当前仅侧载/模拟器验证；没有 Google Play 审核批准。权限拒绝不阻止备注粘贴。真实设备矩阵、APK 最终哈希与完整范围逐项结果见 IMPLEMENTATION_STATUS.md 和 DELIVERY_VERIFICATION.md。
+
+## 统一版本发布与历史归档
+
+完成工程验证后，用相同应用源文件构建 APK 和 Web/PWA。发布前检查版本标签是否已存在，不为单项修复创建重复 Release。生产包只包含 dist；签名 APK 沿用长期证书和包名，versionCode 必须递增。
+
+先下载旧 Release 的 release.json、说明、全部附件与校验文件，核对附件大小和 GitHub 提供的 SHA-256，生成归档清单和 ZIP。新 Release 连同归档上传并读回验证成功后，才删除明确授权的四个旧 Release；删除时不使用删除标签的选项。最后复核四个旧标签的提交对象未改变。
+
+当前发布附件固定包含 APK、Web/PWA ZIP、SHA256SUMS.txt、signature.txt 与历史归档 ZIP。GitHub Pages 和 Cloudflare 备用站点均更新到同一构建；历史验收文档使用归档入口，不能继续指向已删除附件。
+
+本轮额外验证入口：`scripts/test-android-interface.mjs` 限定 emulator-5558 / BesLedgerUiApi36；`scripts/test-android-sync-keys.mjs` 可用 BESLEDGER_TEST_SERIAL 指定同一隔离模拟器。`scripts/create-android-upgrade-fixture.mjs` 仅生成虚构的旧格式加密 SQLite 样本，输出到已忽略的 artifacts；仅在隔离模拟器建立基线后进行正式签名包的覆盖升级，禁止注入任何真实用户设备。

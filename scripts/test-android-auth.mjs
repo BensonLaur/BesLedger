@@ -25,6 +25,8 @@ async function unlock() {
   if (await page.getByRole('heading', { name: '解锁 Bes记账' }).isVisible()) {
     await page.getByLabel('解锁口令', { exact: true }).fill(password);
     await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+    await expect(page.locator('.app-shell')).toBeVisible();
+    if (await page.locator('.connection-summary').count()) await page.locator('.connection-summary').click();
   }
   await page.goto('https://localhost/#/settings');
 }
@@ -73,6 +75,11 @@ try {
   await page.reload();
   await unlock();
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
+  if (await page.getByRole('dialog', { name: 'GitHub 连接' }).count())
+    await page
+      .getByRole('dialog', { name: 'GitHub 连接' })
+      .getByRole('button', { name: '关闭', exact: true })
+      .click();
   await page.getByRole('button', { name: '锁定', exact: true }).click();
   await unlock();
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();

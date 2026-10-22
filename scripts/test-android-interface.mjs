@@ -69,13 +69,25 @@ try {
   await editor.locator('.modal-content').evaluate((e) => (e.scrollTop = 0));
   await page.screenshot({ path: 'artifacts/native-ui-entry.png', animations: 'disabled' });
   await noOverflow();
+  await editor
+    .getByLabel('备注 · 粘贴银行短信即可识别')
+    .fill('虚构软键盘验收：这是一条较长的备注，用来确认文字换行和保存操作。');
+  await editor.getByLabel('备注 · 粘贴银行短信即可识别').click();
+  await editor.getByRole('button', { name: '保存账目' }).scrollIntoViewIfNeeded();
+  await noOverflow();
+  const saveBounds = await editor.getByRole('button', { name: '保存账目' }).boundingBox();
+  const visibleHeight = await page.evaluate(() => window.visualViewport?.height || innerHeight);
+  expect(saveBounds.y + saveBounds.height).toBeLessThanOrEqual(visibleHeight + 2);
   await editor.getByRole('button', { name: '保存账目' }).click();
   await expect(page.getByText('−32.50', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '关闭提示', exact: true }).click();
   await page.screenshot({ path: 'artifacts/native-ui-home.png', animations: 'disabled' });
   await nav.getByRole('link', { name: '账户', exact: true }).click();
   await expect(page.getByRole('button', { name: '虚构信用卡，待还款 ¥ 132.50' })).toBeVisible();
-  await device.close();
+  await Promise.race([
+    device.close().catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
   adb('shell', 'am', 'force-stop', pkg);
   adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
   await connect();
@@ -89,5 +101,11 @@ try {
   fs.writeFileSync('artifacts/native-ui-result.txt', result + '\r\n');
   console.log(result);
 } finally {
-  await device?.close().catch(() => {});
+  await Promise.race([
+    device?.close().catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
 }
+
+// Windows 驱动断开可能保留调试套接字；断言与证据写入均已完成，再结束测试进程。
+process.exit(0);

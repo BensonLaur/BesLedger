@@ -6,22 +6,32 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-当前版本 0.1.1：本地加密账本、共用账户、收支/转账/借贷、短信确认、退款、周期账、日历预算、统计和备份恢复已实现；新增设备安全保存同步密钥。73 项核心测试、三种引擎/尺寸的 18 条浏览器流程通过，Android API 36 的真实 SQLite 保存与进程重启验证通过。GitHub App 的真实登录、自动私有建库、跨端同步和登录续期此前已验收。
+本轮统一版本为 **0.1.2**：恢复原型的五项底部导航、分类图标与数字键盘，账户创建改为分步填写，“我的”清楚区分本地解锁、GitHub 登录和账本同步。保留本地加密记账、登录保持、设备保存同步密钥及跨端同步。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.1 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.1/BesLedger-0.1.1-release.apk)（Android 10 起）。[0.1.1 版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.1) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 9 已验签，与原正式预览包及 0.1.0 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。构建与完整 Lint 通过。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.2 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-release.apk)（Android 10 起）。[0.1.2 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 10 已验签，与原正式预览包及 0.1.0 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/SHA256SUMS.txt)。旧发布说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
 
-Web/PWA 已内置免费的 Cloudflare 登录中转，并修复首次 PWA 更新；此前的 web-20261023 更新包仅保留历史，下载使用 0.1.1。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
+Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
-GitHub 同步可选。普通用户无需注册 App，也无需手工建库或输入仓库名：安装 BesLedger Sync 并登录后，应用自动准备私有存储，再选择需要同步的账本。刷新、重启和锁定后保留加密登录，令牌到期自动续期；本地账本仍需解锁，主动退出会清除本机登录。
+## 登录、解锁与同步
 
-默认安装选择 **All repositories**，令牌具备其他及未来仓库内容的读写能力。当前代码只使用确认过的账本存储，应用行为限制不等同平台隔离；也可自行选择 selected 范围，但首次须已有专用仓库。Android 原生端与 Web 的真实双向同步已通过；物理 Android/iPad 尚未接入。Web 登录中转由维护者统一提供，普通用户不需要托管账号、部署或填写地址；新服务的真实登录、续期、双向同步和离线重开保持登录已验证。Android 直接连接 GitHub。产物和设备证据见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
+- **只在本机记账，无需登录。** 资金账户（现金、银行卡等）、账本和 GitHub 登录账号相互独立，已有账本不必重建。
+- **登录不会上传或覆盖账本。** 首次在 GitHub 安装 BesLedger Sync 并授权后，应用自动准备私有存储，无需手工建库或输入名称。上传哪本账、下载哪本账，由你选择；不同账本可以并存，同名不自动合并。
+- **日常只需解锁本地账本。** 登录凭证在设备上加密保存，刷新、锁定解锁或重启后可恢复，令牌到期自动续期。主动退出或授权失效时需重新登录；断网本身不会退出。清除应用数据、卸载或更换设备后仍可能需要重新登录。
+- **同步密钥验证一次后由设备记住。** 首次上传自动使用本机恢复密钥；新设备首次下载时输入原设备的同步恢复密钥，验证成功后加密保存。回到账本管理、锁定解锁或重启后无需反复输入。独立备份仍不可省略，换设备、恢复备份或主动忘记密钥后可能需要再次提供。
+- **记住登录和密钥，不等于自动上传。** 修改账目后，进入账本管理点击“同步”；另一设备也需同步以获取更新。“已登录”只表示连接状态，账本的“已同步”才表示最近一次成功同步的结果。
+
+默认安装选择 **All repositories**，令牌具备其他及未来仓库内容的读写能力。当前代码只使用确认过的账本存储，应用行为限制不等同平台隔离；也可自行选择 Only select repositories 限定范围，但首次须已有专用仓库。GitHub App 仅申请 Contents 写入、Repository creation 写入、Metadata 只读，已不使用旧 OAuth 的 repo 授权。
+
+真实 GitHub App 登录、自动私有建库、Android 与 Web 双向同步及令牌续期已验收。本轮 73 项核心测试、33 条浏览器流程、API 36 原生界面/SQLite/密钥检查，以及正式签名包从 0.1.1 到 0.1.2 的覆盖升级均通过；物理 Android/iPad 的验收仍待用户实测，不将模拟器或浏览器尺寸测试视为真机结果。产物与证据见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
 
 ## 开始使用
 
 1. 创建本地账本并设置解锁口令；独立保存恢复密钥，然后建立账户及期初金额。
 2. 在“记一笔”的备注中粘贴短信，核对识别结果后保存。本地记账无需 GitHub。
-3. 需要同步时，进入 GitHub 连接，点击“在 GitHub 安装同步应用”，选择自己的账号及安装范围；返回应用点击“使用 GitHub 登录”，按页面设备码完成授权。
-4. 应用自动准备云端私有存储。备份恢复密钥后，选择账本首次上传；另一设备登录后首次输入原设备的同步恢复密钥，解密下载。验证后会在设备上加密保存，返回页面、锁定解锁或重启无需重复输入。已有本地账和不同云端账可以并存，登录本身不上传或覆盖，详见 [本地账本启用同步](docs/SYNC_MODEL.md#本地已有账本后开启-github-同步)。
+3. 需要同步时，进入“我的 → GitHub 连接”，先阅读授权范围，再点击“在 GitHub 安装同步应用”，选择自己的账号及安装范围；返回应用点击“使用 GitHub 登录”，按页面设备码完成授权。这里安装的是 GitHub 账号中的同步应用，无需在手机上另装一个软件，也无需自己注册 GitHub App。
+4. 应用自动准备云端私有存储。独立保存恢复密钥后，在账本管理点击该账本的“首次上传”。原有本地账目继续保留。
+5. 在另一设备创建或解锁本地空间，登录同一 GitHub 账号。首次下载云端账本时，输入上传该账本的原设备同步恢复密钥，点击“解密并下载”；验证后设备会记住。不要把新设备自己的恢复密钥误当成原设备密钥。
+6. 任一设备修改账目后点击该账本的“同步”，再在另一设备同步查看。不同本地账与云端账可以并存；同一笔记录发生并发冲突时，核对双方内容后选择，再同步。详见 [本地账本启用同步](docs/SYNC_MODEL.md#本地已有账本后开启-github-同步)。
 
 保留完整加密备份和恢复密钥；同步不能替代独立备份。手机安装或浏览器使用问题可结合 [安全与恢复说明](docs/SECURITY_AND_RECOVERY.md) 排查。
 
@@ -58,10 +68,10 @@ npm run android:sync
 
 目标是让常见格式、已配置账户和商家规则的单条短信，尽可能在约 10 秒内完成录入；这是待实机验证的体验目标，不是当前已经达到的指标。
 
-## 初步技术方向
+## 技术实现
 
 - Vue 3、TypeScript、Vite：共享 Web/PWA 界面，以 Capacitor 8 构建 Android APK；兼顾 iPad 网页。
-- IndexedDB、Dexie.js：本地保存数据；记账操作先在本机完成。
+- Web 使用 IndexedDB、Dexie.js，Android 使用原生 SQLite：本地保存加密数据，记账操作先在本机完成。
 - GitHub 私有仓库：作为可选的加密同步存储；本地使用不强制登录。
 - Web Crypto：封装加密、密钥恢复和完整性校验。
 - 独立的业务、短信解析、存储与同步模块：具体选型边界见技术决策文档。
@@ -75,6 +85,7 @@ npm run android:sync
 | [内置分类与排序](docs/CATEGORIES.md) | 通用分类清单、默认快捷项、固定“全部”入口和频率排序建议 |
 | [技术栈决策](docs/TECH_STACK.md) | 技术基线、取舍、存储与授权边界 |
 | [首页设计](docs/HOME_DESIGN.md) | 轻立体日历、明细联动、预算与新建账单时间 |
+| [我的与同步设计](docs/MY_PAGE_DESIGN.md) | 登录状态、解锁、设备同步密钥及原型改版的行为要求 |
 | [UI 源码快照](docs/prototypes/README.md) | 已确认页面的设计参考与原型边界 |
 | [完整交付范围](docs/DELIVERY_SCOPE.md) | Web、Android、GitHub 登录与同步的验收标准 |
 | [新会话执行任务](docs/EXECUTION_PROMPT.md) | 持续实施的完整目标、工程默认值和交付要求 |

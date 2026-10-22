@@ -1,4 +1,4 @@
-<!-- 设计源码快照：演示数据均为虚构；不是正式应用。详见同目录 README。 -->
+<!-- 2026-10-23 统一改版原型：演示数据均为虚构；不是正式应用。“我的”与同步行为以 ../MY_PAGE_DESIGN.md（2026-10-23）为准，详见同目录 README。 -->
 <div id="besledger-preview" aria-label="BesLedger 页面预览">
   <div class="bl-stage viz-dotted-background">
     <div class="bl-shell" data-device="mobile">
@@ -427,13 +427,28 @@
 #besledger-preview #besledger-calendar-overview .bc-budget-meta.over>span{color:var(--bl-red);font-weight:500}
 #besledger-preview .bl-budget-error{font-size:12px;color:var(--bl-red);margin:9px 0}
 @media(max-width:430px){#besledger-preview #besledger-calendar-overview .bc-refund-hint{display:none}}
+
+#besledger-preview .bl-bottom button[aria-current="page"]{background:var(--bl-soft);border-radius:13px;box-shadow:inset 0 -3px 0 var(--bl-accent);font-weight:600}
+#besledger-preview button:active{filter:brightness(.91)}
+#besledger-preview .bl-account-pair{grid-template-columns:minmax(0,1fr)}
+#besledger-preview .bl-account-field,#besledger-preview .bl-row-main{min-width:0}
+#besledger-preview .bl-account-field input{width:100%;min-width:0}
+#besledger-preview .bl-row-meta,#besledger-preview .bl-connection-summary{overflow-wrap:anywhere}
+#besledger-preview .bl-demo-state{margin:16px 0;font-size:12px;color:var(--bl-muted)}
+#besledger-preview .bl-demo-state select{width:100%;margin-top:8px}
+#besledger-preview .bl-sync-explanation{font-size:12px;color:var(--bl-muted);margin:12px 0}
 </style>
 <script>
 (() => {
   const root = document.getElementById('besledger-preview');
   const saved = window.openai?.widgetState?.modelContent || {};
-  const pages = {home:'首页明细',entry:'记一笔',categories:'分类选择',accounts:'账户',account:'账户详情',accountTypes:'选择账户类型',accountForm:'添加账户',loan:'借贷记账',detail:'账单与退款',refund:'添加退款',recurring:'事件',rule:'周期规则',reports:'统计',books:'账本管理',settings:'设置',features:'全部功能'};
+  const pages = {home:'首页明细',entry:'记一笔',categories:'分类选择',accounts:'账户',account:'账户详情',accountTypes:'选择账户类型',accountForm:'添加账户',loan:'借贷记账',detail:'账单与退款',refund:'添加退款',recurring:'事件',rule:'周期规则',reports:'统计',books:'账本管理',settings:'我的',features:'全部功能'};
   const state = {page:pages[saved.page]?saved.page:'home',device:['mobile','tablet','desktop'].includes(saved.device)?saved.device:'mobile',appearance:saved.appearance||'auto',book:'日常账本',entryType:'支出',category:'午餐',amount:'',note:'',recognized:false,date:'2026-10-21T12:08',account:'常用储蓄卡',loanType:'还款',loanTotal:'1020',interest:'20',reportTab:'趋势',reportPeriod:'月',month:10,categoryGroup:'餐饮',categoryQuery:'',search:'',modal:'',refundAmount:'50',refunds:[{date:'10月18日',amount:150,account:'微信钱包'},{date:'10月12日',amount:200,account:'常用储蓄卡'}],savedRows:[],ruleAmount:'1860',ruleTitle:'公积金入账',ruleEnabled:true,history:[1860,1860,1860],historyIndex:0,downloaded:false,synced:false,hideMoney:false,notice:true};
+  state.previewConnection = 'local';
+  state.previewLocked = false;
+  state.previewKeySaved = false;
+  state.previewUploaded = false;
+  state.previewDownloaded = false;
   state.palette=['ink','forest','amber'].includes(saved.palette)?saved.palette:'ink';
   const transferKinds={转账:'arrow-right-left',投资:'chart-no-axes-combined',赎回:'coins',存钱:'piggy-bank',取钱:'banknote-arrow-up'};
   const transferAccounts=['常用储蓄卡','微信钱包','现金','投资账户','日常信用卡','公积金'];
@@ -462,11 +477,11 @@
     investment:{label:'投资账户',hint:'证券账户、基金账户',icon:'chart-no-axes-combined',placeholder:'例如 基金账户'},
     receivable:{label:'应收 / 应付',hint:'别人欠我的钱、我欠别人的钱',icon:'hand-coins',placeholder:'例如 朋友甲'},
     stored:{label:'储值卡',hint:'购物卡、公交卡、饭卡',icon:'tickets',placeholder:'例如 食堂饭卡'},
-    custom:{label:'自定义账户',hint:'其他资产或负债',icon:'sliders-horizontal',placeholder:'例如 公积金'}
+    custom:{label:'其他账户',hint:'公积金等其他资金，或一笔欠款',icon:'sliders-horizontal',placeholder:'例如 公积金'}
   };
   function accountDraft(){
     // 按类型保留草稿，切换类型时不把余额自动当成欠款。
-    return state.accountDrafts[state.accountKind] ||= {name:'',amount:'',date:'2026-10-21',tail:'',direction:'receivable',position:'debt',nature:'asset'};
+    return state.accountDrafts[state.accountKind] ||= {name:'',amount:'',date:'2026-10-21T12:00',tail:'',direction:'receivable',position:'debt',nature:'asset'};
   }
   const categories = {
     餐饮:['早餐','午餐','晚餐','夜宵','零食','饮料水果','买菜原料','油盐酱醋','餐饮其他'],
@@ -529,6 +544,7 @@
     let actions=home?navIcon('search','search-open','搜索账单')+navIcon('sliders-horizontal','home-options','首页选项')+button(icon('layout-grid')+'<span>快捷</span>','home-shortcuts','aria-label="展开快捷功能" aria-haspopup="dialog" aria-expanded="false"','bl-quick-trigger'):'';
     if(p==='accounts') actions=navIcon('plus','new-account','添加账户');
     if(p==='recurring'&&state.planTab===1) actions=navIcon('plus','new-rule','新建周期规则');
+    if(p==='settings') actions=button(icon('lock-keyhole')+' 锁定','preview-lock','','bl-secondary');
     if(p==='books') actions=navIcon('plus','new-book','新建账本');
     if(p==='categories') actions=button('管理','manage-categories');
     if(p==='account') actions=navIcon('ellipsis','account-options','账户设置');
@@ -767,14 +783,14 @@
     return `<div class="bl-two-col"><div><section class="bl-hero"><div class="bl-hero-top"><span class="bl-caption">净资产</span>${button(icon(state.hideMoney?'eye-off':'eye'),'toggle-money','aria-label="切换金额显示"','bl-icon-button')}</div><div class="bl-money-large"><small>¥</small>${show(29140.50)}</div><div class="bl-hero-bottom"><div><span class="bl-caption">总资产</span><strong>${show(31420.50)}</strong></div><div><span class="bl-caption">总负债</span><strong>${show(2280)}</strong></div></div></section><div class="bl-note">账户在多个账本间共用 · 本机记录均已计入</div><div class="bl-card bl-section bl-desktop-only">${titleRow('账户概览')}<div class="bl-form-row"><span>日常可用资金</span><strong>13,220.50</strong></div><div class="bl-form-row"><span>公积金</span><strong>18,200.00</strong></div><div class="bl-form-row"><span>本月待还本金</span><strong>2,280.00</strong></div>${button('管理期初余额','opening','','bl-link')}</div></div><div>${[['储蓄卡','常用储蓄卡','尾号 4321',12860,'landmark'],['网络账户','微信钱包','日常零钱',360.5,'wallet'],['其他资产','公积金','每月周期入账',18200,'building-2'],['信用卡','日常信用卡','11月10日还款',-1280,'credit-card'],['应收应付','朋友甲','应付 · 11月5日',-1000,'hand-coins']].map(([g,n,m,v,i])=>`<section class="bl-section">${titleRow(g)}<div class="bl-list">${row(n,m,(v<0?'−':'')+show(Math.abs(v)),i,'open-account',`data-name="${n}"`)}</div></section>`).join('')}</div></div>`;
   }
   function accountTypes(){
-    return `<div class="bl-account-flow"><p class="bl-flow-caption">添加账户 · 先选择类型</p><div class="bl-list bl-account-types">${Object.entries(accountKinds).filter(([key])=>key!=='custom').map(([key,kind])=>button(`${circle(kind.icon)}<span class="bl-row-main"><span class="bl-row-title">${kind.label}</span><span class="bl-row-meta">${kind.hint}</span></span>${icon('chevron-right')}`,'choose-account-kind',`data-kind="${key}"`,'bl-row')).join('')}</div><div class="bl-actions">${button(icon('plus')+' 自定义账户','choose-account-kind','data-kind="custom"','bl-link')}</div></div>`;
+    return `<div class="bl-account-flow"><p class="bl-flow-caption">添加账户 · 先选择类型</p><div class="bl-list bl-account-types">${Object.entries(accountKinds).filter(([key])=>key!=='custom').map(([key,kind])=>button(`${circle(kind.icon)}<span class="bl-row-main"><span class="bl-row-title">${kind.label}</span><span class="bl-row-meta">${kind.hint}</span></span>${icon('chevron-right')}`,'choose-account-kind',`data-kind="${key}"`,'bl-row')).join('')}</div><div class="bl-actions">${button(icon('plus')+' 其他账户','choose-account-kind','data-kind="custom"','bl-link')}</div></div>`;
   }
   function accountForm(){
     const kind=accountKinds[state.accountKind],draft=accountDraft(),key=state.accountKind;
     const debt=(key==='credit'&&draft.position==='debt')||(key==='receivable'&&draft.direction==='payable')||(key==='custom'&&draft.nature==='liability');
-    const amountLabel=key==='receivable'?(debt?'期初应付金额':'期初应收金额'):key==='credit'?(debt?'期初欠款':'期初溢缴款'):debt?'期初欠款':'期初余额';
+    const amountLabel=key==='receivable'?(debt?'我欠对方多少钱':'对方欠我多少钱'):key==='credit'?(debt?'还欠多少钱':'卡里多存的钱'):debt?'还欠多少钱':'账户里有多少钱';
     const choices=(field,items)=>`<div class="bl-account-choice">${items.map(([value,label])=>button(label,'account-choice',`data-draft-field="${field}" data-value="${value}" aria-pressed="${draft[field]===value}"`,'')).join('')}</div>`;
-    return `<div class="bl-account-flow"><p class="bl-flow-caption">添加账户 · 填写信息</p><div class="bl-card"><div class="bl-account-selected">${circle(kind.icon)}<span class="bl-row-main">${kind.label}</span>${button('更换类型','go','data-page="accountTypes"','bl-link')}</div><div class="bl-account-fields"><div class="bl-account-field"><label for="bl-new-account-name">${key==='receivable'?'往来方名称':'账户名称'}</label><input id="bl-new-account-name" data-account-field="name" value="${esc(draft.name)}" placeholder="${kind.placeholder}" maxlength="40" autocomplete="off"></div>${key==='receivable'?`<div class="bl-account-field"><span>期初往来方向</span>${choices('direction',[['receivable','别人欠我'],['payable','我欠别人']])}</div>`:''}${key==='credit'?`<div class="bl-account-field"><span>期初状态</span>${choices('position',[['debt','有欠款'],['surplus','有溢缴款']])}</div>`:''}${key==='custom'?`<div class="bl-account-field"><span>账户性质</span>${choices('nature',[['asset','资产'],['liability','负债']])}</div>`:''}<div class="bl-account-pair"><div class="bl-account-field"><label for="bl-new-account-amount">${amountLabel}（元）</label><input id="bl-new-account-amount" data-account-field="amount" inputmode="decimal" value="${esc(draft.amount)}" placeholder="0.00"></div><div class="bl-account-field"><label for="bl-new-account-date">起算日期</label><input id="bl-new-account-date" data-account-field="date" type="date" value="${esc(draft.date)}"></div></div>${['credit','debit'].includes(key)?`<div class="bl-account-field"><label for="bl-new-account-tail">卡号后四位（选填）</label><input id="bl-new-account-tail" data-account-field="tail" inputmode="numeric" maxlength="4" value="${esc(draft.tail)}" placeholder="用于匹配交易短信"></div>`:''}</div><p class="bl-note">${key==='receivable'?'记录你与对方的往来，不是对方的银行账户。':key==='credit'?(debt?'填写尚未归还的总欠款，不是信用额度。':'填写超出欠款后留在卡内的资金。'):''}</p><p id="bl-account-error" class="bl-error" role="alert" hidden></p></div><p class="bl-note">期初金额不计入收支，同一账户可在多个账本中使用。</p><div class="bl-actions">${primary('保存账户','preview-account-save')}</div></div>`;
+    return `<div class="bl-account-flow"><p class="bl-flow-caption">添加账户 · 填写信息</p><div class="bl-card"><div class="bl-account-selected">${circle(kind.icon)}<span class="bl-row-main">${kind.label}</span>${button('更换类型','go','data-page="accountTypes"','bl-link')}</div><div class="bl-account-fields"><div class="bl-account-field"><label for="bl-new-account-name">${key==='receivable'?'对方怎么称呼':'账户名称'}</label><input id="bl-new-account-name" data-account-field="name" value="${esc(draft.name)}" placeholder="${kind.placeholder}" maxlength="40" autocomplete="off"></div>${key==='receivable'?`<div class="bl-account-field"><span>这笔钱的情况</span>${choices('direction',[['receivable','别人欠我'],['payable','我欠别人']])}</div>`:''}${key==='credit'?`<div class="bl-account-field"><span>这张卡目前的情况</span>${choices('position',[['debt','还有钱没还'],['surplus','卡里有多存的钱']])}</div>`:''}${key==='custom'?`<div class="bl-account-field"><span>这笔钱的情况</span>${choices('nature',[['asset','这是我的钱'],['liability','我欠别人的钱']])}</div>`:''}<div class="bl-account-pair"><div class="bl-account-field"><label for="bl-new-account-amount">${amountLabel}（元）</label><input id="bl-new-account-amount" data-account-field="amount" inputmode="decimal" value="${esc(draft.amount)}" placeholder="0.00"></div><div class="bl-account-field"><label for="bl-new-account-date">从什么时候开始记</label><input id="bl-new-account-date" data-account-field="date" type="datetime-local" value="${esc(draft.date)}"></div></div>${['credit','debit'].includes(key)?`<div class="bl-account-field"><label for="bl-new-account-tail">卡号后四位（选填）</label><input id="bl-new-account-tail" data-account-field="tail" inputmode="numeric" maxlength="4" value="${esc(draft.tail)}" placeholder="用于匹配交易短信"></div>`:''}</div><p class="bl-note">${key==='receivable'?'记录你与对方的往来，不是对方的银行账户。':key==='credit'?(debt?'填写尚未归还的总欠款，不是信用额度。':'填写超出欠款后留在卡内的资金。'):''}</p><p id="bl-account-error" class="bl-error" role="alert" hidden></p></div><p class="bl-note">填写开始记账时的金额，以后每笔收支会在此基础上增减。这笔起始金额不会算作收入或支出。</p><div class="bl-actions">${primary('保存账户','preview-account-save')}</div></div>`;
   }
   function accountDetail(){
     const name=state.accountDetail||'常用储蓄卡';const debt=['日常信用卡','朋友甲'].includes(name);const amount=name==='朋友甲'?1000:debt?1280:name==='微信钱包'?360.5:name==='公积金'?18200:12860;
@@ -832,8 +848,20 @@
     const trend=state.reportPeriod==='月'?lineChart(values,days.map(String),'所选月份末段七日净支出'):lineChart([9,10].map(month=>ledgerHome.reportData('月',month).expense),['9月','10月'],'示例月份净支出');
     return `<div class="bl-segment">${['全部','年','月'].map(p=>button(p,'report-period',`data-period="${p}" aria-pressed="${state.reportPeriod===p}"`,'')).join('')}${button('自定义','custom-period','','')}</div><div class="bl-section-head" style="margin:18px 0 5px">${navIcon('chevron-left','previous-month','上一期间')}<h2>${state.reportPeriod==='全部'?'全部记录':periodLabel()}</h2>${navIcon('chevron-right','next-month','下一期间')}</div><div class="bl-section-tabs" role="tablist" aria-label="统计维度">${['趋势','大类','小类','账户'].map(t=>button(t,'report-tab',`data-tab="${t}" role="tab" aria-selected="${state.reportTab===t}"`,'')).join('')}</div><div class="bl-two-col"><div class="bl-card"><div class="bl-metrics"><div class="active"><span>净支出</span><strong>${money(data.expense)}</strong></div><div><span>收入</span><strong>${money(data.income)}</strong></div><div><span>结余</span><strong>${money(data.income-data.expense)}</strong></div></div>${state.reportTab==='趋势'?`<h3>净支出趋势</h3>${trend}`:`<h3>${state.reportTab}净支出</h3><div class="bl-bars">${groups.map(g=>`<button type="button" class="bl-bar-item cursor-interaction" data-action="report-drill" data-category="${esc(g.name)}"><div class="bl-bar" style="height:${Math.abs(g.amount)/max*130}px"></div><span>${esc(g.name)}</span></button>`).join('')}</div>`}<p class="bl-note">退款抵减支出；转账和借贷本金不计收支。</p></div><section class="bl-section">${titleRow(state.reportTab==='账户'?'账户净支出':'分类净支出')}<div class="bl-card bl-rank">${groups.map(g=>`<div class="bl-rank-row">${button(`<span>${esc(g.name)}</span><strong>${money(g.amount)}</strong>`,'report-drill',`data-category="${esc(g.name)}"`,'bl-rank-label bl-full')}<div class="bl-progress-track"><div class="bl-progress-fill" style="width:${Math.abs(g.amount)/max*100}%"></div></div></div>`).join('')||'<p class="bl-note">此期间暂无支出记录</p>'}</div></section></div>`;
   }
-  function books(){return `<div class="bl-note" style="margin-bottom:18px">账本可独立保存在本机，也可开启云端同步。</div>${[['日常账本','日常消费与收支','仅本地','hard-drive','进入账本','book-enter',''],['旅行账本','旅途中的每一笔','已同步','cloud-check','进入账本','book-enter','orange'],['购车账本','购车支出与补贴',state.synced?'已同步':'待同步','refresh-cw',state.synced?'进入账本':'立即同步',state.synced?'book-enter':'sync-book',''],['家庭账本','其他设备创建',state.downloaded?'已同步':'仅云端','cloud-download',state.downloaded?'进入账本':'下载到本机',state.downloaded?'book-enter':'download-book','orange']].map(([n,sub,status,i,a,act,color])=>`<div class="bl-book-card"><div class="bl-cover ${color}">${icon('notebook')}</div><div class="bl-book-body"><h3>${n}${n===state.book?' <span class="bl-badge">当前</span>':''}</h3><div class="bl-caption">${sub}</div><div class="bl-book-actions"><span class="bl-status-pill ${status==='仅本地'||status==='仅云端'?'muted':status==='待同步'?'orange':''}">${icon(i)}${status}</span>${button(a,act,`data-book="${n}"`)}</div></div></div>`).join('')}<div class="bl-actions">${button(icon('plus')+' 新建账本','new-book','','bl-secondary bl-full')}</div><p class="bl-note">同步状态以最近一次检查为准。</p>`;}
-  function settings(){return `<div class="bl-card"><div class="bl-row" style="padding:0;border:0">${circle('notebook')}<div class="bl-row-main"><h2>BesLedger</h2><p class="bl-row-meta">自己的账，自己掌握。</p></div><span class="bl-badge">界面预览</span></div></div><section class="bl-section">${titleRow('记账偏好')}<div class="bl-list">${row('类别管理','常用类别与顺序',icon('chevron-right'),'shapes','go','data-page="categories"')}${row('周期记账','自动生成固定收支',icon('chevron-right'),'repeat-2','go','data-page="recurring"')}${row('账户与期初余额','统一管理余额与欠款',icon('chevron-right'),'wallet','go','data-page="accounts"')}</div></section><section class="bl-section">${titleRow('数据与同步')}<div class="bl-list">${row('我的账本','查看本机与云端账本',icon('chevron-right'),'notebook','go','data-page="books"')}${row('GitHub 同步','已连接 · 示例连接',icon('chevron-right'),'cloud','sync-settings')}${row('备份与恢复','保存账目与关联关系',icon('chevron-right'),'archive','backup')}</div></section><section class="bl-section">${titleRow('隐私与提醒')}<div class="bl-card"><div class="bl-form-row"><span>到期事项提示</span>${button('','toggle-notice',`role="switch" aria-label="到期事项提示" aria-checked="${state.notice}"`,'bl-toggle')}</div><div class="bl-form-row"><span>短信识别</span><span>在本机处理</span></div></div></section><p class="bl-note" style="text-align:center;margin-top:25px">BesLedger · Bes记账</p>`;}
+
+  const connectionStates={local:'未连接 GitHub · 本地记账可正常使用',waiting:'等待你在 GitHub 完成授权',preparing:'已登录 example-user · 正在准备私有存储',ready:'已登录 example-user · 此设备保持登录',offline:'已保存登录 · 暂时离线，可继续本地记账',error:'已保存登录 · 暂时无法连接同步存储',expired:'GitHub 授权已失效，请重新登录',conflict:'已登录 example-user · 此设备保持登录'};
+  const previewConnected=()=>['preparing','ready','offline','error','conflict'].includes(state.previewConnection);
+  function syncPanel(){
+    const connected=previewConnected(), phase=state.previewConnection;
+    showSheet('GitHub 连接',`<span class="bl-badge">界面原型 · 状态模拟</span><p class="bl-sync-explanation">${connectionStates[phase]}</p>${connected?`${phase==='preparing'?button('模拟存储准备完成','preview-ready','','bl-primary'):''}<p class="bl-note">锁定本地空间不会退出 GitHub。修改后请点击账本的“同步”，另一设备也需同步获取更新。</p><div class="bl-actions">${button('管理云端账本','go','data-page="books"','bl-primary')}${button('退出 GitHub','preview-logout','','bl-secondary')}</div><p class="bl-note">退出仅清除此设备登录，不删除账目，也不忘记已保存的同步密钥。</p>`:`<p class="bl-note">首次在 GitHub 启用 BesLedger Sync，默认选择 All repositories，再返回登录。无需另装手机软件、注册 App、建库或部署服务。</p><p class="bl-note">授权包含你账号内其他仓库（包括私有仓库）的内容读写权限；应用只用确认过的账本存储。</p>${phase==='waiting'?`<div class="bl-card"><p>模拟一次性码：DEMO-CODE</p>${button('模拟完成授权','preview-authorize','','bl-primary')}${button('取消授权','preview-logout','','bl-secondary')}</div>`:button('使用 GitHub 登录（模拟）','preview-login','','bl-primary')}`}<details class="bl-demo-state"><summary>切换模拟状态</summary><label>连接状态<select data-preview-state>${Object.entries(connectionStates).map(([value,label])=>`<option value="${value}" ${phase===value?'selected':''}>${label}</option>`).join('')}</select></label></details><details class="bl-sync-explanation"><summary>了解 GitHub 授权范围</summary><p>Contents 写入、Repository creation 写入、Metadata 只读。All repositories 包含其他及未来仓库，代码限制不等同平台隔离；本地记账无需 GitHub。</p></details>`);
+  }
+  function books(){
+    const connected=previewConnected(), phase=state.previewConnection;
+    const status=phase==='conflict'?'待同步 · 有冲突':phase==='error'?'同步未完成':state.previewUploaded?'已同步':'仅本地';
+    const card=(name,note,status,action,label)=>`<div class="bl-book-card"><div class="bl-cover">${icon('notebook')}</div><div class="bl-book-body"><h3>${name}</h3><div class="bl-caption">${note}</div><div class="bl-book-actions"><span class="bl-status-pill">${status}</span>${button(label,action,`data-book="${esc(name)}"`)}</div></div></div>`;
+    return `<p class="bl-note">界面原型 · 状态模拟。登录不会上传账本，修改后仍需点击“同步”。</p>${card('日常账本','本机原有账本 A',status,connected?'preview-upload':'book-enter',connected?(state.previewUploaded?'同步':'首次上传'):'进入账本')}${connected?card('旅行账本','其他设备的账本 B，与 A 独立并存',state.previewDownloaded?'已同步':'仅云端','preview-download',state.previewDownloaded?'同步':'解密并下载'):''}${state.previewKeySaved?`<p class="bl-note">同步密钥已在此设备加密保存（模拟）</p>${button('同步密钥','preview-key','','bl-link')}`:''}${phase==='offline'?'<p class="bl-note">当前离线，以上为最近确认的状态。</p>':''}${phase==='error'?'<p class="bl-note">暂时无法访问同步存储，请检查安装范围。原绑定与账目已保留。</p>':''}${phase==='conflict'?`<div class="bl-card"><h3>同步冲突 · 请核对双方内容</h3><p class="bl-note">本机：虚构午餐 32 元；云端：虚构午餐 35 元。</p>${button('保留本机（模拟）','preview-resolve','','bl-secondary')}${button('保留云端（模拟）','preview-resolve','','bl-secondary')}</div>`:''}<section class="bl-section"><div class="bl-list">${row('GitHub 连接',connectionStates[phase],icon('chevron-right'),'cloud','sync-settings')}</div></section>`;
+  }
+  function settings(){return `<div class="bl-card"><div class="bl-row" style="padding:0;border:0">${circle('notebook')}<div class="bl-row-main"><h2>Bes记账</h2><p class="bl-row-meta">${state.previewLocked?'本地已锁定':'本地已解锁'} · 只在本机记账也可以</p></div><span class="bl-badge">状态模拟</span></div></div><section class="bl-section">${titleRow('日常记账')}<div class="bl-list">${row('账户管理','现金、银行卡和往来款',icon('chevron-right'),'wallet','go','data-page="accounts"')}${row('事件与周期账','还款日期和固定收支',icon('chevron-right'),'calendar-clock','go','data-page="recurring"')}</div></section><section class="bl-section">${titleRow('数据与同步')}<div class="bl-list">${row('账本管理','选择上传、下载或同步哪本账',icon('chevron-right'),'notebook','go','data-page="books"')}${row('GitHub 连接',connectionStates[state.previewConnection],icon('chevron-right'),'cloud','sync-settings')}</div></section><section class="bl-section">${titleRow('数据保护')}<div class="bl-list">${row('导出完整加密备份','账户、账目、退款和周期账一起备份',icon('chevron-right'),'download','backup-demo')}${row('校验并恢复备份','先检查备份内容，再确认恢复',icon('chevron-right'),'upload','restore-demo')}${row('查看本机恢复密钥','用于恢复这台设备的本地空间',icon('chevron-right'),'shield-check','preview-local-key')}</div></section><section class="bl-section">${titleRow('隐私与帮助')}<div class="bl-list">${row('回收站','找回已删除的账目',icon('chevron-right'),'trash-2','preview-recycle')}${row('记账、登录与同步有什么区别？','三种状态分别查看',icon('chevron-right'),'circle-help','preview-help')}</div></section><p class="bl-note" style="text-align:center;margin-top:25px">Bes记账 0.1.2 · 界面原型 · 演示数据均为虚构</p>`;}
   const renderers={home,entry,categories:categoryPage,accounts,account:accountDetail,accountTypes,accountForm,loan,detail,refund,recurring,rule,reports,books,settings,features};
   function render(){
     closeQuickPanel(false);
@@ -902,6 +930,7 @@
     if(date)state.date=`2026-${date[1].padStart(2,'0')}-${date[2].padStart(2,'0')}T${date[3]}`;
     state.recognized=true;return true;
   }
+  root.addEventListener('change',e=>{if(e.target.matches('[data-preview-state]')){state.previewConnection=e.target.value;syncPanel();}});
   root.addEventListener('input',e=>{
     const accountField=e.target.dataset.accountField;
     if(accountField){accountDraft()[accountField]=e.target.value;const error=root.querySelector('#bl-account-error');if(error)error.hidden=true;return;}
@@ -1082,9 +1111,24 @@
     }
     if(action==='new-book'){showSheet('新建账本',`<input id="bl-book-name" aria-label="账本名称" placeholder="账本名称"><div class="bl-form-row"><span>保存方式</span><select aria-label="账本保存方式"><option>仅保存在本机</option><option>开启 GitHub 同步</option></select></div><p class="bl-note">资金账户可与已有账本共用。</p><div class="bl-actions">${primary('创建账本','create-book')}</div>`);return;}
     if(action==='create-book'){const name=root.querySelector('#bl-book-name').value.trim();if(!name){toast('请填写账本名称');return;}state.book=name;go('home');toast('已切换到示例新账本');return;}
-    if(action==='sync-settings'){showSheet('GitHub 同步',`<div class="bl-form-row"><span>连接状态</span><span class="bl-badge">已连接 · 示例</span></div><div class="bl-form-row"><span>数据仓库</span><span>besledger-data · 私有</span></div><div class="bl-form-row"><span>同步方式</span><span>加密后上传</span></div><p class="bl-note">每个账本可单独启用同步。退出连接后，本地账目仍可使用。</p><div class="bl-actions">${button('查看账本','go','data-page="books"','bl-primary')}${button('关闭','close-sheet','','bl-secondary')}</div>`);return;}
-    if(action==='backup'){showSheet('备份与恢复',`<div class="bl-list">${row('导出完整备份','包含账户、账单、分类和关联关系',icon('chevron-right'),'download','backup-demo')}${row('从备份恢复','先预览数据，再确认恢复',icon('chevron-right'),'upload','restore-demo')}</div><p class="bl-note">备份可用于更换设备或恢复本地账目。</p>`);return;}
-    if(action==='backup-demo'||action==='restore-demo'){toast('当前展示备份与恢复入口，不读取或生成真实文件');return;}
+
+    if(action==='sync-settings'){syncPanel();return;}
+    if(action==='preview-ready'){state.previewConnection='ready';syncPanel();return;}
+    if(action==='preview-login'){state.previewConnection='waiting';syncPanel();return;}
+    if(action==='preview-authorize'){state.previewConnection='preparing';syncPanel();return;}
+    if(action==='preview-logout'){state.previewConnection='local';syncPanel();return;}
+    if(action==='preview-lock'){state.previewLocked=true;showSheet('本地已锁定（模拟）',`<p class="bl-note">锁定不会退出 GitHub，也不会忘记同步密钥。正式应用需输入本地解锁口令。</p>${button('模拟解锁','preview-unlock','','bl-primary')}`);return;}
+    if(action==='preview-unlock'){state.previewLocked=false;render();return;}
+    if(action==='preview-local-key'){showSheet('本机恢复密钥',`<p class="bl-note">界面原型不生成真实密钥。这是当前本地空间的恢复密钥，不一定能解密其他设备的账本，请独立保存。</p>${button('我已了解','close-sheet','','bl-primary')}`);return;}
+    if(action==='preview-key'){showSheet('此设备的同步密钥',`<p class="bl-note">同步密钥已在此设备加密保存（模拟）。忘记不删除账目或云端数据；换设备仍需原设备密钥。</p>${button('忘记此设备密钥（模拟）','preview-forget','','bl-secondary')}`);return;}
+    if(action==='preview-forget'){state.previewKeySaved=false;render();toast('已模拟忘记密钥，账目保留');return;}
+    if(action==='preview-upload'){if(['offline','error','preparing'].includes(state.previewConnection)){toast('当前尚不能同步，本地账目保留');return;}state.previewUploaded=true;state.previewKeySaved=true;render();toast('模拟同步完成，不上传真实数据');return;}
+    if(action==='preview-download'){if(['offline','error','preparing'].includes(state.previewConnection)){toast('当前尚不能下载，本地账目保留');return;}if(state.previewKeySaved){toast('已模拟使用设备保存的密钥同步');return;}showSheet('首次下载（模拟）',`<p class="bl-note">输入原设备的同步恢复密钥。此处仅演示，请填 DEMO，不要输入真实密钥。</p><input id="bl-demo-key" aria-label="模拟同步密钥" placeholder="DEMO"><p id="bl-demo-key-error" class="bl-error" hidden>模拟密钥不正确，原账目和已保存密钥未改变。</p>${button('解密并下载（模拟）','preview-download-confirm','','bl-primary')}`);return;}
+    if(action==='preview-download-confirm'){if(root.querySelector('#bl-demo-key').value!=='DEMO'){root.querySelector('#bl-demo-key-error').hidden=false;return;}state.previewKeySaved=true;state.previewDownloaded=true;render();return;}
+    if(action==='preview-resolve'){state.previewConnection='ready';state.previewUploaded=false;render();toast('已模拟选择版本，请再次同步');return;}
+    if(action==='preview-help'){showSheet('记账、登录与同步',`<p class="bl-note">资金账户是现金、银行卡等，账本用来整理账目，GitHub 账号只提供可选同步。登录不会上传、覆盖或合并账本；同名不同账本独立存在。</p><p class="bl-note">锁定本地空间、退出 GitHub、忘记某本账的同步密钥是不同操作。修改后点击“同步”，另一设备再同步取回更新。</p>`);return;}
+    if(action==='preview-recycle'){showSheet('回收站（模拟）','<p class="bl-note">当前没有已删除的示例账目。</p>');return;}
+    if(action==='backup'||action==='backup-demo'||action==='restore-demo'){showSheet('备份与恢复（模拟）','<p class="bl-note">正式应用先校验备份并预览内容，经确认后才恢复。此原型不读取或生成真实备份，请独立保存备份和恢复密钥。</p>');return;}
     if(action==='edit-original'){state.entryType='支出';state.category='运动健身';state.amount='1000';state.note='运动课程 · 调整套餐';go('entry');return;}
     if(action==='saved-detail'){toast('这是一条保存在当前预览中的示例记录');return;}
   });
@@ -1095,6 +1139,7 @@
     tweak.addSelect(state,'device',{label:'设备布局',options:[{label:'手机',value:'mobile'},{label:'iPad',value:'tablet'},{label:'电脑',value:'desktop'}]});
     tweak.addSelect(state,'page',{label:'预览页面',options:Object.entries(pages).filter(([p])=>!['account','accountForm','refund','features'].includes(p)).map(([value,label])=>({label,value}))});
     tweak.addSelect(state,'palette',{label:'产品配色',options:[{label:'墨蓝 · 暖灰白',value:'ink'},{label:'森林绿 · 暖白',value:'forest'},{label:'暖琥珀 · 米白',value:'amber'}]});
+    tweak.addSelect(state,'previewConnection',{label:'模拟连接状态',options:Object.entries(connectionStates).map(([value,label])=>({value,label}))});
     tweak.addSelect(state,'appearance',{label:'外观',options:[{label:'跟随应用',value:'auto'},{label:'浅色',value:'light'},{label:'深色',value:'dark'}]});
   }
 })();

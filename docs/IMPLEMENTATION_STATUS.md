@@ -1,5 +1,12 @@
 # 实施状态
 
+## 0.1.2 统一交付
+
+2026-10-23：原型与正式应用统一改进五项导航、账户创建、分类图标、记账键盘和“我的”分组/连接状态，保留已有登录与同步能力。工程、浏览器和 API 36 原生验证及签名覆盖升级结果见 [本轮验收](DELIVERY_VERIFICATION.md#012-统一界面与登录同步交付2026-10-23)。当前版本入口：[0.1.2](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2)，旧发布转入 [历史归档](RELEASE_ARCHIVE.md)。
+
+以下保留原 0.1.1 与早期实施记录，作为技术追溯，不代表当前下载版本。
+
+
 已完成（2026-10-23，0.1.1）：首次上传自动使用本机密钥，外部账本首次下载验证后安全记住；按账号/仓库/账本绑定的 HKDF + AES-GCM 密文存入本机归档，不进入导出备份和云端。锁定/恢复后的迟到请求、错误替换、跨窗口 CAS、忘记后不复活及旧归档兼容测试通过。当前核心 73 项、浏览器 18 条流程通过；新增案例验证先有本地账户与流水，再登录、下载另一云端账本，原数据保留且不自动上传，显式首次上传后才新增远端副本。
 
 Android 0.1.1 / versionCode 9 已使用原长期签名构建并验签，与正式预览包及 0.1.0 同证书。GitHub Actions 39825782728 的 API 36 隔离模拟器实际运行 WebView/SQLite，验证密钥加密落盘、页面返回、锁定解锁、杀进程重启后不重新输入、忘记密钥保留账目。GitHub API/登录会话在此新增原生测试中明确模拟；真实 GitHub 授权协议的既有证据保持独立。本机模拟器启动曾被自动审批拒绝，已通过远端隔离环境完成替代验证。
@@ -28,9 +35,9 @@ Android 0.1.1 / versionCode 9 已使用原长期签名构建并验签，与正�
 ## 当前交付物
 
 - [Web/PWA](https://bensonlaur.github.io/BesLedger/)。
-- [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/) 与 [2026-10-23 Web 更新包](https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023)。两个来源的本地存储互相独立；已有用户继续原网址更新，换网址需加密备份或同步恢复。
+- [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/) 与 [2026-10-23 Web 更新包](RELEASE_ARCHIVE.md)。两个来源的本地存储互相独立；已有用户继续原网址更新，换网址需加密备份或同步恢复。
 - 最新 Web 包 BesLedger-web-20261023-pwa.zip：199,202 字节，SHA-256 1fe4f0fd9614696f8c39911e23e8f8d909bb8c4d29a14eaa17a57974418166a9；应用构建源码 dc338f9fe9d683c1f8657a3e96a02b7167bed147。Cloudflare Web 部署 be5c84a1，中转含双来源配置的部署 9dcc341b。15 个产物条目已检查，无实际凭证、私钥或源码映射。
-- [0.1.0 正式版本](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0)：APK、Web 生产 ZIP、SHA256SUMS.txt、signature.txt；旧 preview.1 只保留历史。
+- [0.1.0 正式版本](RELEASE_ARCHIVE.md)：APK、Web 生产 ZIP、SHA256SUMS.txt、signature.txt；旧 preview.1 只保留历史。
 - 构建源码：8b3e5587b51ff602a4011226e024d8fc3f471b2c。APK 0.1.0 / versionCode 8，8,364,607 字节，Android 10/API 29 起、target 36。
 - APK SHA-256：63b6f1c06d6ed47bb7b4f9a9aeff5e1b651956e3891e821583809cd4f06a1e3e。
 - 原 0.1.0 Web ZIP：199,210 字节；SHA-256 3b950318d56f21cfeece43964dd748f24915907bf9253ea50f931b4c33af7059。仅保留原发布记录，Web 下载使用上方更新包。

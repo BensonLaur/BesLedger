@@ -6,11 +6,11 @@ import { githubSyncFixture } from '../tests/support/github-sync-fixture.ts';
 
 const adbPath = process.env.BESLEDGER_ADB;
 if (!adbPath) throw new Error('Set BESLEDGER_ADB');
-const serial = 'emulator-5556',
+const serial = process.env.BESLEDGER_TEST_SERIAL || 'emulator-5556',
   pkg = 'com.bensoftware.besledger';
 const adb = (...args) =>
   execFileSync(adbPath, ['-s', serial, ...args], { encoding: 'utf8', windowsHide: true });
-if (!adb('emu', 'avd', 'name').includes('BesLedgerTestApi36'))
+if (!/BesLedger(Test|Ui)Api36/.test(adb('emu', 'avd', 'name')) || !serial.startsWith('emulator-'))
   throw new Error('Only isolated emulator allowed');
 const app = {
   id: Number(process.env.BESLEDGER_TEST_APP_ID),
@@ -135,7 +135,10 @@ try {
   await page.getByRole('button', { name: '锁定', exact: true }).click();
   await unlock();
   await sync();
-  await device.close();
+  await Promise.race([
+    device.close().catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
   adb('shell', 'am', 'force-stop', pkg);
   adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
   await connect();
@@ -150,5 +153,11 @@ try {
     'PASS: native API 36 WebView/SQLite: verified cloud key encrypted, route return, lock/unlock and process restart sync without re-entry; forget preserves ledger. GitHub API/session simulated.',
   );
 } finally {
-  await device?.close().catch(() => undefined);
+  await Promise.race([
+    device?.close().catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
 }
+
+// Windows 驱动断开可能保留调试套接字；断言与证据写入均已完成，再结束测试进程。
+process.exit(0);

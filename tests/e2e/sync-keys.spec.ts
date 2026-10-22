@@ -104,12 +104,14 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     await b.reload();
     await b.getByLabel('解锁口令', { exact: true }).fill(password);
     await b.getByRole('button', { name: '解锁账本', exact: true }).click();
+    if (new URL(b.url()).hash === '#/settings') await b.locator('.connection-summary').click();
     await expect(b.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
     await sync(b);
     await b.goto('./#/settings');
     await b.getByRole('button', { name: '锁定', exact: true }).click();
     await b.getByLabel('解锁口令', { exact: true }).fill(password);
     await b.getByRole('button', { name: '解锁账本', exact: true }).click();
+    if (new URL(b.url()).hash === '#/settings') await b.locator('.connection-summary').click();
     await expect(b.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
     await sync(b);
     // 错误的替换输入必须失败，留空后仍能用原先已验证的密钥同步。
@@ -163,6 +165,33 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     await localCard.getByRole('button', { name: '首次上传', exact: true }).click();
     await expect(localCard.getByText('已同步', { exact: true })).toBeVisible();
     expect(remote.files.size).toBe(2); // 显式首次上传才新增本地账本对应的远端文件。
+    // 同一本账并发改名必须保留双方；关掉冲突面板也不能显示成同步成功。
+    const conflictCard = (page: Page, name: string) =>
+      page.locator('.book-card').filter({ has: page.locator('.book-name').filter({ hasText: name }) });
+    async function rename(page: Page, oldName: string, name: string) {
+      if (new URL(page.url()).hash !== '#/books') await page.goto('./#/books');
+      await conflictCard(page, oldName).getByRole('button', { name: '改名', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: '账本改名' });
+      await dialog.getByLabel('账本名称').fill(name);
+      await dialog.getByRole('button', { name: '保存', exact: true }).click();
+      await expect(dialog).toBeHidden();
+    }
+    await rename(a, '虚构电脑修改已回传', '虚构甲方改名');
+    await rename(b, '虚构电脑修改已回传', '虚构乙方改名');
+    await conflictCard(a, '虚构甲方改名').getByRole('button', { name: '同步', exact: true }).click();
+    await expect(conflictCard(a, '虚构甲方改名').getByText('已同步', { exact: true })).toBeVisible();
+    await input.fill(originalKey); // 前一场景已明确忘记外部密钥，此处重新验证后再测试并发冲突。
+    await conflictCard(b, '虚构乙方改名').getByRole('button', { name: '同步', exact: true }).click();
+    const conflict = b.getByRole('dialog', { name: '同步冲突 · 请选择保留版本' });
+    await expect(conflict).toBeVisible();
+    await conflict.getByRole('button', { name: '关闭', exact: true }).click();
+    await expect(conflictCard(b, '虚构乙方改名').getByText('同步未完成', { exact: true })).toBeVisible();
+    await conflictCard(b, '虚构乙方改名').getByRole('button', { name: '同步', exact: true }).click();
+    await conflict.getByRole('button', { name: '保留本机', exact: true }).click();
+    await conflictCard(b, '虚构乙方改名').getByRole('button', { name: '同步', exact: true }).click();
+    await expect(conflictCard(b, '虚构乙方改名').getByText('已同步', { exact: true })).toBeVisible();
+    await conflictCard(a, '虚构甲方改名').getByRole('button', { name: '同步', exact: true }).click();
+    await expect(conflictCard(a, '虚构乙方改名')).toBeVisible();
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }
