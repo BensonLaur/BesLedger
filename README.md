@@ -6,11 +6,11 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-正式 Vue/TypeScript 应用 0.1.0 已交付：本地加密账本、共用账户、收支/转账/借贷、短信确认、退款、周期账、日历预算、统计和备份恢复已实现。66 项核心测试、三种引擎/尺寸的 12 条主要流程与 3 条授权流程通过；真实 GitHub App 登录、自动私有建库、跨端同步和登录续期通过。
+当前版本 0.1.1：本地加密账本、共用账户、收支/转账/借贷、短信确认、退款、周期账、日历预算、统计和备份恢复已实现；新增设备安全保存同步密钥。73 项核心测试、三种引擎/尺寸的 18 条浏览器流程通过，Android API 36 的真实 SQLite 保存与进程重启验证通过。GitHub App 的真实登录、自动私有建库、跨端同步和登录续期此前已验收。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.0/BesLedger-0.1.0-release.apk)（Android 10 起）。[0.1.0 版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0) 提供专用长期签名 APK、Web 生产包及 SHA-256。Android versionCode 8 已验签，并在 API 36 模拟器从同签名 versionCode 7 覆盖升级、冷启动；完整 Lint 通过。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.1 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.1/BesLedger-0.1.1-release.apk)（Android 10 起）。[0.1.1 版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.1) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 9 已验签，与原正式预览包及 0.1.0 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。构建与完整 Lint 通过。
 
-2026-10-23 的 [Web/PWA 更新包](https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023) 已内置免费的 Cloudflare 登录中转，并修复首次 PWA 更新；Web 下载请使用该更新包，Android APK 保持上述版本。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
+Web/PWA 已内置免费的 Cloudflare 登录中转，并修复首次 PWA 更新；此前的 web-20261023 更新包仅保留历史，下载使用 0.1.1。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
 GitHub 同步可选。普通用户无需注册 App，也无需手工建库或输入仓库名：安装 BesLedger Sync 并登录后，应用自动准备私有存储，再选择需要同步的账本。刷新、重启和锁定后保留加密登录，令牌到期自动续期；本地账本仍需解锁，主动退出会清除本机登录。
 
@@ -21,7 +21,7 @@ GitHub 同步可选。普通用户无需注册 App，也无需手工建库或输
 1. 创建本地账本并设置解锁口令；独立保存恢复密钥，然后建立账户及期初金额。
 2. 在“记一笔”的备注中粘贴短信，核对识别结果后保存。本地记账无需 GitHub。
 3. 需要同步时，进入 GitHub 连接，点击“在 GitHub 安装同步应用”，选择自己的账号及安装范围；返回应用点击“使用 GitHub 登录”，按页面设备码完成授权。
-4. 应用自动准备云端私有存储。备份恢复密钥后，选择账本首次上传；另一设备登录后，输入原设备的同步恢复密钥，解密下载。
+4. 应用自动准备云端私有存储。备份恢复密钥后，选择账本首次上传；另一设备登录后首次输入原设备的同步恢复密钥，解密下载。验证后会在设备上加密保存，返回页面、锁定解锁或重启无需重复输入。已有本地账和不同云端账可以并存，登录本身不上传或覆盖，详见 [本地账本启用同步](docs/SYNC_MODEL.md#本地已有账本后开启-github-同步)。
 
 保留完整加密备份和恢复密钥；同步不能替代独立备份。手机安装或浏览器使用问题可结合 [安全与恢复说明](docs/SECURITY_AND_RECOVERY.md) 排查。
 

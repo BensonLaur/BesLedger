@@ -3,7 +3,7 @@ import { fixtureApp } from '../fixtures';
 import { githubSyncFixture } from '../support/github-sync-fixture';
 
 const password = 'fictional-sync-browser-password';
-async function initialize(page: Page, name: string) {
+async function initialize(page: Page, name: string, beforeLogin?: () => Promise<void>) {
   await page.goto('./#/books');
   await page.getByLabel('账本名称').fill(name);
   await page.getByLabel('解锁口令', { exact: true }).fill(password);
@@ -11,6 +11,7 @@ async function initialize(page: Page, name: string) {
   const recovery = await page.locator('.recovery-key').innerText();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();
+  if (beforeLogin) await beforeLogin();
   await page.getByRole('button', { name: '使用 GitHub 登录' }).click();
   await expect(page.getByRole('button', { name: '退出 GitHub' })).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('已准备：fictional-user/BesLedger-Data', { exact: true })).toBeVisible();
@@ -56,7 +57,35 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     const originalKey = await initialize(a, '虚构手机同步账');
     await a.getByRole('button', { name: '首次上传', exact: true }).click();
     await expect(a.getByText('同步密钥已在此设备加密保存', { exact: true })).toBeVisible();
-    await initialize(b, '虚构电脑本地账');
+    await initialize(b, '虚构电脑本地账', async () => {
+      await b.goto('./#/accounts');
+      await b.getByRole('button', { name: '添加账户', exact: true }).click();
+      const account = b.getByRole('dialog', { name: '添加共用账户' });
+      await account.getByLabel('账户名称').fill('虚构仅本地现金');
+      await account.getByLabel('期初余额（元）').fill('1000');
+      await account.getByLabel('起算日期时间').fill('2026-01-01T00:00');
+      await account.getByRole('button', { name: '保存账户' }).click();
+      await expect(account).toBeHidden();
+      await b.goto('./#/');
+      await b.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
+      const editor = b.getByRole('dialog', { name: '记一笔', exact: true });
+      await editor.getByLabel('金额', { exact: true }).fill('9.87');
+      await editor.getByRole('button', { name: '早餐', exact: true }).click();
+      await editor.getByLabel('备注 · 粘贴银行短信即可识别').fill('虚构仅本地流水');
+      await editor.getByRole('button', { name: '付款账户', exact: true }).click();
+      await b
+        .getByRole('dialog', { name: '选择资金账户' })
+        .getByRole('button', { name: '虚构仅本地现金' })
+        .click();
+      await editor.getByRole('button', { name: '保存账目' }).click();
+      await expect(editor).toBeHidden();
+      await b.goto('./#/books');
+    });
+    const localCard = b
+      .locator('.book-card')
+      .filter({ has: b.locator('.book-name', { hasText: '虚构电脑本地账' }) });
+    await expect(localCard.getByText('仅本地', { exact: true })).toBeVisible();
+    expect(remote.files.size).toBe(1); // 只登录不会上传已有本地账。
     const input = b.getByLabel('原设备的同步恢复密钥（跨端下载时填写）');
     await input.fill('56'.repeat(32));
     await b.getByRole('button', { name: '解密并下载', exact: true }).click();
@@ -119,6 +148,17 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     await b.getByRole('button', { name: '忘记此设备密钥', exact: true }).click();
     await expect(b.getByText('同步密钥已在此设备加密保存', { exact: true })).toHaveCount(0);
     await expect(b.locator('.book-name').filter({ hasText: '虚构电脑修改已回传' })).toBeVisible();
+    // 下载并反复同步其他账本后，原有本地账户和流水仍保持独立且尚未上传。
+    expect(remote.files.size).toBe(1);
+    await localCard.locator('.book-name').click();
+    await b.goto('./#/');
+    await expect(b.getByRole('button').filter({ hasText: '虚构仅本地流水' })).toContainText('9.87');
+    await b.goto('./#/accounts');
+    await expect(b.getByText('余额 ¥ 990.13', { exact: true })).toBeVisible();
+    await b.goto('./#/books');
+    await localCard.getByRole('button', { name: '首次上传', exact: true }).click();
+    await expect(localCard.getByText('已同步', { exact: true })).toBeVisible();
+    expect(remote.files.size).toBe(2); // 显式首次上传才新增本地账本对应的远端文件。
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
   }

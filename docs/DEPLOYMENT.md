@@ -2,6 +2,8 @@
 
 当前阶段 Web：https://bensonlaur.github.io/BesLedger/。源码：https://github.com/BensonLaur/BesLedger。
 
+当前下载为 [0.1.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.1)：长期签名 Android versionCode 9 与 Web/PWA，新增设备安全保存同步密钥。与已发布正式预览包/0.1.0 同包名同证书，可直接覆盖升级；不要先卸载或清空数据。旧版先导出完整加密备份，在 Android 系统分享中保存到应用外，再独立保存恢复密钥。下方旧版资产信息仅供追溯。
+
 2026-10-23 Web 更新：https://github.com/BensonLaur/BesLedger/releases/tag/web-20261023。此更新修复登录中转及 PWA 首次更新，Android 仍使用下述已验收的 0.1.0 APK。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/，部署在同一维护者 Cloudflare 免费账号；普通用户无需注册托管账号。
 
 可下载的 [0.1.0 正式交付版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0) 包含长期签名 APK（versionCode 8）、Web/PWA 生产 ZIP、SHA256SUMS.txt 和公开验签结果。构建源码为 8b3e5587b51ff602a4011226e024d8fc3f471b2c，真实 GitHub App 授权、自动私有建库、Android 原生与 Web 双向同步及续期已通过。文件大小、哈希、设备证据及未覆盖范围见 DELIVERY_VERIFICATION.md；旧 preview.1 仅保留历史。
