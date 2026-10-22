@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="44" fill="#304765"/><path d="M56 42h57a26 26 0 0 1 16 46 30 30 0 0 1-16 56H56z" fill="none" stroke="#f5f5f2" stroke-width="13" stroke-linejoin="round"/><path d="M61 89h47" stroke="#e88a55" stroke-width="13" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Bes记账 · 日常钱包</title>
+  <rect width="256" height="256" rx="58" fill="#f6f5ef"/>
+  <g id="wallet">
+    <path fill="#304765" d="M55 112V99C55 86 64 76 77 74L171 57C189 54 202 65 202 82V120Z"/>
+    <path fill="#f6f5ef" d="M70 104V98C70 93 74 89 80 88L174 71C181 70 187 74 187 81V107Z"/>
+    <path fill="#304765" d="M70 103H182C198 103 208 114 208 130V179C208 197 197 208 180 208H70C52 208 42 197 42 180V131C42 113 52 103 70 103Z"/>
+    <path fill="#e9874b" d="M179 134H213C219 134 223 138 223 144V169C223 175 219 179 213 179H179C173 179 169 175 169 169V144C169 138 173 134 179 134Z"/>
+    <path fill="#f6f5ef" d="M205 156.5A8.5 8.5 0 1 1 188 156.5A8.5 8.5 0 1 1 205 156.5Z"/>
+  </g>
+</svg>

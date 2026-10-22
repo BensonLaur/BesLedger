@@ -1,4 +1,8 @@
-# BesLedger · Bes记账
+<p align="center">
+  <img src="public/icon.svg" width="96" height="96" alt="Bes记账：米白底、墨蓝钱包与暖橙搭扣" />
+</p>
+
+<h1 align="center">BesLedger · Bes记账</h1>
 
 先为自己做一本顺手的账：复制银行交易短信，粘贴后识别分类、资金账户、金额和交易时间，确认后保存。
 
@@ -11,6 +15,16 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.2 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-release.apk)（Android 10 起）。[0.1.2 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 10 已验签，与原正式预览包、0.1.0 和 0.1.1 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/SHA256SUMS.txt)。原四个阶段性 Release 已归档清理，源码标签保留；旧说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
 
 Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
+
+## 界面预览
+
+以下为实际运行的 Web/PWA 手机布局，与 Android 共用界面。全部账本、账户和金额均为虚构演示数据；工资示例为 6,000 元，另有 400 元奖金。点击图片可查看大图。
+
+| 收支日历与月预算 | 分类记账与数字键盘 | 账户与资产总览 |
+| :---: | :---: | :---: |
+| <a href="docs/images/preview-home.png"><img src="docs/images/preview-home.png" width="260" alt="真实运行界面：月度收支、预算水印与每日金额日历，使用虚构数据" /></a> | <a href="docs/images/preview-entry.png"><img src="docs/images/preview-entry.png" width="260" alt="真实运行界面：午餐分类选中、金额、备注、付款账户和数字键盘" /></a> | <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="真实运行界面：现金、信用卡、银行卡和网络账户的虚构余额" /></a> |
+
+当前源码采用「日常钱包」图标；已发布的 0.1.2 APK 仍是原 B 图标，新图标将随下一次安装包更新。
 
 ## 登录、解锁与同步
 

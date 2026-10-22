@@ -1,4 +1,9 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="192" android:viewportHeight="192">
-    <path android:pathData="M56,42 L113,42 C139,42 148,74 129,88 C155,109 138,144 113,144 L56,144 Z" android:fillColor="#00000000" android:strokeColor="#f5f5f2" android:strokeWidth="13" android:strokeLineJoin="round" />
-    <path android:pathData="M61,89 L108,89" android:strokeColor="#e88a55" android:strokeWidth="13" android:strokeLineCap="round" />
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="256" android:viewportHeight="256">
+    <group android:pivotX="128" android:pivotY="128" android:scaleX="0.75" android:scaleY="0.75">
+        <path android:fillColor="#304765" android:pathData="M55 112V99C55 86 64 76 77 74L171 57C189 54 202 65 202 82V120Z" />
+        <path android:fillColor="#f6f5ef" android:pathData="M70 104V98C70 93 74 89 80 88L174 71C181 70 187 74 187 81V107Z" />
+        <path android:fillColor="#304765" android:pathData="M70 103H182C198 103 208 114 208 130V179C208 197 197 208 180 208H70C52 208 42 197 42 180V131C42 113 52 103 70 103Z" />
+        <path android:fillColor="#e9874b" android:pathData="M179 134H213C219 134 223 138 223 144V169C223 175 219 179 213 179H179C173 179 169 175 169 169V144C169 138 173 134 179 134Z" />
+        <path android:fillColor="#f6f5ef" android:pathData="M205 156.5A8.5 8.5 0 1 1 188 156.5A8.5 8.5 0 1 1 205 156.5Z" />
+    </group>
 </vector>
