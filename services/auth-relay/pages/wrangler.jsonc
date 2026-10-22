@@ -8,6 +8,6 @@
     "GITHUB_CLIENT_ID": "Iv23liqKVYOk5K5MFB1j",
     "GITHUB_APP_ID": "5426577",
     "GITHUB_APP_SLUG": "besledger-sync",
-    "ALLOWED_ORIGINS": "https://bensonlaur.github.io"
+    "ALLOWED_ORIGINS": "https://bensonlaur.github.io,https://besledger-bensonlaur.pages.dev"
   }
 }

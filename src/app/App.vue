@@ -21,6 +21,13 @@ const navigation = [
   { path: '/settings', name: '我的', icon: 'settings' },
 ];
 const { needRefresh, updateServiceWorker } = useRegisterSW({ immediate: true });
+async function applyUpdate() {
+  if (ui.editor) return;
+  const registration = await navigator.serviceWorker?.getRegistration();
+  await updateServiceWorker(true);
+  // 首次打开的页面可能尚未受控，新 Worker 已激活时不会再触发 controlling 刷新。
+  if (!navigator.serviceWorker?.controller && !registration?.waiting) window.location.reload();
+}
 onMounted(() => {
   window.addEventListener('online', () => {
     offline.value = false;
@@ -74,7 +81,7 @@ onMounted(() => {
         </div>
       </header>
       <div v-if="needRefresh" class="banner">
-        新版本已准备好，请先保存当前草稿。<button @click="!ui.editor && updateServiceWorker(true)">
+        新版本已准备好，请先保存当前草稿。<button :disabled="ui.editor" @click="applyUpdate">
           重新加载更新
         </button>
       </div>
