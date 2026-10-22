@@ -6,11 +6,22 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-正式 Vue/TypeScript 应用已开始交付：本地加密账本、共用账户、收支/转账/借贷、短信确认、退款、周期账、日历预算、统计和备份恢复已实现。27 项领域/存储/协议测试、三种引擎/尺寸的 12 条浏览器流程已通过；真实私有测试仓库协议集成已通过。
+正式 Vue/TypeScript 应用 0.1.0 已交付：本地加密账本、共用账户、收支/转账/借贷、短信确认、退款、周期账、日历预算、统计和备份恢复已实现。63 项核心测试、三种引擎/尺寸的 12 条主要流程与 3 条授权流程通过；真实 GitHub App 登录、自动私有建库、跨端同步和登录续期通过。
 
-已发布 [Web/PWA](https://bensonlaur.github.io/BesLedger/) 和 [0.1.0 实施预览版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0-preview.1)，版本页提供专用长期签名 APK、Web 生产包及 SHA-256。Android versionCode 4 已验签并在 API 36 模拟器完成覆盖安装与启动；完整 Lint 通过。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.0/BesLedger-0.1.0-release.apk)（Android 10 起）。[0.1.0 版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0) 提供专用长期签名 APK、Web 生产包及 SHA-256。Android versionCode 8 已验签，并在 API 36 模拟器从同签名 versionCode 7 覆盖升级、冷启动；完整 Lint 通过。
 
-**最终交付仍在推进**：GitHub App 已完成真实登录、私有仓库创建、双端同步和安全保持登录。最新方案允许 All repositories，登录后自动准备私有账本存储，无需手工建库或输入名称；此授权也赋予其他仓库的内容读写能力，应用行为限制不等同平台隔离。最终产物和验收见 [实施状态](docs/IMPLEMENTATION_STATUS.md)。普通用户无需注册 App；维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
+GitHub 同步可选。普通用户无需注册 App，也无需手工建库或输入仓库名：安装 BesLedger Sync 并登录后，应用自动准备私有存储，再选择需要同步的账本。刷新、重启和锁定后保留加密登录，令牌到期自动续期；本地账本仍需解锁，主动退出会清除本机登录。
+
+默认安装选择 **All repositories**，令牌具备其他及未来仓库内容的读写能力。当前代码只使用确认过的账本存储，应用行为限制不等同平台隔离；也可自行选择 selected 范围，但首次须已有专用仓库。Android 原生端与 Web 的真实双向同步已通过；物理 Android/iPad 尚未接入。Web 登录需要授权中转服务可达，部分网络可能被托管平台拦截；Android 直接连接 GitHub。产物和设备证据见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
+
+## 开始使用
+
+1. 创建本地账本并设置解锁口令；独立保存恢复密钥，然后建立账户及期初金额。
+2. 在“记一笔”的备注中粘贴短信，核对识别结果后保存。本地记账无需 GitHub。
+3. 需要同步时，进入 GitHub 连接，点击“在 GitHub 安装同步应用”，选择自己的账号及安装范围；返回应用点击“使用 GitHub 登录”，按页面设备码完成授权。
+4. 应用自动准备云端私有存储。备份恢复密钥后，选择账本首次上传；另一设备登录后，输入原设备的同步恢复密钥，解密下载。
+
+保留完整加密备份和恢复密钥；同步不能替代独立备份。手机安装或浏览器使用问题可结合 [安全与恢复说明](docs/SECURITY_AND_RECOVERY.md) 排查。
 
 ## 开发与构建
 

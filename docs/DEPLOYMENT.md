@@ -2,7 +2,7 @@
 
 当前阶段 Web：https://bensonlaur.github.io/BesLedger/。源码：https://github.com/BensonLaur/BesLedger。
 
-可下载的 [0.1.0 实施预览版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0-preview.1) 包含长期签名 APK（versionCode 4）、Web/PWA 生产 ZIP、SHA256SUMS.txt 和公开验签结果。该预览版尚未配置真实 OAuth 登录，完整功能不能因此视为已验收。文件大小、哈希、构建提交和设备证据见 DELIVERY_VERIFICATION.md。
+可下载的 [0.1.0 正式交付版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0) 包含长期签名 APK（versionCode 8）、Web/PWA 生产 ZIP、SHA256SUMS.txt 和公开验签结果。构建源码为 8b3e5587b51ff602a4011226e024d8fc3f471b2c，真实 GitHub App 授权、自动私有建库、Android 原生与 Web 双向同步及续期已通过。文件大小、哈希、设备证据及未覆盖范围见 DELIVERY_VERIFICATION.md；旧 preview.1 仅保留历史。
 
 ## Web/PWA
 
@@ -24,7 +24,7 @@
 
 Only select repositories 要求至少选择一个现有仓库；未安装时建库返回 403。最新默认流程为安装 All repositories → 应用登录 → 自动准备私有存储并发现远端账本。名称不由普通用户填写；同名其他用途仓库不覆盖，自动使用稳定备用名。全部仓库模式不枚举所有仓库，只查自动候选与本机已知绑定。高级用户仍可自行限定 selected 范围。
 
-已通过的真实 API 测试使用独立私有仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 和虚构加密账。它使用开发凭证验证协议，不作为应用内登录验收证据。
+早期协议测试使用独立私有仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 和开发凭证，不作为应用内登录证据。后续两套隔离 Edge 存储和 Android SQLite 客户端均通过实际 GitHub App Device Flow 授权，并连接真实私有仓库完成验收；没有把 gh 登录代替用户登录。自动创建的 BesLedger-Data 保留私有性和存储标记，本轮新建虚构验收账本已从当前分支清理，历史只有虚构密文。
 
 ## Android 发布
 

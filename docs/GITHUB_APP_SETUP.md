@@ -31,7 +31,7 @@ Repository permissions 仅设置下列三项；其余仓库、组织和账号权
 
 进入新 App 的 Install App，选择自己的个人账号。默认自动准备流程选择 **All repositories**。这是用户在了解范围后于 2026-10-22 明确选择的方案：保留三项能力，允许自动新建私有数据仓库，不回到 OAuth repo。
 
-实际界面已确认：不选择仓库时 Install 禁用，至少必须选择一个。本轮先选已创建且只有虚构密文的 **BesLedger-Data-Acceptance-20261022**；安装后应用真实自动创建 **BesLedger-Data-AppTest-20261022**，GitHub 自动将新仓库加入本 App 范围。不要选 BesLedger 源码仓库或其他业务仓库。
+历史 selected 模式验收已确认：选 Only select repositories 却不选择仓库时 Install 禁用，至少必须选择一个。当时仅选虚构验收仓库，安装后应用能自动创建第二个私有仓库。此记录解释默认方案的调整，不是当前普通用户需要执行的建库步骤。当前 All repositories 流程无需选择或输入具体仓库。
 
 普通用户只需安装 App 并完成登录。应用自动准备私有存储、发现已有账本；无需输入仓库名。优先使用已有绑定，否则检查 BesLedger-Data 及稳定备用名；同名未知用途或公开仓库不覆盖。以专用标记或旧加密目录识别仓库，不依赖名称前缀。
 

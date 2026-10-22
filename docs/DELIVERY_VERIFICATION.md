@@ -1,38 +1,38 @@
 # 第一版逐项验收记录
 
-当前结论：GitHub App 的真实授权、自动建库、双端同步及登录保持已通过。用户最新明确选择 All repositories，应用正在完成自动准备存储的新版交付；不再要求普通用户手工建库或输入名称。此范围具备其他仓库内容读写能力，应用行为约束不能宣称平台隔离。以下区分历史测试和当前版本。
+当前结论：0.1.0 已发布，GitHub App 的真实授权、自动建库、Web 与 Android 原生双向同步及登录保持已通过。用户最新明确选择 All repositories，不再要求普通用户手工建库或输入名称。此范围具备其他仓库内容读写能力，应用行为约束不能宣称平台隔离。以下区分历史测试、当前版本及尚未接入的物理设备。
 
 ## 交付与设备矩阵
 
 | 环境 | 已通过 | 未覆盖 |
 | --- | --- | --- |
-| Windows Edge 155.0.4283.62，桌面 | 创建空间/账户、保存编辑、主要页面、短信确认、日期保留、预算取消/保留、独立借贷草稿、离线重开、子路径；两套独立存储真实 GitHub App 登录与同步、刷新/锁定/进程重启保持、实际续期 | 全新 GitHub 账号首次准备未单独测试；平台建库限制见下文 |
+| Windows Edge 155.0.4283.62，桌面 | 创建空间/账户、保存编辑、主要页面、短信确认、日期保留、预算取消/保留、独立借贷草稿、离线重开、子路径；两套独立存储真实 GitHub App 登录与同步、刷新/锁定/进程重启保持、实际续期；All 范围自动新建默认私有仓库 | 全新 GitHub 账号未单独测试；实际账号从默认仓库不存在的状态完成自动创建 |
 | Edge，Pixel 7 尺寸模拟 | 同上，无横向溢出 | 不代表 Android 原生/物理设备 |
 | Windows WebKit 27.2，iPad 尺寸 | 同上 | 不代表真实 iPad Safari/PWA |
-| Android API 36 x86_64 模拟器，WebView 133.0.6943.137 | 原生 SQLite、账户/记账、杀进程重启、断网解锁与余额一致；普通短信权限拒绝/授予、银行/日期候选、勾选识别、撤回；软键盘保存按钮可见、返回键草稿确认、前后台恢复；发布包安装启动 | 物理 Android、厂商权限差异、生产 OAuth |
+| Android API 36 x86_64 模拟器，WebView 133.0.6943.137 | 原生 SQLite、账户/记账、杀进程重启、断网解锁；普通短信权限拒绝/授予、范围筛选、勾选识别、撤回；软键盘、返回键与前后台；真实 GitHub App 直连授权、与 Web 双向同步、实际续期、锁定/断网冷启动保持与主动退出；签名包覆盖升级和启动 | 物理 Android、厂商权限差异；API 29 未实际运行 |
 | 物理 Android / iPad | 无设备接入 | 全部真机交互与安装体验待用户设备验证 |
 
 Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 发布包使用专用长期签名；原生主要功能在调试验收包验证，最终非调试 APK 另行验签、覆盖安装及启动，不将两类证据混淆。
 
-## 已发布的预览产物
+## 已发布的正式交付产物
 
-发布日期：2026-10-22。版本页：[v0.1.0-preview.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0-preview.1)，明确标记 prerelease，尚未达到完整第一版的 OAuth/跨端验收条件。
+发布日期：2026-10-22。版本页：[v0.1.0](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0)，非草稿、非 prerelease。旧 preview.1 保留为历史版本，不作为当前下载入口。
 
 | 项目 | 已核实值 |
 | --- | --- |
-| 构建源码 | 863eb99629d505730679350d76642e78e2e08ced |
-| APK | BesLedger-0.1.0-release.apk，8,355,995 字节 |
-| 版本/包名 | versionName 0.1.0 / versionCode 4；com.bensoftware.besledger |
+| 构建源码 | 8b3e5587b51ff602a4011226e024d8fc3f471b2c |
+| APK | BesLedger-0.1.0-release.apk，8,364,607 字节 |
+| 版本/包名 | versionName 0.1.0 / versionCode 8；com.bensoftware.besledger |
 | 系统范围 | minSdk 29 / targetSdk 36；API 29 仅构建与 Lint 检查，实际运行验证为 API 36 |
-| APK SHA-256 | 3d1a5bf3ef2ca6691e5a24d5e70f3280ae1ce040e32a571f781c5c5de30f1a1c |
+| APK SHA-256 | 63b6f1c06d6ed47bb7b4f9a9aeff5e1b651956e3891e821583809cd4f06a1e3e |
 | 签名 | 专用 RSA-3072，APK Signature Scheme v2；无 DEBUGGABLE 标记 |
 | 证书 SHA-256 | b54b12f342a892713a8764ae2544e68de234309a266e7a70c6fba87000a22716 |
-| Web 生产包 | BesLedger-0.1.0-web-pwa.zip，193,251 字节；/BesLedger/ 子路径 |
-| Web ZIP SHA-256 | 74d9036afa27fc68efca46b9b79349c9cc99685969504038814df529536fead6 |
+| Web 生产包 | BesLedger-0.1.0-web-pwa.zip，199,210 字节；/BesLedger/ 子路径 |
+| Web ZIP SHA-256 | 3b950318d56f21cfeece43964dd748f24915907bf9253ea50f931b4c33af7059 |
 
-发布时的签名构建、Web/Android 构建、完整 lintDebug 与 Pages 部署均已通过。最终 APK 在本任务隔离模拟器从同签名 versionCode 2 执行 install -r 升级到 4，系统读回版本正确，冷启动正常显示本地账本创建页，应用进程无崩溃。该升级检查不等于带真实账目的迁移验证。
+发布源码的 [签名构建 39796038326](https://github.com/BensonLaur/BesLedger/actions/runs/39796038326)、[Web/Android 与完整 Lint 39796037179](https://github.com/BensonLaur/BesLedger/actions/runs/39796037179)、[Pages 39796036860](https://github.com/BensonLaur/BesLedger/actions/runs/39796036860) 均成功。最终 APK 在本任务隔离模拟器从同签名 versionCode 7 执行 install -r 升级到 8，系统读回版本正确、无 DEBUGGABLE，冷启动正常显示本地账本创建页，应用进程正常。该签名升级检查不等于带真实账目的迁移验证；此前原生 SQLite v1 到 v2 的虚构数据迁移另行通过。
 
-版本附件同时提供 SHA256SUMS.txt 与 signature.txt。本机相同文件在 artifacts/final/，生产目录为 dist/。最终 APK/Web ZIP 的 472 个归档条目通过受保护凭证精确匹配、私钥/令牌模式、禁止文件类型和源码映射检查；签名私钥与口令未分发。
+版本附件同时提供 SHA256SUMS.txt 与 signature.txt。本机相同文件在 artifacts/v8-final/，本次 Web 发布目录为 artifacts/v8-web/。最终 APK 457 个、Web ZIP 15 个归档条目通过受保护凭证精确匹配、私钥/令牌模式、禁止文件类型和源码映射检查；签名私钥与口令未分发。发布后 GitHub 返回的两项资产 SHA-256 与本机一致；线上 Web 的空白启动和 390 像素布局复核通过。
 
 ## 功能验收对照
 
@@ -51,14 +51,14 @@ Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 发布包使�
 | 明细/统计 | 同源整数汇总、时间/分类/账户/关键词、趋势与类别/账户下钻、退款和利息口径 | 已实现，核心计算验证 |
 | 本地保护 | AES-GCM 密文、独立口令封装、恢复密钥、上一版回退、升级拒绝未知格式、并发保存和锁定生命周期 | 自动化通过 |
 | 备份/恢复 | 账户期初、退款关系、周期来源、墓碑、稳定 ID 全量加密恢复，失败不改原库 | 自动化通过 |
-| GitHub 登录 | 新 GitHub App Device Flow，固定服务与 App 身份；本机加密保存与真实 refresh token 轮换；锁定/重启不要求重新授权 | 两套真实独立 Edge 客户端通过；原生新版待验收 |
-| 私有仓库创建/选择 | 用户选择 All repositories；校验三项能力、仓库身份/归属/private、专用标记；自动准备存储 | 应用内真实建库通过；当前自动复用旧库已通过，首次无本机绑定的完整自动路径待新版实际验收 |
-| 远端发现/同步 | SHA 比较写入、版本向量、独立合并、显式冲突、删除与恢复、仅当前账本投影 | 两套真实已登录浏览器存储完成首次上传、发现下载、修改回传、离线冲突、删除/编辑冲突及显式恢复 |
+| GitHub 登录 | 新 GitHub App Device Flow，固定服务与 App 身份；本机加密保存与真实 refresh token 轮换；锁定/重启不要求重新授权 | 两套独立 Edge 与原生 Android 真实登录、实际续期和保持登录通过 |
+| 私有仓库创建/选择 | 用户选择 All repositories；校验三项能力、仓库身份/归属/private、专用标记；自动准备存储 | 实际自动创建 BesLedger-Data，重复准备复用；新 Android 客户端登录后自动发现，无需填写名称 |
+| 远端发现/同步 | SHA 比较写入、版本向量、独立合并、显式冲突、删除与恢复、仅当前账本投影 | 两套浏览器实际并发/删除/恢复通过；原生 SQLite 与 Web 真实下载及双向修改收敛通过 |
 
 ## 测试性质与边界
 
-- 核心 Vitest 当前 60 项通过。历史协议集成使用两个独立 Vault 和 fake-indexeddb 连接真实私有仓库，不等同于浏览器登录；最新版真实浏览器 App 验收另列如下。默认集成测试跳过，入口只接受实际授权的 GitHub App 用户令牌，拒绝开发者 gh/PAT/OAuth 凭证。
-- 浏览器端到端当前 12 条路径通过，覆盖三种引擎/尺寸组合。
+- 核心 Vitest 当前 63 项通过。历史协议集成使用两个独立 Vault 和 fake-indexeddb 连接真实私有仓库，不等同于浏览器登录；最新版真实浏览器 App 验收另列如下。默认集成测试 1 项跳过，入口只接受实际授权的 GitHub App 用户令牌，拒绝开发者 gh/PAT/OAuth 凭证。
+- 浏览器端到端 12 条主要路径与 3 条授权路径通过，覆盖三种引擎/尺寸组合。授权自动化使用模拟 GitHub 响应，真实授权证据为下文独立验收。
 - 原生脚本实际连接本任务的 Android 模拟器，存储走 SQLite，而不是将桌面 Web 结果记作原生结果。
 - 短信权限在普通 adb 安装的模拟器上具有 RESTRICTION_INSTALLER_EXEMPT，由系统普通运行时弹窗授予；未手工加入受限权限白名单，未要求默认短信应用。不同安装器/手机仍可能拒绝。
 - 权限撤回会被 Android 杀掉应用进程；已保存账目能恢复，未保存草稿不承诺跨系统杀进程保留。
@@ -75,4 +75,15 @@ Web 已部署：https://bensonlaur.github.io/BesLedger/。Android 发布包使�
 - 用户暂时卸载安装后，身份授权仍有效、安装列表为空，POST /user/repos 返回 403 Resource not accessible by integration。重新安装仅选择新测试仓库，两端不用再次登录即可恢复同步。
 - 用户确认已撤销原 BesLedger OAuth 授权。旧客户端已主动退出；新版遇到旧格式凭证会清除本机 OAuth 凭证，不发送旧令牌。
 
-以上 404 拒绝和“必须先建库”的结论适用于历史 selected 模式。用户随后明确选择 All repositories，并已保存到安装 174137690；不再把单仓库隔离作为当前保证，也不恢复 OAuth repo。新版自动准备存储，不要求输入名称；60 项核心测试覆盖同名未知用途/公开仓库不覆盖、自动备用名、任意有效名称识别、错误权限拒绝及标记验证。三类浏览器自动准备和登录保持通过；真实账号自动复用旧测试存储已通过。物理 Android/iPad 未接入。
+以上 404 拒绝和“必须先建库”的结论适用于历史 selected 模式。用户随后明确选择 All repositories，并已保存到安装 174137690；不再把单仓库隔离作为当前保证，也不恢复 OAuth repo。此前未选中的虚构私有仓库元数据现在返回 200，证明范围确实扩大；没有读取无关业务仓库内容。核心测试覆盖同名未知用途/公开仓库不覆盖、稳定备用名、任意有效名称识别、错误权限拒绝及标记验证。
+
+## 当前自动准备与 Android 原生真实验收
+
+- 实际 App 用户令牌自动创建 BesLedger-Data，读回 private、仓库 ID 1429836113 与存储标记；重复准备返回同一仓库。通过 Web UI 上传新建虚构账本，原生端使用另一个独立 Device Flow 完成真实 GitHub 授权，登录后自动发现仓库和云端账本。
+- Android 采用 API 36 调试验收包的实际 WebView、Capacitor 和 SQLite。输入原设备恢复密钥后解密下载虚构支出 18.88；原生改为 19.99 并回传，Web 拉取一致；Web 再改为 20.25，原生拉取一致。两端本地空间密钥独立，没有用浏览器存储冒充 SQLite。
+- 原生凭证单独密文落盘，桥接日志关闭。仅调整隔离验收凭证的到期元数据触发真实 GitHub 续期，访问令牌与刷新令牌均轮换并重新加密保存；没有使用模拟续期响应，也无需 Client Secret。
+- 原生锁定/解锁、刷新、关闭应用进程并断网冷启动后，登录和已保存流水保留；恢复网络后实际同步成功。主动退出将凭证保存为不可恢复登录的墓碑，刷新解锁后仍要求登录。
+- 验收结束后浏览器和原生测试客户端主动退出；只删除本轮新建默认仓库中的虚构验收文件，并通过带新查询参数的 GET 确认 404。私有仓库、README 和存储标记保留；历史虚构密文不宣称已擦除。其余独立虚构测试仓库保留。
+- 原生访问 Web 授权中转曾被托管平台边缘 403/CORS 阻止，versionCode 8 改用原生 HTTP 直连固定 GitHub 端点并成功验收。Web/PWA 仍需要中转可达：当前桌面浏览器已实际通过，受拦截网络可能不能登录；部署替代服务的说明见 DEPLOYMENT.md。未通过修改代理或请求身份绕过边缘限制。
+
+剩余验证范围：物理 Android/iPad、不同厂商短信权限和安装器、全新 GitHub 账号，以及更多银行短信模板。当前不承诺商店审核通过、任何网络下均可授权、关闭应用后的准时后台推送或无限账本容量。

@@ -138,6 +138,6 @@ GitHub 访问凭证与账本解密密钥分离。本地功能不要求 GitHub �
 - 已锁定并验证 Node 24.15.0、Vue 3.5.44、Vite 7.3.7、Capacitor 8.4.3、Vitest 5.0.5；完整补丁版本以 package-lock.json 为准。Capacitor 旧补丁存在官方内部代理漏洞，8.4.3 含修复；8.5.3 CLI 的 iOS xcode 依赖带来审计告警，本轮无需 iOS，选用同系列无该告警的 8.4.3。npm audit 已为零。
 - Web 使用 Dexie 密文快照，Android 使用自写薄 SQLite 适配（只接收密文/版本，不实现加密算法），避免引入额外 SQLite 加密插件与原生依赖；两端采用相同备份格式和短事务版本比较。
 - 为保护落盘隐私，暂不保存财务明文索引；解锁后建立内存投影。本地与同步采用版本化完整快照，按主动同步批次上传，增量块与历史压缩尚未实现，容量边界见 SECURITY_AND_RECOVERY.md。
-- 真实私有 GitHub 仓库协议测试已通过，但应用内 OAuth 注册、用户授权和生产跨端闭环仍需单独验证。最小 Device Flow 服务代码已部署，不依赖开发者 gh 凭证或 client secret。
+- 2026-10-22 已完成真实 GitHub App 注册、两套独立浏览器授权、Android 原生授权、自动私有建库、跨端同步与实际续期。按用户最新选择使用 All repositories，以免首次手工建库；三项能力和真实范围见 SECURITY_AND_RECOVERY.md。Web Device Flow 中转已部署，Android 原生 HTTP 直接连接 GitHub；均不依赖开发者 gh 凭证或 client secret。Web 中转的网络可达性限制见 DEPLOYMENT.md。
 - 原生发布脚本使用 PowerShell 7；JDK/SDK/Gradle 环境在子进程范围设置并恢复。Gradle Wrapper 使用官方 bin 发行包并锁定 SHA-256。
 - 原生包不注册 Service Worker，Web 和 Android 分别输出 dist 与 dist-android，避免 PWA 缓存覆盖 APK 自带资源。
