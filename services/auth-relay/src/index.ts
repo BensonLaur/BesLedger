@@ -1,5 +1,7 @@
 export interface Env {
   GITHUB_CLIENT_ID: string;
+  GITHUB_APP_ID: string;
+  GITHUB_APP_SLUG: string;
   ALLOWED_ORIGINS: string;
 }
 export function createRelay(transport: typeof fetch = fetch) {
@@ -7,9 +9,18 @@ export function createRelay(transport: typeof fetch = fetch) {
   return {
     async fetch(request: Request, env: Env): Promise<Response> {
       const url = new URL(request.url);
+      const configured =
+        /^Iv[A-Za-z0-9.]+$/.test(env.GITHUB_CLIENT_ID || '') &&
+        /^[1-9][0-9]*$/.test(env.GITHUB_APP_ID || '') &&
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(env.GITHUB_APP_SLUG || '');
+      const app = {
+        id: Number(env.GITHUB_APP_ID),
+        clientId: env.GITHUB_CLIENT_ID,
+        slug: env.GITHUB_APP_SLUG,
+      };
       if (url.pathname === '/health' && request.method === 'GET')
         return Response.json(
-          { service: 'BesLedger OAuth device relay', configured: !!env.GITHUB_CLIENT_ID },
+          { service: 'BesLedger GitHub App device relay', configured, ...(configured ? { app } : {}) },
           { headers: { 'Cache-Control': 'no-store' } },
         );
       const origin = request.headers.get('Origin') || '';
@@ -30,8 +41,7 @@ export function createRelay(transport: typeof fetch = fetch) {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
       if (request.method !== 'POST' || !['/device', '/token', '/refresh'].includes(url.pathname))
         return new Response('Not found', { status: 404, headers });
-      if (!env.GITHUB_CLIENT_ID)
-        return Response.json({ error: 'app_not_configured' }, { status: 503, headers });
+      if (!configured) return Response.json({ error: 'app_not_configured' }, { status: 503, headers });
       if (Number(request.headers.get('Content-Length') || 0) > 8192)
         return new Response('Too large', { status: 413, headers });
       const ip = request.headers.get('CF-Connecting-IP') || 'local';
@@ -50,7 +60,8 @@ export function createRelay(transport: typeof fetch = fetch) {
         let endpoint: string;
         if (url.pathname === '/device') {
           endpoint = 'https://github.com/login/device/code';
-          params.set('scope', 'repo offline_access');
+          // GitHub App 的仓库权限来自安装授权；禁止再申请 OAuth 的 repo 范围。
+          params.set('scope', 'offline_access');
         } else if (url.pathname === '/refresh') {
           if (typeof body.refresh_token !== 'string' || !/^[a-zA-Z0-9_.-]{1,4096}$/.test(body.refresh_token))
             return new Response('Invalid refresh token', { status: 400, headers });
@@ -92,7 +103,7 @@ export function createRelay(transport: typeof fetch = fetch) {
           'error',
         ];
         return Response.json(
-          Object.fromEntries(Object.entries(data).filter(([key]) => allowedKeys.includes(key))),
+          { ...Object.fromEntries(Object.entries(data).filter(([key]) => allowedKeys.includes(key))), app },
           { headers },
         );
       } catch {

@@ -32,21 +32,23 @@ Web 使用 Dexie/IndexedDB；Android 使用独立 SQLite 原生适配。两者�
 
 ## GitHub 授权与密钥隔离
 
-选择 OAuth App 的 Device Flow：Web 和 Android 使用同一公开 client ID，用户在 GitHub 官方页面输入一次性授权码，最小服务只转发固定的设备码与 token 端点。无需 client secret，避免静态页面/APK 泄露秘密，也不依赖本机授权代理。服务不接收业务数据或恢复密钥，不落盘 token，不记录响应体；来源白名单、请求长度及短时限流在服务端校验。
+2026-10-22 权限审计后改用 GitHub App 的 Device Flow：Web 和 Android 使用同一公开 App ID/client ID/slug，用户完成按仓库选择的安装，再在 GitHub 官方页面输入一次性授权码。服务只转发固定设备码、token 与续期端点，不接收账目或恢复密钥，不落盘或记录 token；校验来源、请求大小及短时限流。Device Flow 和其续期均无需 client secret 或 App 私钥。
 
-创建私有仓库需要 OAuth `repo` scope；该 scope 比单仓库权限更广，登录界面明确提示。实际客户端仅操作用户选择且读回确认为其所有的私有仓库。未请求删除仓库、组织管理等 scope。GitHub App 的细粒度安装及新仓库选择有额外流程，本版采用官方文档明确支持的 OAuth 创建仓库路径，不能宣称 token 自身只具备单仓库权限。
+仅接受 Contents write、Repository creation write、Metadata read 三项安装权限，不申请 Administration、Workflows、Actions、组织或账号管理权限。GitHub 在平台侧限制安装所授予的仓库；客户端还会拒绝 All repositories、额外权限、公开仓库、非本人仓库以及非 BesLedger-Data 或 BesLedger-Data-用途 命名的仓库。枚举使用 /user/installations/{id}/repositories，不再列出账号的全部私有仓库。读取和写入账本前重新核对安装、仓库 ID、归属与 private，未授权的仓库不能仅靠名称绕过检查。
 
 2026-10-22 按用户要求改为安全保持登录。访问令牌、refresh token、有效期与 GitHub 数字用户 ID 单独加密保存：Web 使用独立 IndexedDB 数据库，Android 使用 SQLite 独立 credentials 表；不进入账本快照、上一版本、导出备份或云端仓库。凭证 AES-256-GCM 密钥通过 HKDF-SHA-256 从随机主密钥派生，使用独立 salt/info 用途标识，与财务数据的 AES 密钥隔离，且不可导出。持久化材料受原有口令封装保护，没有将明文密钥和令牌一起存盘；此方案不宣称使用 Android 硬件 Keystore。
 
 锁定账本只清除内存中的凭证访问能力，保留本机密文；再次本地解锁、页面刷新或进程重启后恢复登录，不要求再次 GitHub 授权。离线时恢复已保存身份；首次联网操作先验证真实 GitHub 数字用户 ID，再访问仓库。账本仍须正常解锁，保持 GitHub 登录不等于绕过本地口令。
 
-Device Flow 请求 repo 与 offline_access；支持短期访问令牌与 refresh token 自动轮换，也兼容原有无有效期的令牌。临近到期或收到 401 时尝试续期；只有已确认的令牌/refresh token 失效、已过期且无法续期或身份不匹配才清除该登录。断网、超时、403、429 和服务 5xx 不视为退出。Web Locks 串行化同源窗口的轮换；凭证版本比较与退出墓碑防止迟到的刷新结果复活旧登录，同源窗口通过无凭证内容的广播刷新状态。锁定期间已开始的轮换可以只更新密文，不恢复已锁定 UI。
+Device Flow 只请求 offline_access；支持 GitHub App 短期访问令牌与 refresh token 自动轮换，也兼容同一 GitHub App 的无有效期令牌。临近到期或收到 401 时尝试续期；只有已确认的令牌/refresh token 失效、已过期且无法续期或身份不匹配才清除该登录。断网、超时、403、429 和服务 5xx 不视为退出。Web Locks 串行化同源窗口的轮换；凭证版本比较与退出墓碑防止迟到的刷新结果复活旧登录，同源窗口通过无凭证内容的广播刷新状态。锁定期间已开始的轮换可以只更新密文，不恢复已锁定 UI。
 
 主动退出会删除本机可用凭证并保留版本墓碑，不能从账本备份恢复登录。退出当前设备不撤销 GitHub 服务端对应用的授权，也不撤销其他设备的独立登录；界面提供官方撤销入口。已经发送的网络请求可能已被远端处理，退出后迟到的响应不能重新登录或改写当前 UI。浏览器站点数据清理、卸载、损坏或以另一空间密钥恢复后，可能需要重新授权；不承诺凭证密文的文件系统取证擦除。已解锁设备、恶意脚本及系统管理员仍属于前述保护边界。
 
 首次上传默认使用当前空间恢复密钥作为云端解密凭据。另一设备可以有独立本地口令/主密钥，同步时输入原设备恢复密钥；它只在当前账本管理页面内存保留，不发送到授权服务。请明确保管原始同步恢复密钥，不能用新设备新建空间的恢复密钥替代。
 
-官方依据：[OAuth 授权](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)、[创建用户仓库](https://docs.github.com/en/rest/repos/repos#create-a-repository-for-the-authenticated-user)、[Contents API](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents)。
+GitHub App 用户令牌也具有读取公开资源的隐式能力；“限定专用仓库”指私有仓库访问和写入范围，不声称 GitHub 禁止读取互联网公开资料。客户端不枚举或读取无关公开仓库。
+
+官方依据：[App 权限边界](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app)、[GitHub App Device Flow](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app)、[令牌续期](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens)、[创建用户仓库](https://docs.github.com/en/rest/repos/repos#create-a-repository-for-the-authenticated-user)。
 
 ## Android 签名与工具
 
@@ -55,3 +57,7 @@ Device Flow 请求 repo 与 offline_access；支持短期访问令牌与 refresh
 后续升级必须复用同一签名，不覆盖现有密钥。请将 JKS 和实际口令分别备份到个人安全介质/密码管理器；仅复制 DPAPI 文件到另一台电脑通常无法解密。实际口令的受控备份由维护者在本机完成，不粘贴到聊天中。
 
 使用 PowerShell 7 运行项目构建脚本，独立 JDK 21 和 SDK 路径作为参数传入。环境变量只在当前进程临时设置并恢复；不改变系统 Java、SDK 或其他项目。Android 禁止系统自动备份，使用应用内显式加密备份。
+
+## GitHub App 迁移边界
+
+Repository creation 用于自动新建私有数据仓库；创建后必须读回安装授权与 private 才能上传。GitHub 自动将应用新建的仓库纳入可访问范围。同名但未授权的仓库导致创建失败时，提示用户核对和选择；不扩大范围、不改名重建、不覆盖既有数据。旧 OAuth repo 权限超出业务所需，已停止沿用；新版解锁时将登录格式 v1 的旧 OAuth 凭证清除为版本墓碑，不对 GitHub 发出携带该旧令牌的请求，账本数据不受影响。服务端旧授权仍需用户在 Authorized OAuth Apps 中撤销。注册和最小权限操作见 GITHUB_APP_SETUP.md。

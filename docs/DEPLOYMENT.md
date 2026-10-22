@@ -10,19 +10,17 @@
 
 首次联网访问完成 Service Worker 缓存后可离线重开。更新可用时先保存草稿，再点击重新加载；本地解锁空间独立于应用缓存。清理浏览器站点数据会删除本机账本，请先导出加密备份。
 
-## GitHub OAuth 注册与配置
+## GitHub App 注册与配置
 
-用户已于 2026-10-22 完成 BesLedger OAuth App 注册，提供公开 Client ID，并开启 Device Flow 和 Expire user access tokens。授权服务运行环境已配置该 ID；支持登录保存与自动续期的客户端和服务正在进行实际发布验收。注册成功不能代替后续真实用户授权和跨端同步证据。下面保留部署所需字段供维护者核对，普通应用用户不需要自行注册应用。
+2026-10-22 权限审计后，改用公开的 [BesLedger Sync](https://github.com/apps/besledger-sync) GitHub App。App ID 为 5426577，公开 Client ID 为 Iv23liqKVYOk5K5MFB1j。仅 Contents 写入、Repository creation 写入、Metadata 只读；用户安装时使用 Only select repositories。维护者注册步骤见 GITHUB_APP_SETUP.md，普通用户无需注册应用。
 
-1. 在 https://github.com/settings/applications/new 注册 OAuth App，应用名 BesLedger。
-2. Homepage URL：https://bensonlaur.github.io/BesLedger/。
-3. Authorization callback URL：https://bensonlaur.github.io/BesLedger/。本版使用 Device Flow，不依赖此回调接收 token。
-4. 勾选 Enable Device Flow 和 Expire user access tokens。本版支持 refresh token 自动续期，无需生成或提供 Client Secret。
-5. 将公开 Client ID 配置到授权服务运行环境 GITHUB_CLIENT_ID。可以把公开 Client ID 提供给实施者；不要提供密码、2FA、client secret 或长期 token。
+开启 Device Flow 和 Expire user access tokens，关闭 Webhook。本版只请求 offline_access，登录及续期均不需要 Client Secret 或 App 私钥。服务配置 GITHUB_CLIENT_ID、GITHUB_APP_ID、GITHUB_APP_SLUG，以及固定来源 ALLOWED_ORIGINS。旧 OAuth App 的 repo 授权不再使用；用户应从 Authorized OAuth Apps 撤销旧 BesLedger。
 
 授权服务源代码在 services/auth-relay/src/index.ts；可用 Wrangler 部署，也已通过 Sites 部署。当前 Sites project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd，地址 https://besledger-github-auth.bensonlaur.chatgpt.site。更新运行环境后重新部署既有版本，不重复创建 Site。
 
-随后设置源码仓库变量 BESLEDGER_AUTH_SERVICE 为上面的 HTTPS 地址，并重跑 Pages 和 Android 发布流程。开发验证用 .env.local 的 VITE_AUTH_SERVICE，文件已忽略。完成后必须在两个独立设备/浏览器存储中实际登录，验证创建或选择 BesLedger-Data 私有仓库、读回 private、发现下载、编辑回传、退出/重连与冲突，才能关闭 GitHub 交付项。
+源码仓库变量 BESLEDGER_AUTH_SERVICE 使用上述 HTTPS 地址，并设置 BESLEDGER_GITHUB_APP_ID、BESLEDGER_GITHUB_APP_CLIENT_ID、BESLEDGER_GITHUB_APP_SLUG。Pages 和 Android 构建映射为 VITE_AUTH_SERVICE、VITE_GITHUB_APP_ID、VITE_GITHUB_APP_CLIENT_ID、VITE_GITHUB_APP_SLUG。开发可在被忽略的 .env.local 中配置这四个公开值；秘密不得使用 VITE_ 前缀。
+
+GitHub 安装页实际要求 Only select repositories 至少选择一个仓库。安装后应用自动创建新的专用私有仓库已经真实验证；没有现有专用仓库的新用户首次准备仍是独立待解决限制，不能以 All repositories 代替。新版只列出该 App 安装中选定的专用私有仓库。
 
 已通过的真实 API 测试使用独立私有仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 和虚构加密账。它使用开发凭证验证协议，不作为应用内登录验收证据。
 
@@ -46,7 +44,7 @@ package ID：com.bensoftware.besledger；Android 10/API 29 起，compile/target 
 
 - npm test：金额、借贷、退款、日期、周期、加密、恢复、冲突和生命周期。
 - npm run test:e2e：Edge 桌面、Pixel 7 布局模拟、WebKit iPad 布局；不等于物理 iPad/Android。
-- npm run test:auth：三种浏览器/尺寸使用明确模拟的 OAuth 响应，验证实际加密存储的刷新、关闭重开、锁定恢复、跨窗口退出和续期失效。该测试不冒充真实 GitHub 授权。
+- npm run test:auth：三种浏览器/尺寸使用明确模拟的 GitHub App 响应，验证实际加密存储的刷新、关闭重开、锁定恢复、跨窗口退出和续期失效。该测试不冒充真实 GitHub 授权。
 - scripts/test-android.mjs：只连接 BesLedgerTestApi36 隔离模拟器，实际原生 SQLite 与离线重启。
 - scripts/test-android-sms.mjs：只连接该模拟器，测试普通运行时权限拒绝/授予、日期与银行范围、勾选识别及撤回。运行前安装 Playwright Android 驱动，并先运行基础原生测试。所有短信为新生成虚构内容。
 - scripts/test-android-lifecycle.mjs：只连接该模拟器，测试实际软键盘下保存按钮、返回键与未保存草稿、前后台恢复。原生自动化需调试验收包；正式包另行执行验签、安装和启动检查。

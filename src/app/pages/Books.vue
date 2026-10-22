@@ -277,7 +277,7 @@ const deletedBooks = computed(() =>
     <section v-if="auth" class="card">
       <h2>专用私有仓库</h2>
       <p class="hint">选择前核对归属和内容。只有选定账本的密文会上传。</p>
-      <button class="secondary" :disabled="ui.busy" @click="getRepos">读取我的私有仓库</button
+      <button class="secondary" :disabled="ui.busy" @click="getRepos">读取已授权的专用仓库</button
       ><label
         >数据仓库<select v-model="selectedRepo">
           <option value="">请选择</option>

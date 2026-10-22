@@ -9,6 +9,7 @@ import { WebBackend } from '../../src/storage/backend';
 import { downloadLedger, syncLedger } from '../../src/sync/engine';
 import { importKey, parseRecovery } from '../../src/crypto/vault';
 import { mergeEntities, resolveConflict } from '../../src/sync/merge';
+import { appIdentitySchema } from '../../src/providers/github/app';
 
 test.skipIf(!process.env.BESLEDGER_TEST_REPO)(
   '真实私有测试仓库：独立加密存储发现、双向修改、并发、删除及恢复',
@@ -18,8 +19,14 @@ test.skipIf(!process.env.BESLEDGER_TEST_REPO)(
       throw new Error('集成测试只允许专用测试仓库');
     const [owner, repo] = repository.split('/');
     const token = process.env.BESLEDGER_TEST_TOKEN;
-    if (!token) throw new Error('缺少测试授权凭证');
-    const github = new GitHub(token),
+    if (!token?.startsWith('ghu_'))
+      throw new Error('仅接受已实际授权的 GitHub App 测试凭证，不能使用 gh/PAT/OAuth 代替');
+    const app = appIdentitySchema.parse({
+      id: Number(process.env.BESLEDGER_TEST_APP_ID),
+      clientId: process.env.BESLEDGER_TEST_APP_CLIENT_ID,
+      slug: process.env.BESLEDGER_TEST_APP_SLUG,
+    });
+    const github = new GitHub(token, undefined, app),
       user = await github.user();
     await github.verifyPrivate(owner, repo, user.id);
     const a = new Vault(new WebBackend(`BesLedger-test-a-${crypto.randomUUID()}`));

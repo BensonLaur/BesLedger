@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { appIdentitySchema, githubApp, sameApp, type GitHubAppIdentity } from './app';
 
 const token = z
   .string()
@@ -6,10 +7,11 @@ const token = z
   .max(4096)
   .regex(/^[A-Za-z0-9_.-]+$/);
 export const tokensSchema = z.object({
-  accessToken: token,
+  accessToken: token.refine((value) => value.startsWith('ghu_')),
   refreshToken: token.optional(),
   expiresAt: z.number().finite().optional(),
   refreshExpiresAt: z.number().finite().optional(),
+  app: appIdentitySchema,
 });
 export type AuthTokens = z.infer<typeof tokensSchema>;
 export class AuthorizationInvalid extends Error {
@@ -23,14 +25,21 @@ const replySchema = z.object({
   expires_in: z.number().nonnegative().finite().optional(),
   refresh_token_expires_in: z.number().nonnegative().finite().optional(),
   scope: z.string(),
+  app: appIdentitySchema,
 });
-export function parseTokenReply(value: unknown, now = Date.now()): AuthTokens {
+export function parseTokenReply(
+  value: unknown,
+  now = Date.now(),
+  expectedApp: GitHubAppIdentity | undefined = githubApp,
+): AuthTokens {
   const result = replySchema.safeParse(value);
   if (!result.success) throw new Error('GitHub 授权响应格式无效，请重试');
   const reply = result.data;
-  if (!reply.scope.split(/[ ,]+/).includes('repo')) throw new Error('未授予私有仓库权限，无法启用同步');
+  if (reply.scope !== '' || !reply.access_token.startsWith('ghu_') || !sameApp(reply.app, expectedApp))
+    throw new Error('授权响应不属于当前最小权限 GitHub App，已拒绝保存');
   return {
     accessToken: reply.access_token,
+    app: reply.app,
     refreshToken: reply.refresh_token,
     expiresAt: reply.expires_in === undefined ? undefined : now + reply.expires_in * 1000,
     refreshExpiresAt:

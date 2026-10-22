@@ -3,6 +3,7 @@ import { onUnmounted, ref } from 'vue';
 import { auth, githubSession, run, ui } from '../store';
 import {
   authConfigured,
+  installationUrl,
   openAuthorization,
   pollAuthorization,
   startAuthorization,
@@ -67,30 +68,32 @@ async function logout() {
   <section class="connection-card">
     <div class="section-heading">
       <h2><Icon name="cloud" /> GitHub 连接</h2>
-      <span class="tag">{{ auth ? '已授权' : '未连接' }}</span>
+      <span class="tag">{{ auth ? '已登录' : '未连接' }}</span>
     </div>
     <template v-if="auth"
       ><p>
         已登录 <strong>{{ auth.user.login }}</strong
-        >。此设备已保持登录，锁定账本不会退出 GitHub。
+        >。此设备已保持登录，锁定账本不会退出。云端访问须通过专用仓库的安装范围校验。
       </p>
       <div class="actions">
         <RouterLink class="primary" to="/books">管理云端账本</RouterLink
         ><button class="secondary" :disabled="ui.busy" @click="logout">退出 GitHub</button>
       </div>
-      <a
-        class="text-button"
-        href="https://github.com/settings/applications"
-        target="_blank"
-        rel="noopener noreferrer"
-        >在 GitHub 撤销应用授权</a
+      <a class="text-button" :href="installationUrl" target="_blank" rel="noopener noreferrer"
+        >安装或调整专用仓库访问范围</a
       ></template
     ><template v-else
       ><p>使用 GitHub 作为可选的私有存储。账目先在客户端加密，登录不会上传任何账本。</p>
       <p class="hint">
-        OAuth 需要 repo 权限以创建私有仓库。应用只操作你明确选择的 BesLedger
-        数据仓库。登录凭证在本机加密保存，刷新、重启和锁定后无需重新授权。
+        使用 GitHub App，仅授予专用私有账本仓库。登录凭证在本机加密保存，刷新、重启和锁定后无需重新授权。
       </p>
+      <p v-if="authConfigured" class="hint">
+        首次安装选择 Only select repositories，仅勾选自己的 BesLedger-Data 专用私有仓库。GitHub
+        安装页要求至少选择一个仓库；安装后可在应用内创建新的私有仓库。
+      </p>
+      <button v-if="authConfigured" class="secondary" @click="openAuthorization(installationUrl)">
+        安装或调整专用仓库访问范围
+      </button>
       <p v-if="!authConfigured" class="warning-panel">
         授权服务尚未完成生产配置，真实登录当前未就绪。本地记账不受影响。
       </p>
@@ -100,7 +103,7 @@ async function logout() {
       <div v-else class="device-code">
         <small>在 GitHub 输入此一次性授权码</small><strong>{{ code?.user_code }}</strong
         ><button class="primary" @click="openAuthorization(code!.verification_uri)">打开 GitHub 授权</button>
-        <p class="hint">完成后自动连接。请核对应用名称为 BesLedger。</p>
+        <p class="hint">完成后自动连接。请核对应用名称为 BesLedger Sync；不应出现 repo 全部仓库授权。</p>
         <button class="text-button" @click="cancel">取消授权</button>
       </div>
       <button v-if="ui.loginRecovery" class="secondary" :disabled="ui.busy" @click="logout">

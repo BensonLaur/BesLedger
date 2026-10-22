@@ -1,4 +1,23 @@
 import { emptyState, put, type Entry, type State } from '../src/domain/model';
+export const fixtureApp = { id: 7, clientId: 'Iv1.fictional', slug: 'besledger-fixture' };
+export const fixtureInstallation = {
+  id: 11,
+  app_id: 7,
+  account: { id: 42, login: 'fictional-owner' },
+  target_type: 'User',
+  repository_selection: 'selected' as const,
+  permissions: { metadata: 'read', contents: 'write', repository_creation: 'write' },
+  suspended_at: null,
+};
+export const fixtureRepository = {
+  id: 501,
+  name: 'BesLedger-Data-test',
+  full_name: 'fictional-owner/BesLedger-Data-test',
+  private: true,
+  owner: { id: 42, login: 'fictional-owner' },
+  permissions: { push: true },
+  default_branch: 'main',
+};
 export function fixture(): State {
   const state = emptyState();
   state.deviceId = 'device-a';

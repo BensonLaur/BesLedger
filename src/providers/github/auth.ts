@@ -1,8 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { AuthorizationInvalid, parseTokenReply, type AuthTokens } from './tokens';
+import { githubApp } from './app';
 const service = import.meta.env.VITE_AUTH_SERVICE as string | undefined;
-export const authConfigured = !!service;
+export const authConfigured = !!service && !!githubApp;
+export const installationUrl = githubApp ? `https://github.com/apps/${githubApp.slug}/installations/new` : '';
 export type DeviceCode = {
   device_code: string;
   user_code: string;
@@ -11,11 +13,11 @@ export type DeviceCode = {
   interval: number;
 };
 async function relay<T>(path: string, payload: unknown): Promise<T> {
-  if (!service) throw new Error('生产授权服务尚未配置；当前版本不能完成 GitHub 登录');
-  const url = new URL(service);
+  if (!authConfigured) throw new Error('GitHub App 尚未配置；本地记账不受影响');
+  const url = new URL(service!);
   if (url.protocol !== 'https:' && url.hostname !== '127.0.0.1' && url.hostname !== 'localhost')
     throw new Error('授权服务必须使用 HTTPS');
-  const response = await fetch(`${service.replace(/\/$/, '')}/${path}`, {
+  const response = await fetch(`${service!.replace(/\/$/, '')}/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -38,7 +40,8 @@ export async function startAuthorization(): Promise<DeviceCode> {
   return code;
 }
 export async function openAuthorization(url: string): Promise<void> {
-  if (url !== 'https://github.com/login/device') throw new Error('授权地址不受信任');
+  if (url !== 'https://github.com/login/device' && (!installationUrl || url !== installationUrl))
+    throw new Error('授权地址不受信任');
   if (Capacitor.isNativePlatform()) await Browser.open({ url });
   else window.open(url, '_blank', 'noopener,noreferrer');
 }

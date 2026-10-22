@@ -1,5 +1,5 @@
 import { expect, it, describe } from 'vitest';
-import { fixture, entry } from './fixtures';
+import { fixture, entry, fixtureApp, fixtureInstallation, fixtureRepository } from './fixtures';
 import { put, type Binding, type Entity } from '../src/domain/model';
 import { saveEntry, deleteEntry } from '../src/domain/ledger';
 import { ledgerProjection, mergeEntities, resolveConflict, mainStatus } from '../src/sync/merge';
@@ -97,8 +97,12 @@ describe('并发与同步边界', () => {
       const path = new URL(String(url)).pathname;
       if (expired) return Response.json({}, { status: 401 });
       if (path === '/user') return Response.json({ id: 42, login: 'fictional-owner' });
+      if (path === '/user/installations') return Response.json({ installations: [fixtureInstallation] });
+      if (path === '/user/installations/11/repositories')
+        return Response.json({ repositories: [{ ...fixtureRepository, private: !publicRepo }] });
       if (path.endsWith('/BesLedger-Data-test'))
         return Response.json({
+          ...fixtureRepository,
           private: !publicRepo,
           owner: { id: 42, login: 'fictional-owner' },
           permissions: { push: true },
@@ -122,7 +126,7 @@ describe('并发与同步边界', () => {
       }
       throw new Error('unexpected path');
     };
-    const github = new GitHub('fictional-test-credential', transport),
+    const github = new GitHub('ghu_fictionalTest', transport, fixtureApp),
       key = await importKey(crypto.getRandomValues(new Uint8Array(32)));
     const a = fixture(),
       id = a.preferences.currentLedger;
@@ -152,12 +156,12 @@ describe('并发与同步边界', () => {
     expired = false;
     publicRepo = true;
     const before = writes;
-    await expect(syncLedger(a, id, binding, key, github)).rejects.toThrow('不是私有');
+    await expect(syncLedger(a, id, binding, key, github)).rejects.toThrow('非私有');
     expect(writes).toBe(before);
   });
 });
 describe('授权服务隔离', () => {
-  it('拒绝非白名单来源和任意授权目标；固定客户端与 repo 权限，不透传秘密字段', async () => {
+  it('拒绝非白名单来源和任意授权目标；只请求 offline_access，不透传秘密字段', async () => {
     const calls: { url: string; body: string }[] = [];
     const relay = createRelay(async (url, init) => {
       calls.push({ url: String(url), body: String(init?.body) });
@@ -167,7 +171,12 @@ describe('授权服务隔离', () => {
         client_secret: 'not-for-client',
       });
     });
-    const env = { GITHUB_CLIENT_ID: 'public-client-id', ALLOWED_ORIGINS: 'https://fictional.example' };
+    const env = {
+      GITHUB_CLIENT_ID: 'Iv1.public',
+      GITHUB_APP_ID: '7',
+      GITHUB_APP_SLUG: 'besledger-fixture',
+      ALLOWED_ORIGINS: 'https://fictional.example',
+    };
     const request = (origin: string, path: string, body = {}) =>
       new Request(`https://relay.example${path}`, {
         method: 'POST',
@@ -181,7 +190,7 @@ describe('授权服务隔离', () => {
     );
     expect(calls[0]).toEqual({
       url: 'https://github.com/login/device/code',
-      body: 'client_id=public-client-id&scope=repo+offline_access',
+      body: 'client_id=Iv1.public&scope=offline_access',
     });
     expect(await response.text()).not.toContain('client_secret');
     expect(response.headers.get('Cache-Control')).toBe('no-store');

@@ -20,6 +20,9 @@ jobs:
       - run: npm run build
         env:
           VITE_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
+          VITE_GITHUB_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}
+          VITE_GITHUB_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
+          VITE_GITHUB_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: besledger-web
@@ -42,6 +45,9 @@ jobs:
       - run: npm run android:sync
         env:
           VITE_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
+          VITE_GITHUB_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}
+          VITE_GITHUB_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
+          VITE_GITHUB_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
       - run: bash android/gradlew -p android --no-daemon assembleDebug lintDebug
       - uses: actions/upload-artifact@v7.0.2
         with:

@@ -23,6 +23,9 @@ jobs:
       - run: npm run android:sync
         env:
           VITE_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
+          VITE_GITHUB_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}
+          VITE_GITHUB_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
+          VITE_GITHUB_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
       - name: 构建与校验长期签名 APK
         env:
           BESLEDGER_KEYSTORE_BASE64: ${{ secrets.BESLEDGER_KEYSTORE_BASE64 }}

@@ -3,10 +3,11 @@ import { decrypt, encrypt } from '../../crypto/vault';
 import type { CredentialBackend, StoredCredential } from '../../storage/credentials';
 import { GitHub, type GitHubUser } from './client';
 import { AuthorizationInvalid, tokensSchema, type AuthTokens } from './tokens';
+import { githubApp, sameApp, type GitHubAppIdentity } from './app';
 
 const userSchema = z.object({ id: z.number().int().positive(), login: z.string().min(1).max(100) });
 const sessionSchema = z.object({
-  version: z.literal(1),
+  version: z.literal(2),
   id: z.string().uuid(),
   user: userSchema,
   tokens: tokensSchema,
@@ -36,6 +37,7 @@ export class GitHubSession {
     private changed: (login?: Login, message?: string) => void,
     private transport: typeof fetch = (input, init) => fetch(input, init),
     private now: () => number = Date.now,
+    private expectedApp: GitHubAppIdentity | undefined = githubApp,
   ) {}
   observe(): void {
     if (typeof BroadcastChannel === 'undefined' || this.channel) return;
@@ -61,11 +63,24 @@ export class GitHubSession {
     const row = await this.disk.read();
     if (!row?.payload) return undefined;
     if (row.payload.length > 100_000) throw new Error('本机登录凭证格式无效，原数据已保留');
+    let decoded: unknown;
     try {
-      return { row, value: sessionSchema.parse(await decrypt(JSON.parse(row.payload), key, context)) };
+      decoded = await decrypt(JSON.parse(row.payload), key, context);
     } catch {
       throw new Error('本机登录凭证无法解密，原数据已保留；可退出 GitHub 后重新连接');
     }
+    // 旧 OAuth 的宽权限凭证不能在新版本中恢复，更不能拿来验证新安装。
+    if (decoded && typeof decoded === 'object' && 'version' in decoded && decoded.version === 1) {
+      if (!(await this.disk.compareSwap(row.revision, null))) return this.read(key);
+      this.notify();
+      this.changed(undefined, '已清除旧 OAuth 本机凭证，请改用仅访问专用仓库的 GitHub App；账目保持不变');
+      return undefined;
+    }
+    const parsed = sessionSchema.safeParse(decoded);
+    if (!parsed.success) throw new Error('本机登录格式无法识别，原数据已保留');
+    if (!this.expectedApp) throw new Error('GitHub App 尚未配置，已暂停云端访问');
+    if (!sameApp(parsed.data.tokens.app, this.expectedApp)) return this.invalidate(row);
+    return { row, value: parsed.data };
   }
   private publish(value?: Credential, message?: string): void {
     const id = value?.id;
@@ -74,7 +89,7 @@ export class GitHubSession {
       value
         ? {
             user: value.user,
-            github: new GitHub('', (input, init) => this.authorizedFetch(id!, input, init)),
+            github: new GitHub('', (input, init) => this.authorizedFetch(id!, input, init), value.tokens.app),
           }
         : undefined,
       message,
@@ -104,6 +119,8 @@ export class GitHubSession {
     this.publish();
   }
   async accept(tokens: AuthTokens, stillCurrent: () => boolean = () => true): Promise<void> {
+    tokens = tokensSchema.parse(tokens);
+    if (!sameApp(tokens.app, this.expectedApp)) throw new Error('此授权不属于配置的 GitHub App');
     const generation = this.generation,
       key = this.key;
     this.active(generation);
@@ -112,7 +129,7 @@ export class GitHubSession {
     this.active(generation);
     if (!stillCurrent()) return;
     const value: Credential = {
-      version: 1,
+      version: 2,
       id: crypto.randomUUID(),
       user,
       tokens: tokensSchema.parse(tokens),
@@ -208,7 +225,7 @@ export class GitHubSession {
       const headers = new Headers(options?.headers);
       headers.set('Authorization', `Bearer ${token}`);
       headers.set('Accept', 'application/vnd.github+json');
-      headers.set('X-GitHub-Api-Version', '2022-11-28');
+      headers.set('X-GitHub-Api-Version', '2026-03-10');
       return this.transport(url, {
         ...options,
         headers,

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { fixtureApp, fixtureInstallation } from '../fixtures';
 
 const password = 'fictional-browser-auth-password';
 async function unlock(page: Page) {
@@ -7,7 +8,10 @@ async function unlock(page: Page) {
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
 }
 
-test('模拟 OAuth 响应：加密登录跨刷新/关闭重开/锁定保留，跨窗口退出不复活', async ({ page, context }) => {
+test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留，跨窗口退出不复活', async ({
+  page,
+  context,
+}) => {
   let grants = 0,
     renewals = 0,
     rejectApi = false,
@@ -32,9 +36,10 @@ test('模拟 OAuth 响应：加密登录跨刷新/关闭重开/锁定保留，�
         json: revoke
           ? { error: 'bad_refresh_token' }
           : {
-              access_token: 'fictional-renewed-access',
+              access_token: 'ghu_fictionalRenewed',
               refresh_token: 'fictional-renewed-refresh',
-              scope: 'repo',
+              scope: '',
+              app: fixtureApp,
               expires_in: 28800,
               refresh_token_expires_in: 15552000,
             },
@@ -42,17 +47,22 @@ test('模拟 OAuth 响应：加密登录跨刷新/关闭重开/锁定保留，�
     }
     return route.fulfill({
       json: {
-        access_token: 'fictional-browser-access',
+        access_token: 'ghu_fictionalBrowser',
         refresh_token: 'fictional-browser-refresh',
-        scope: 'repo',
+        scope: '',
+        app: fixtureApp,
         expires_in: 28800,
         refresh_token_expires_in: 15552000,
       },
     });
   });
   await context.route('https://api.github.com/**', async (route) => {
-    if (rejectApi && route.request().headers().authorization !== 'Bearer fictional-renewed-access')
+    if (rejectApi && route.request().headers().authorization !== 'Bearer ghu_fictionalRenewed')
       return route.fulfill({ status: 401, json: {} });
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/user/installations')
+      return route.fulfill({ json: { installations: [fixtureInstallation] } });
+    if (path === '/user/installations/11/repositories') return route.fulfill({ json: { repositories: [] } });
     return route.fulfill({
       json: new URL(route.request().url()).pathname === '/user' ? { id: 42, login: 'fictional-user' } : [],
     });
@@ -80,7 +90,7 @@ test('模拟 OAuth 响应：加密登录跨刷新/关闭重开/锁定保留，�
   expect(grants).toBe(1);
   await reopened.getByRole('link', { name: '管理云端账本' }).click();
   rejectApi = true;
-  await reopened.getByRole('button', { name: '读取我的私有仓库' }).click();
+  await reopened.getByRole('button', { name: '读取已授权的专用仓库' }).click();
   await expect.poll(() => renewals).toBe(1);
   await reopened.goto('./#/settings');
   const other = await context.newPage();
@@ -101,7 +111,7 @@ test('模拟 OAuth 响应：加密登录跨刷新/关闭重开/锁定保留，�
   rejectApi = true;
   revoke = true;
   await other.getByRole('link', { name: '管理云端账本' }).click();
-  await other.getByRole('button', { name: '读取我的私有仓库' }).click();
+  await other.getByRole('button', { name: '读取已授权的专用仓库' }).click();
   await expect(other.getByRole('button', { name: '使用 GitHub 登录' })).toBeVisible();
   await expect(other.getByText('GitHub 授权已失效，请重新登录；本地账目不受影响')).toBeVisible();
   expect(grants).toBe(2);

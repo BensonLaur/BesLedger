@@ -10,7 +10,7 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 已发布 [Web/PWA](https://bensonlaur.github.io/BesLedger/) 和 [0.1.0 实施预览版](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.0-preview.1)，版本页提供专用长期签名 APK、Web 生产包及 SHA-256。Android versionCode 4 已验签并在 API 36 模拟器完成覆盖安装与启动；完整 Lint 通过。
 
-**完整第一版尚未验收完成**：OAuth App 已注册，真实用户授权、应用内创建私有数据仓库及登录后的双端同步正在验证。新版已加入本机凭证加密保存、锁定恢复和自动续期。开发者 gh 凭证只用于开发测试，不是最终应用登录。逐项状态、设备边界和产物信息见 [验收记录](docs/DELIVERY_VERIFICATION.md)，所需公开 Client ID 的注册步骤见 [部署说明](docs/DEPLOYMENT.md)。
+**完整第一版尚未验收完成**：正在交付最小权限 GitHub App 版本，仅允许选定的专用私有账本仓库，并保留本机凭证加密保存、锁定恢复和自动续期。新 App 已完成真实登录、应用内私有仓库创建及两个独立客户端的发现下载；最终产物和剩余验收见 [实施状态](docs/IMPLEMENTATION_STATUS.md)。普通用户无需注册 App；维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
 
 ## 开发与构建
 
