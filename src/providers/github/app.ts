@@ -21,8 +21,8 @@ export const githubApp = parsed.success ? parsed.data : undefined;
 export function sameApp(a: GitHubAppIdentity, b?: GitHubAppIdentity): boolean {
   return !!b && a.id === b.id && a.clientId === b.clientId && a.slug === b.slug;
 }
-export function dedicatedRepository(name: string): boolean {
-  return /^BesLedger-Data(?:-[A-Za-z0-9-]+)?$/.test(name);
+export function validRepositoryName(name: string): boolean {
+  return /^[A-Za-z0-9_.-]{1,100}$/.test(name) && !['.', '..'].includes(name);
 }
 export function assertMinimalPermissions(permissions: Record<string, string>): void {
   const allowed: Record<string, string> = {

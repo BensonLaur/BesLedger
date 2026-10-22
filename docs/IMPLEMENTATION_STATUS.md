@@ -1,6 +1,6 @@
 # 实施状态
 
-更新：2026-10-22。已发布可安装 Android APK 与 Web/PWA 实施预览版，**完整第一版尚未完成**。正在按最新要求迁移到最小权限 GitHub App；旧 OAuth 的真实测试不能代替新方案验收。采用本轮明确授权；本轮所有新增提交标题和正文均为中文。
+更新：2026-10-22。已发布可安装 Android APK 与 Web/PWA 实施预览版，**最终交付仍在推进**。用户最新明确选择 GitHub App 的 All repositories，以免首次手工建库；保留三项能力，不恢复 OAuth repo。正在实现登录后自动准备存储、取消名称前缀限制与明确授权范围。所有新增提交标题和正文均为中文。
 
 ## 阶段与验收
 
@@ -42,21 +42,24 @@ D 是可用的预览产物验收，不代表 C 可以省略。全量功能、实
 
 ## 当前 GitHub App 迁移（2026-10-22）
 
-用户要求改用平台强制限制仓库范围的 GitHub App，保持自动建库和安全登录保存。原 OAuth 方案的 repo 范围过大，不再作为最终交付方案。新注册、安装及撤销旧授权步骤见 GITHUB_APP_SETUP.md。公开 App 为 https://github.com/apps/besledger-sync，ID 5426577、Client ID Iv23liqKVYOk5K5MFB1j；已通过真实 API 核对三项最小权限。
+用户先要求限定专用仓库，随后在充分说明风险后明确选择 GitHub App 的 All repositories，并已在安装 174137690 保存。此最新授权替代早先“只选专用仓库”的范围要求。App 仍仅 Contents 写入、Repository creation 写入、Metadata 只读；不恢复 OAuth repo，不申请 Administration。公开 App 为 https://github.com/apps/besledger-sync，ID 5426577、Client ID Iv23liqKVYOk5K5MFB1j。旧 OAuth 授权用户已确认撤销。
 
 - 本轮 OAuth 路径曾实际完成两套独立浏览器授权、应用内私有测试仓库创建、读回 private、首次上传、发现下载、修改回传、离线并发冲突、删除传播及显式恢复。
 - 私有验收仓库：BensonLaur/BesLedger-Data-Acceptance-20261022，仅有本轮虚构加密数据。旧协议测试仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 可作未选中仓库的权限负向验证，不能使用真实业务仓库测试越权。
 - OAuth 的实际刷新、锁定、浏览器进程重启后登录恢复及真实 refresh token 轮换均已通过；这证明持久化机制，不证明最小权限方案已验收。
 - Android v5 调试验收已通过 SQLite v1 数据文件迁移、原有余额与流水保留、虚构授权凭证的刷新/锁定/进程重启/离线恢复和主动退出。脚本 scripts/test-android-auth.mjs 为该验收入口。
 - 当前源码主线 c6ea34d6236751faa9e6528632575318f6a713aa 已推送，Web 已部署；v5 签名 APK 已构建和验签（CB374850C5024490D9786118B307143957347B8E49C161680940C61AA7485AED），因权限迁移未发布新版 Release。
-- 工作区已改为 GitHub App：只请求 offline_access；校验固定 App 身份、Only select repositories、最小三项权限、仓库名称/私有/本人归属；旧 OAuth 凭证升级即清除，不再调用全部私有仓库列表。
+- GitHub App 只请求 offline_access，校验固定 App 身份及三项能力。新版允许 All/selected；全部仓库模式不枚举账号全部仓库，只查询自动候选和本机已有绑定。以仓库 ID/owner ID 的专用标记或兼容旧加密目录识别账本，取消名称前缀限制。同名未知或公开仓库保持不动，自动尝试稳定备用名。
 - GitHub App 核心测试 59 项通过，三类浏览器登录保持流程通过（模拟 App 响应）。真实 App 的两个独立 Edge 存储已完成用户 Device Flow 授权、应用内自动创建 BesLedger-Data-AppTest-20261022、读回私有与安装范围、首次上传、发现解密下载、修改回传、离线并发冲突、删除/编辑冲突、删除传播与显式恢复。
 - 真实 GitHub App 用户令牌访问未选中的独立虚构私有仓库 BesLedger-Data-SyncTest-20261021 返回 404；应用仅列出安装中的专用仓库。没有测试任何无关业务仓库的文件。
 - 真实 App 登录在刷新、锁定/解锁、浏览器进程关闭并离线重启后保留，联网同步成功。仅在隔离测试存储将到期元数据调早，实际 GitHub refresh 请求成功，访问令牌和刷新令牌均轮换并加密落盘。
-- GitHub 页面要求 Only select repositories 至少选择一个现有仓库；已实测卸载后 GET /user/installations 为 200 空列表，POST /user/repos 为 403 Resource not accessible by integration。首次无专用仓库时必须由用户在 GitHub 确认创建私有仓库，客户端提供完整引导；安装后自动建库保留。该平台限制不能用扩大权限替代。Android v6 构建、最终 Pages 与 Release 仍待完成。
+- 已实测 selected 模式必须选择现有仓库，未安装时建库返回 403；用户因此选择 All repositories。新版登录后自动转到账本页、准备私有存储并发现远端账本，正常流程不输入仓库名。应用代码的范围限制不能等同 GitHub 的单仓库强制隔离，界面和安全文档明确说明。
+- v6 源码 80311647461ebe783d0cc0872a35333440ca5a59 的 Web/Android/Lint、签名构建及 Pages 全通过。APK 8,363,147 字节，SHA256 3fe9209b0dd1841917509f6485c7aa097fbc0535c658f6e94927f7f812803757，签名不变；模拟器从同签名 v4 升级到 v6 启动成功，原生旧 SQLite 数据及虚构登录保持脚本通过。因首次体验调整未发布 Release，最终将使用 v7 或更高。
 - 授权服务复用 https://besledger-github-auth.bensonlaur.chatgpt.site，project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；v3 已成功发布，源码 886ae9fac46760b0ea285bb112d030299108b79c，环境 revision 3，固定为新 GitHub App 身份。
 
 旧 OAuth 浏览器验收目录 private/oauth-acceptance/alpha、beta 已主动退出并关闭。新 App 验收目录 private/app-acceptance/alpha、beta 及临时测试恢复材料受当前 Windows 用户/SYSTEM ACL 保护且被忽略，未输出或入库。所有账目均虚构，禁止用真实财务文件补 fixture。
+
+当前自动准备版本：60 项核心测试、三类浏览器自动准备与登录保持通过；真实 All repositories 安装中自动识别既有虚构账本通过。Android versionCode 已升至 7，构建及首次自动准备实测待完成。v6 产物仅保留为内部验收，不发布为最终版本。
 
 ## 有效命令与恢复
 

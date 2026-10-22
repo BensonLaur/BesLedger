@@ -108,6 +108,21 @@ describe('并发与同步边界', () => {
           permissions: { push: true },
         });
       if (path.includes('/contents/')) {
+        if (path.endsWith('/contents/besledger/repository.json'))
+          return Response.json({
+            encoding: 'base64',
+            size: 120,
+            content: encode(
+              new TextEncoder().encode(
+                JSON.stringify({
+                  format: 'BesLedger.repository',
+                  version: 1,
+                  repositoryId: fixtureRepository.id,
+                  ownerId: 42,
+                }),
+              ),
+            ),
+          });
         if (init?.method === 'PUT') {
           const data = JSON.parse(String(init.body));
           if ((content ? String(version) : undefined) !== data.sha) return Response.json({}, { status: 409 });
@@ -156,7 +171,7 @@ describe('并发与同步边界', () => {
     expired = false;
     publicRepo = true;
     const before = writes;
-    await expect(syncLedger(a, id, binding, key, github)).rejects.toThrow('非私有');
+    await expect(syncLedger(a, id, binding, key, github)).rejects.toThrow('不是私有');
     expect(writes).toBe(before);
   });
 });

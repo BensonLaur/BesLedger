@@ -12,7 +12,7 @@
 
 ## GitHub App 注册与配置
 
-2026-10-22 权限审计后，改用公开的 [BesLedger Sync](https://github.com/apps/besledger-sync) GitHub App。App ID 为 5426577，公开 Client ID 为 Iv23liqKVYOk5K5MFB1j。仅 Contents 写入、Repository creation 写入、Metadata 只读；用户安装时使用 Only select repositories。维护者注册步骤见 GITHUB_APP_SETUP.md，普通用户无需注册应用。
+2026-10-22 改用公开的 [BesLedger Sync](https://github.com/apps/besledger-sync) GitHub App。App ID 为 5426577，公开 Client ID 为 Iv23liqKVYOk5K5MFB1j。仅 Contents 写入、Repository creation 写入、Metadata 只读；按用户最新决定，默认选择 All repositories 以实现首次自动建库。范围包含其他私有仓库的内容读写，必须如实说明。维护者注册步骤见 GITHUB_APP_SETUP.md，普通用户无需注册应用。
 
 开启 Device Flow 和 Expire user access tokens，关闭 Webhook。本版只请求 offline_access，登录及续期均不需要 Client Secret 或 App 私钥。服务配置 GITHUB_CLIENT_ID、GITHUB_APP_ID、GITHUB_APP_SLUG，以及固定来源 ALLOWED_ORIGINS。旧 OAuth App 的 repo 授权不再使用；用户应从 Authorized OAuth Apps 撤销旧 BesLedger。
 
@@ -20,7 +20,7 @@
 
 源码仓库变量 BESLEDGER_AUTH_SERVICE 使用上述 HTTPS 地址，并设置 BESLEDGER_GITHUB_APP_ID、BESLEDGER_GITHUB_APP_CLIENT_ID、BESLEDGER_GITHUB_APP_SLUG。Pages 和 Android 构建映射为 VITE_AUTH_SERVICE、VITE_GITHUB_APP_ID、VITE_GITHUB_APP_CLIENT_ID、VITE_GITHUB_APP_SLUG。开发可在被忽略的 .env.local 中配置这四个公开值；秘密不得使用 VITE_ 前缀。
 
-GitHub 安装页实际要求 Only select repositories 至少选择一个仓库。已用真实 App 用户令牌验证：卸载后身份授权仍有效、安装列表为空，但 POST /user/repos 返回 403 Resource not accessible by integration。首次没有专用仓库的用户必须在 GitHub 确认创建私有 BesLedger-Data，再只选该库安装。客户端已提供完整首次引导；安装后自动创建新专用私有仓库真实通过。不使用 All repositories 或宽权限 OAuth 绕过这一限制。
+Only select repositories 要求至少选择一个现有仓库；未安装时建库返回 403。最新默认流程为安装 All repositories → 应用登录 → 自动准备私有存储并发现远端账本。名称不由普通用户填写；同名其他用途仓库不覆盖，自动使用稳定备用名。全部仓库模式不枚举所有仓库，只查自动候选与本机已知绑定。高级用户仍可自行限定 selected 范围。
 
 已通过的真实 API 测试使用独立私有仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 和虚构加密账。它使用开发凭证验证协议，不作为应用内登录验收证据。
 

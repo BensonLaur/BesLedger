@@ -1,4 +1,4 @@
-# 最小权限 GitHub App 注册与安装
+# GitHub App 注册与自动同步安装
 
 2026-10-22：改用 GitHub App。旧 OAuth App 的 repo 权限不能缩小成单仓库授权；旧凭证不会被新版继续使用。本地加密账本和数据仓库保持原状。
 
@@ -29,15 +29,17 @@ Repository permissions 仅设置下列三项；其余仓库、组织和账号权
 
 ## 当前账号的安装
 
-进入新 App 的 Install App，选择自己的个人账号 BensonLaur。选择 **Only select repositories**，不要选择 All repositories。
+进入新 App 的 Install App，选择自己的个人账号。默认自动准备流程选择 **All repositories**。这是用户在了解范围后于 2026-10-22 明确选择的方案：保留三项能力，允许自动新建私有数据仓库，不回到 OAuth repo。
 
 实际界面已确认：不选择仓库时 Install 禁用，至少必须选择一个。本轮先选已创建且只有虚构密文的 **BesLedger-Data-Acceptance-20261022**；安装后应用真实自动创建 **BesLedger-Data-AppTest-20261022**，GitHub 自动将新仓库加入本 App 范围。不要选 BesLedger 源码仓库或其他业务仓库。
 
-首次无专用仓库的普通用户：打开 https://github.com/new ，名称 BesLedger-Data，可见性选 Private，确认创建；然后安装时仅选择这个仓库，返回应用登录。这个首次建库确认是当前 GitHub 限制：真实测试中卸载 App 后用户授权仍有效、GET /user/installations 返回空列表，但 POST /user/repos 被 403 Resource not accessible by integration 拒绝。不能宣称零仓库首次全自动，不申请更大范围来隐藏限制。后续应用内自动建库不受这一首次步骤影响。
+普通用户只需安装 App 并完成登录。应用自动准备私有存储、发现已有账本；无需输入仓库名。优先使用已有绑定，否则检查 BesLedger-Data 及稳定备用名；同名未知用途或公开仓库不覆盖。以专用标记或旧加密目录识别仓库，不依赖名称前缀。
+
+All repositories 允许内容读写覆盖账号内全部及未来仓库，包括私有仓库。代码只使用确认过的账本存储，但令牌泄露或恶意代码仍可能访问其他仓库；开源不等于平台隔离。用户也可自行选择 Only select repositories，代价是首次必须已有专用仓库。未安装时，真实建库请求被 GitHub 403 拒绝，因此任何模式都仍需先安装。
 
 已注册的 App 为 https://github.com/apps/besledger-sync，App ID 5426577，Client ID Iv23liqKVYOk5K5MFB1j。用户已在 Advanced 将注册改为 Public，API 返回的权限恰好是上述三项。App 注册公开不改变任何数据仓库的私有性。
 
-安装后返回 BesLedger 完成一次应用内登录。应用会核对安装对象、安装权限、Only select repositories，以及被授予的仓库范围；发现多余权限或非专用仓库时会停止云端操作，提示修改安装配置，不降级到 OAuth/PAT。
+安装后返回 BesLedger 完成一次应用内登录。应用核对本人账号、固定 App 身份、三项能力、存储标记、私有性和仓库数字 ID。发现额外能力、暂停安装、账号不符或未知内容时停止相关操作；不读取无关仓库文件，不降级到 OAuth/PAT。
 
 ## 收回旧 OAuth 授权
 

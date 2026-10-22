@@ -32,9 +32,11 @@ Web 使用 Dexie/IndexedDB；Android 使用独立 SQLite 原生适配。两者�
 
 ## GitHub 授权与密钥隔离
 
-2026-10-22 权限审计后改用 GitHub App 的 Device Flow：Web 和 Android 使用同一公开 App ID/client ID/slug，用户完成按仓库选择的安装，再在 GitHub 官方页面输入一次性授权码。服务只转发固定设备码、token 与续期端点，不接收账目或恢复密钥，不落盘或记录 token；校验来源、请求大小及短时限流。Device Flow 和其续期均无需 client secret 或 App 私钥。
+2026-10-22 改用 GitHub App 的 Device Flow：Web 和 Android 使用同一公开 App ID/client ID/slug，用户安装后在 GitHub 官方页面输入一次性授权码。默认安装范围按用户最新明确选择为 All repositories，以实现首次自动建库。服务只转发固定设备码、token 与续期端点，不接收账目或恢复密钥，不落盘或记录 token；校验来源、请求大小及短时限流。服务会短暂处理令牌，因此不能宣称维护者在技术上绝不可能接触令牌。Device Flow 和其续期均无需 client secret 或 App 私钥。
 
-仅接受 Contents write、Repository creation write、Metadata read 三项安装权限，不申请 Administration、Workflows、Actions、组织或账号管理权限。GitHub 在平台侧限制安装所授予的仓库；客户端还会拒绝 All repositories、额外权限、公开仓库、非本人仓库以及非 BesLedger-Data 或 BesLedger-Data-用途 命名的仓库。枚举使用 /user/installations/{id}/repositories，不再列出账号的全部私有仓库。读取和写入账本前重新核对安装、仓库 ID、归属与 private，未授权的仓库不能仅靠名称绕过检查。
+仅接受 Contents write、Repository creation write、Metadata read 三项能力，不申请 Administration、Workflows、Actions、组织或账号管理权限。All repositories 使令牌具有账号全部及未来仓库内容的读写能力；这是扩大后的真实权限，不属于平台单仓库隔离。开源代码可审查当前行为，但不能保证部署、后续更新或被盗令牌仍遵守代码约束。未授予 Administration 限制整仓管理能力，Contents 写入仍允许修改和删除文件。
+
+当前代码在全部仓库模式下只查询固定候选名和本机已有绑定，不调用全部私有仓库列表。使用专用标记（绑定仓库数字 ID 与 owner ID）或旧加密目录判断账本存储，不靠名称前缀。创建时显式 private，读回归属、仓库 ID、私有性后才初始化标记；读写流水前继续校验。同名未知用途或公开仓库不覆盖，改用稳定备用名。已有绑定不可见时停止，不切换成新空库。selected 模式保留平台范围检查，但不作为默认首次流程。
 
 2026-10-22 按用户要求改为安全保持登录。访问令牌、refresh token、有效期与 GitHub 数字用户 ID 单独加密保存：Web 使用独立 IndexedDB 数据库，Android 使用 SQLite 独立 credentials 表；不进入账本快照、上一版本、导出备份或云端仓库。凭证 AES-256-GCM 密钥通过 HKDF-SHA-256 从随机主密钥派生，使用独立 salt/info 用途标识，与财务数据的 AES 密钥隔离，且不可导出。持久化材料受原有口令封装保护，没有将明文密钥和令牌一起存盘；此方案不宣称使用 Android 硬件 Keystore。
 
@@ -60,4 +62,4 @@ GitHub App 用户令牌也具有读取公开资源的隐式能力；“限定专
 
 ## GitHub App 迁移边界
 
-Repository creation 用于自动新建私有数据仓库；创建后必须读回安装授权与 private 才能上传。GitHub 自动将应用新建的仓库纳入可访问范围。同名但未授权的仓库导致创建失败时，提示用户核对和选择；不扩大范围、不改名重建、不覆盖既有数据。旧 OAuth repo 权限超出业务所需，已停止沿用；新版解锁时将登录格式 v1 的旧 OAuth 凭证清除为版本墓碑，不对 GitHub 发出携带该旧令牌的请求，账本数据不受影响。服务端旧授权仍需用户在 Authorized OAuth Apps 中撤销。注册和最小权限操作见 GITHUB_APP_SETUP.md。
+Repository creation 用于自动新建私有数据仓库。GitHub 自动授予新建仓库访问权；All repositories 范围已经覆盖它。旧 OAuth repo 不再使用，用户已确认撤销旧授权；新版解锁时将登录格式 v1 的旧 OAuth 凭证清除为版本墓碑，不发送旧令牌，账本数据保持不变。注册、默认范围和保留的 selected 选项见 GITHUB_APP_SETUP.md。

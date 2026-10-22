@@ -22,6 +22,30 @@ const bookName = ref(''),
   conflictLedger = ref(''),
   removing = ref(''),
   deleteCloud = ref('');
+let preparedFor = 0;
+function knownRepositories(): string[] {
+  return Object.values(state.value!.bindings)
+    .filter(
+      (binding) =>
+        binding.userId === auth.value?.user.id &&
+        binding.owner.toLowerCase() === auth.value.user.login.toLowerCase(),
+    )
+    .map((binding) => binding.repo);
+}
+watch(
+  [auth, () => ui.busy],
+  ([login, busy]) => {
+    if (!login) {
+      preparedFor = 0;
+      return;
+    }
+    if (!busy && preparedFor !== login.user.id) {
+      preparedFor = login.user.id;
+      void prepareCloud();
+    }
+  },
+  { immediate: true },
+);
 const cloudOnly = computed(() =>
   Object.entries(state.value!.bindings).filter(([id, b]) => b.remoteExists && !state.value!.entities[id]),
 );
@@ -69,7 +93,19 @@ async function selectBook(id: string) {
 }
 async function getRepos() {
   await run(async () => {
-    repositories.value = await auth.value!.github.repositories();
+    repositories.value = await auth.value!.github.repositories(knownRepositories());
+  });
+}
+async function prepareCloud() {
+  await run(async () => {
+    const login = auth.value;
+    if (!login) return;
+    const repo = await login.github.prepareRepository(knownRepositories());
+    if (auth.value?.user.id !== login.user.id) return;
+    repositories.value = [repo];
+    selectedRepo.value = repo.full_name;
+    await discoverContents();
+    ui.notice = '云端私有存储已准备好，选择要同步的账本即可';
   });
 }
 async function createRepo() {
@@ -81,29 +117,30 @@ async function createRepo() {
   });
 }
 async function discover() {
-  await run(async () => {
-    const repo = selectedRepository.value;
-    if (!repo || !auth.value) throw new Error('请选择自己的私有数据仓库');
-    const files = await auth.value.github.discover(repo.owner.login, repo.name, auth.value.user.id);
-    await mutate((s) => {
-      for (const f of files) {
-        const previous = s.bindings[f.id];
-        if (previous && (previous.owner !== repo.owner.login || previous.repo !== repo.name))
-          throw new Error('发现相同账本身份绑定到其他仓库，请先核对');
-        s.bindings[f.id] = {
-          ...previous,
-          owner: repo.owner.login,
-          repo: repo.name,
-          userId: auth.value!.user.id,
-          remoteExists: true,
-          remoteHash: f.sha,
-          lastChecked: new Date().toISOString(),
-          ...(previous && previous.remoteHash !== f.sha ? { syncedDigest: undefined } : {}),
-        };
-      }
-    });
-    ui.notice = `已发现 ${files.length} 个加密账本；名称在解密后可见`;
+  await run(discoverContents);
+}
+async function discoverContents() {
+  const repo = selectedRepository.value;
+  if (!repo || !auth.value) throw new Error('请选择自己的私有数据仓库');
+  const files = await auth.value.github.discover(repo.owner.login, repo.name, auth.value.user.id);
+  await mutate((s) => {
+    for (const f of files) {
+      const previous = s.bindings[f.id];
+      if (previous && (previous.owner !== repo.owner.login || previous.repo !== repo.name))
+        throw new Error('发现相同账本身份绑定到其他仓库，请先核对');
+      s.bindings[f.id] = {
+        ...previous,
+        owner: repo.owner.login,
+        repo: repo.name,
+        userId: auth.value!.user.id,
+        remoteExists: true,
+        remoteHash: f.sha,
+        lastChecked: new Date().toISOString(),
+        ...(previous && previous.remoteHash !== f.sha ? { syncedDigest: undefined } : {}),
+      };
+    }
   });
+  ui.notice = `已发现 ${files.length} 个加密账本；名称在解密后可见`;
 }
 async function key() {
   if (recovery.value.trim()) return importKey(parseRecovery(recovery.value));
@@ -275,20 +312,28 @@ const deletedBooks = computed(() =>
   <div class="settings-grid section">
     <GitHubConnection />
     <section v-if="auth" class="card">
-      <h2>专用私有仓库</h2>
-      <p class="hint">选择前核对归属和内容。只有选定账本的密文会上传。</p>
-      <button class="secondary" :disabled="ui.busy" @click="getRepos">读取已授权的专用仓库</button
-      ><label
-        >数据仓库<select v-model="selectedRepo">
-          <option value="">请选择</option>
-          <option v-for="r in repositories" :value="r.full_name">{{ r.full_name }}</option>
-        </select></label
-      ><button class="primary" :disabled="ui.busy || !selectedRepo" @click="discover">发现已有账本</button>
-      <form class="inline-form" @submit.prevent="createRepo">
-        <input v-model="repoName" aria-label="新私有仓库名称" /><button class="secondary" :disabled="ui.busy">
-          创建私有仓库
-        </button>
-      </form>
+      <h2>云端私有存储</h2>
+      <p v-if="selectedRepo" class="hint">已准备：{{ selectedRepo }}</p>
+      <p class="hint">应用自动准备存储，无需输入仓库名称。只有你选择同步的账本密文会上传。</p>
+      <button class="secondary" :disabled="ui.busy" @click="prepareCloud">重新检查云端存储</button>
+      <details class="section">
+        <summary>高级：切换或新建独立数据仓库</summary>
+        <button class="secondary" :disabled="ui.busy" @click="getRepos">查找已有账本仓库</button
+        ><label
+          >数据仓库<select v-model="selectedRepo">
+            <option value="">请选择</option>
+            <option v-for="r in repositories" :value="r.full_name">{{ r.full_name }}</option>
+          </select></label
+        ><button class="primary" :disabled="ui.busy || !selectedRepo" @click="discover">发现已有账本</button>
+        <form class="inline-form" @submit.prevent="createRepo">
+          <input v-model="repoName" aria-label="新私有仓库名称" /><button
+            class="secondary"
+            :disabled="ui.busy"
+          >
+            创建私有仓库
+          </button>
+        </form>
+      </details>
       <label
         >原设备的同步恢复密钥（跨端下载时填写）<input
           v-model="recovery"

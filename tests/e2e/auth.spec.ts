@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { fixtureApp, fixtureInstallation } from '../fixtures';
+import { fixtureApp, fixtureInstallation, fixtureRepository } from '../fixtures';
 
 const password = 'fictional-browser-auth-password';
 async function unlock(page: Page) {
@@ -12,6 +12,7 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   page,
   context,
 }) => {
+  test.setTimeout(60000);
   let grants = 0,
     renewals = 0,
     rejectApi = false,
@@ -61,8 +62,34 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
       return route.fulfill({ status: 401, json: {} });
     const path = new URL(route.request().url()).pathname;
     if (path === '/user/installations')
-      return route.fulfill({ json: { installations: [fixtureInstallation] } });
+      return route.fulfill({
+        json: { installations: [{ ...fixtureInstallation, repository_selection: 'all' }] },
+      });
     if (path === '/user/installations/11/repositories') return route.fulfill({ json: { repositories: [] } });
+    if (path === '/repos/fictional-user/BesLedger-Data')
+      return route.fulfill({
+        json: {
+          ...fixtureRepository,
+          name: 'BesLedger-Data',
+          full_name: 'fictional-user/BesLedger-Data',
+          owner: { id: 42, login: 'fictional-user' },
+        },
+      });
+    if (path.endsWith('/contents/besledger/repository.json'))
+      return route.fulfill({
+        json: {
+          encoding: 'base64',
+          size: 120,
+          content: Buffer.from(
+            JSON.stringify({
+              format: 'BesLedger.repository',
+              version: 1,
+              repositoryId: fixtureRepository.id,
+              ownerId: 42,
+            }),
+          ).toString('base64'),
+        },
+      });
     return route.fulfill({
       json: new URL(route.request().url()).pathname === '/user' ? { id: 42, login: 'fictional-user' } : [],
     });
@@ -78,8 +105,10 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible({
     timeout: 15000,
   });
+  await expect(page.getByText('云端私有存储已准备好，选择要同步的账本即可')).toBeVisible();
   await page.reload();
   await unlock(page);
+  await page.goto('./#/settings');
   await page.getByRole('button', { name: '锁定', exact: true }).click();
   await unlock(page);
   // 页面关闭后新建页面，保留真实 IndexedDB；不使用测试变量模拟登录恢复。
@@ -90,7 +119,7 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   expect(grants).toBe(1);
   await reopened.getByRole('link', { name: '管理云端账本' }).click();
   rejectApi = true;
-  await reopened.getByRole('button', { name: '读取已授权的专用仓库' }).click();
+  await reopened.getByRole('button', { name: '重新检查云端存储' }).click();
   await expect.poll(() => renewals).toBe(1);
   await reopened.goto('./#/settings');
   const other = await context.newPage();
@@ -108,10 +137,12 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   await expect(other.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible({
     timeout: 15000,
   });
+  await expect(other.getByText('云端私有存储已准备好，选择要同步的账本即可')).toBeVisible();
+  await other.goto('./#/settings');
   rejectApi = true;
   revoke = true;
+  // 进入账本页会自动检查存储，失效授权无需额外点击就应被识别。
   await other.getByRole('link', { name: '管理云端账本' }).click();
-  await other.getByRole('button', { name: '读取已授权的专用仓库' }).click();
   await expect(other.getByRole('button', { name: '使用 GitHub 登录' })).toBeVisible();
   await expect(other.getByText('GitHub 授权已失效，请重新登录；本地账目不受影响')).toBeVisible();
   expect(grants).toBe(2);

@@ -1,5 +1,5 @@
-import { decode, encode } from '../../crypto/vault';
-import { assertMinimalPermissions, dedicatedRepository, githubApp, type GitHubAppIdentity } from './app';
+import { decode, encode, envelopeSchema } from '../../crypto/vault';
+import { assertMinimalPermissions, validRepositoryName, githubApp, type GitHubAppIdentity } from './app';
 export class GitHubError extends Error {
   constructor(
     public status: number,
@@ -30,9 +30,10 @@ export type AppInstallation = {
 };
 export class RepositoryNotGranted extends Error {
   constructor() {
-    super('此仓库未授予 BesLedger GitHub App，请在 Only select repositories 中仅选择专用私有账本仓库');
+    super('此仓库尚未授予 BesLedger GitHub App，请检查安装范围');
   }
 }
+export class RepositoryNotDedicated extends Error {}
 export class GitHub {
   constructor(
     private accessToken: string,
@@ -82,15 +83,16 @@ export class GitHub {
       );
       if (installed || result.installations.length < 100) break;
     }
-    if (!installed) throw new Error('请先将 BesLedger GitHub App 安装到自己的个人账号，并仅选择专用账本仓库');
+    if (!installed)
+      throw new Error('请先安装 BesLedger Sync；选择 All repositories 后，应用会自动准备私有账本仓库');
     if (installed.suspended_at) throw new Error('GitHub App 安装已暂停，请在 GitHub 恢复后重试');
-    if (installed.repository_selection !== 'selected')
-      throw new Error('当前安装允许访问全部仓库，已停止云端操作；请改为 Only select repositories');
+    if (!['all', 'selected'].includes(installed.repository_selection)) throw new Error('GitHub 安装范围无效');
     assertMinimalPermissions(installed.permissions);
     return { user, installation: installed };
   }
-  private async repositoryContext(): Promise<{ user: GitHubUser; repositories: Repository[] }> {
-    const { user, installation } = await this.installation();
+  private async selectedRepositories(installation: AppInstallation): Promise<Repository[]> {
+    // 全部仓库授权不等于枚举全部仓库；只查询固定候选名及本机已有绑定。
+    if (installation.repository_selection === 'all') return [];
     const all: Repository[] = [];
     for (let page = 1; ; page++) {
       const result = await this.request<{ repositories: Repository[] }>(
@@ -101,63 +103,208 @@ export class GitHub {
       all.push(...current);
       if (current.length < 100) break;
     }
-    // 选中无关仓库也视为安装配置错误，不能仅在列表中隐藏后继续使用宽权限令牌。
-    if (all.some((repo) => !repo.private || repo.owner.id !== user.id || !dedicatedRepository(repo.name)))
-      throw new Error('安装中包含非专用或非私有仓库，请仅保留自己的 BesLedger-Data 专用数据仓库');
-    return { user, repositories: all };
+    return all;
   }
-  async repositories(): Promise<Repository[]> {
-    return (await this.repositoryContext()).repositories;
+  private candidateNames(user: GitHubUser): string[] {
+    return ['BesLedger-Data', `BesLedger-Data-${this.app!.id}`, `BesLedger-Data-${this.app!.id}-${user.id}`];
   }
-  async verifyPrivate(owner: string, repo: string, userId?: number): Promise<Repository> {
-    if (!dedicatedRepository(repo)) throw new RepositoryNotGranted();
-    const context = await this.repositoryContext();
+  private async privateMetadata(owner: string, repo: string, userId?: number): Promise<Repository> {
+    const context = await this.installation();
     if (userId !== undefined && context.user.id !== userId) throw new Error('GitHub 账号与账本绑定不一致');
-    const selected = context.repositories.find(
-      (item) => item.owner.login.toLowerCase() === owner.toLowerCase() && item.name === repo,
+    if (context.user.login.toLowerCase() !== owner.toLowerCase())
+      throw new Error('只能使用自己的私有账本仓库');
+    const selected = (await this.selectedRepositories(context.installation)).find(
+      (item) => item.name === repo && item.owner.id === context.user.id,
     );
-    if (!selected) throw new RepositoryNotGranted();
+    if (context.installation.repository_selection === 'selected' && !selected)
+      throw new RepositoryNotGranted();
     const info = await this.request<Repository>(this.repoPath(owner, repo));
-    if (!info.private) throw new Error('该仓库不是私有仓库，已禁止传输账本');
-    if (info.id !== selected.id || info.owner.id !== context.user.id)
+    if (!info.private) throw new RepositoryNotDedicated('该仓库不是私有仓库，已禁止传输账本');
+    if ((selected && info.id !== selected.id) || info.owner.id !== context.user.id)
       throw new Error('仓库身份与安装范围不一致');
     if (!info.permissions?.push) throw new Error('当前授权没有仓库写入权限');
     return info;
   }
-  async createRepository(name: string): Promise<Repository> {
-    if (!dedicatedRepository(name)) throw new Error('请使用 BesLedger-Data 或 BesLedger-Data-用途 命名');
-    const { user, repositories } = await this.repositoryContext();
-    if (repositories.some((repo) => repo.name === name))
-      throw new Error('同名仓库已授权，请选择已有仓库；不会覆盖内容');
+  private async marker(info: Repository): Promise<boolean> {
     try {
-      await this.request('/user/repos', 'POST', {
-        name,
-        private: true,
-        auto_init: true,
-        description: 'BesLedger 客户端加密账本数据',
-        has_issues: false,
-        has_projects: false,
-        has_wiki: false,
-      });
+      const file = await this.request<{ content: string; encoding: string; size: number }>(
+        `${this.repoPath(info.owner.login, info.name)}/contents/besledger/repository.json`,
+      );
+      if (file.encoding !== 'base64' || file.size > 4096) return false;
+      let marker: Record<string, unknown>;
+      try {
+        marker = JSON.parse(new TextDecoder().decode(decode(file.content.replaceAll('\n', ''))));
+      } catch {
+        return false;
+      }
+      if (!marker || typeof marker !== 'object' || Array.isArray(marker)) return false;
+      return (
+        marker.format === 'BesLedger.repository' &&
+        marker.version === 1 &&
+        marker.repositoryId === info.id &&
+        marker.ownerId === info.owner.id
+      );
     } catch (error) {
-      if (error instanceof GitHubError && error.status === 422)
-        throw new Error(
-          '仓库未创建：同名仓库可能已存在但尚未授权，或名称不符合 GitHub 规则；请检查安装范围，不会覆盖原数据',
-        );
+      if (!(error instanceof GitHubError) || error.status !== 404) throw error;
+    }
+    // 兼容已实际同步过的旧版仓库，以专用目录和加密文件格式识别，不依赖名字前缀。
+    const base = this.repoPath(info.owner.login, info.name);
+    try {
+      const root = await this.request<{ name: string; type: string }[]>(`${base}/contents`);
+      if (!Array.isArray(root) || root.some((f) => !['README.md', 'besledger'].includes(f.name)))
+        return false;
+      const files = await this.request<{ name: string; type: string }[]>(`${base}/contents/besledger/v1`);
+      if (
+        !Array.isArray(files) ||
+        !files.length ||
+        files.some((f) => f.type !== 'file' || !/^[a-f0-9-]{36}\.json$/.test(f.name))
+      )
+        return false;
+      const file = await this.request<{ content: string; encoding: string; size: number }>(
+        `${base}/contents/besledger/v1/${files[0].name}`,
+      );
+      if (file.encoding !== 'base64' || file.size > 25_000_000) return false;
+      try {
+        return envelopeSchema.safeParse(
+          JSON.parse(new TextDecoder().decode(decode(file.content.replaceAll('\n', '')))),
+        ).success;
+      } catch {
+        return false;
+      }
+    } catch (error) {
+      if (error instanceof GitHubError && error.status === 404) return false;
       throw error;
     }
-    // GitHub 会自动授予新建仓库；只等待该范围传播，不再次执行创建请求。
-    for (let attempt = 0; ; attempt++) {
+  }
+  async verifyPrivate(owner: string, repo: string, userId?: number): Promise<Repository> {
+    const info = await this.privateMetadata(owner, repo, userId);
+    if (!(await this.marker(info)))
+      throw new RepositoryNotDedicated('此仓库尚未确认为 BesLedger 账本存储，已停止读写，不会覆盖原内容');
+    return info;
+  }
+  async repositories(known: string[] = []): Promise<Repository[]> {
+    const { user, installation } = await this.installation();
+    const selected = await this.selectedRepositories(installation);
+    const names = [
+      ...new Set([
+        ...known,
+        ...this.candidateNames(user),
+        ...selected.filter((r) => r.private && r.owner.id === user.id).map((r) => r.name),
+      ]),
+    ];
+    const result: Repository[] = [];
+    for (const name of names) {
+      if (!validRepositoryName(name)) continue;
+      try {
+        const info = await this.privateMetadata(user.login, name, user.id);
+        if (await this.marker(info)) result.push(info);
+      } catch (error) {
+        if (
+          error instanceof RepositoryNotDedicated ||
+          error instanceof RepositoryNotGranted ||
+          (error instanceof GitHubError && error.status === 404)
+        )
+          continue;
+        throw error;
+      }
+    }
+    return result;
+  }
+  async prepareRepository(known: string[] = []): Promise<Repository> {
+    const { user } = await this.installation();
+    // 已有绑定优先，避免升级或新页面打开时把旧账本切到新空库。
+    for (const name of [...new Set(known)]) {
       try {
         return await this.verifyPrivate(user.login, name, user.id);
       } catch (error) {
-        if (!(error instanceof RepositoryNotGranted) || attempt >= 3) throw error;
+        if (
+          !(error instanceof RepositoryNotGranted) &&
+          !(error instanceof GitHubError && error.status === 404)
+        )
+          throw error;
+      }
+    }
+    if (known.length) throw new Error('原云端存储当前不可见，请检查授权或仓库状态；不会自动换成新空库');
+    for (const name of this.candidateNames(user)) {
+      try {
+        const info = await this.privateMetadata(user.login, name, user.id);
+        if (await this.marker(info)) return info;
+        continue; // 同名但不属于本应用的内容保持不动，自动采用下一个稳定名称。
+      } catch (error) {
+        if (error instanceof RepositoryNotDedicated) continue;
+        if (
+          !(error instanceof RepositoryNotGranted) &&
+          !(error instanceof GitHubError && error.status === 404)
+        )
+          throw error;
+      }
+      try {
+        return await this.createRepository(name);
+      } catch (error) {
+        if (!(error instanceof GitHubError) || error.status !== 422) throw error;
+        // 另一设备可能已创建但尚未写好标记；只重读，不覆盖文件或重复 POST。
+        for (let attempt = 0; attempt < 3; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt));
+          try {
+            const info = await this.privateMetadata(user.login, name, user.id);
+            if (await this.marker(info)) return info;
+          } catch (readError) {
+            if (
+              !(readError instanceof RepositoryNotGranted) &&
+              !(readError instanceof GitHubError && readError.status === 404)
+            )
+              throw readError;
+          }
+        }
+      }
+    }
+    throw new Error('自动存储名称均已被其他内容占用，原仓库保持不变；请从高级设置选择已确认的账本仓库');
+  }
+  async createRepository(name: string): Promise<Repository> {
+    if (!validRepositoryName(name)) throw new Error('仓库名称格式无效');
+    const { user } = await this.installation();
+    const created = await this.request<Repository>('/user/repos', 'POST', {
+      name,
+      private: true,
+      auto_init: true,
+      description: 'BesLedger 客户端加密账本数据',
+      has_issues: false,
+      has_projects: false,
+      has_wiki: false,
+    });
+    // GitHub 会自动授予新建仓库；只等待该范围传播，不再次执行创建请求。
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const info = await this.privateMetadata(user.login, name, user.id);
+        if (info.id !== created.id) throw new Error('新建仓库身份不一致，已停止初始化');
+        const content = encode(
+          new TextEncoder().encode(
+            JSON.stringify({
+              format: 'BesLedger.repository',
+              version: 1,
+              repositoryId: info.id,
+              ownerId: user.id,
+            }),
+          ),
+        );
+        await this.request(`${this.repoPath(user.login, name)}/contents/besledger/repository.json`, 'PUT', {
+          message: '初始化加密账本存储标记',
+          content,
+        });
+        return await this.verifyPrivate(user.login, name, user.id);
+      } catch (error) {
+        if (
+          !(error instanceof RepositoryNotGranted) &&
+          !(error instanceof GitHubError && error.status === 404)
+        )
+          throw error;
+        if (attempt >= 3) throw error;
         await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt));
       }
     }
   }
   private repoPath(owner: string, repo: string): string {
-    if (!/^[\w.-]+$/.test(owner) || !/^[\w.-]+$/.test(repo)) throw new Error('仓库标识无效');
+    if (!/^[\w.-]+$/.test(owner) || !validRepositoryName(repo)) throw new Error('仓库标识无效');
     return `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
   }
   async discover(owner: string, repo: string, userId: number): Promise<{ id: string; sha: string }[]> {
