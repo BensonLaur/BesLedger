@@ -4,6 +4,7 @@ import { AuthorizationInvalid, parseTokenReply, type AuthTokens } from './tokens
 import { githubApp } from './app';
 const service = import.meta.env.VITE_AUTH_SERVICE as string | undefined;
 export const authConfigured = !!service && !!githubApp;
+export const repositorySetupUrl = 'https://github.com/new';
 export const installationUrl = githubApp ? `https://github.com/apps/${githubApp.slug}/installations/new` : '';
 export type DeviceCode = {
   device_code: string;
@@ -40,7 +41,11 @@ export async function startAuthorization(): Promise<DeviceCode> {
   return code;
 }
 export async function openAuthorization(url: string): Promise<void> {
-  if (url !== 'https://github.com/login/device' && (!installationUrl || url !== installationUrl))
+  if (
+    url !== 'https://github.com/login/device' &&
+    url !== repositorySetupUrl &&
+    (!installationUrl || url !== installationUrl)
+  )
     throw new Error('授权地址不受信任');
   if (Capacitor.isNativePlatform()) await Browser.open({ url });
   else window.open(url, '_blank', 'noopener,noreferrer');

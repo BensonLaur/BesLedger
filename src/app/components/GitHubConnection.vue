@@ -4,6 +4,7 @@ import { auth, githubSession, run, ui } from '../store';
 import {
   authConfigured,
   installationUrl,
+  repositorySetupUrl,
   openAuthorization,
   pollAuthorization,
   startAuthorization,
@@ -110,5 +111,24 @@ async function logout() {
         退出并清除本机登录
       </button>
     </template>
+    <details v-if="authConfigured" class="section">
+      <summary>首次使用，还没有专用私有仓库</summary>
+      <p class="hint">
+        GitHub 要求安装时至少选择一个仓库。首次需要在 GitHub
+        确认建库；完成安装后，可在本应用自动创建更多专用私有仓库。
+      </p>
+      <ol>
+        <li>
+          在 GitHub 新建 <strong>BesLedger-Data</strong>，可见性务必选择
+          <strong>Private</strong>，无需上传文件。
+        </li>
+        <li>安装本应用，选择 Only select repositories，只勾选这个专用仓库。</li>
+        <li>返回这里登录，进入“管理云端账本”选择仓库，再决定上传哪些账本。</li>
+      </ol>
+      <p class="hint">若同名仓库已存在，先核对它确实是自己的私有账本仓库；不要覆盖或删除已有数据。</p>
+      <button class="secondary" @click="openAuthorization(repositorySetupUrl)">
+        在 GitHub 创建首个私有仓库
+      </button>
+    </details>
   </section>
 </template>

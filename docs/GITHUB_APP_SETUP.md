@@ -31,7 +31,9 @@ Repository permissions 仅设置下列三项；其余仓库、组织和账号权
 
 进入新 App 的 Install App，选择自己的个人账号 BensonLaur。选择 **Only select repositories**，不要选择 All repositories。
 
-实际界面已确认：不选择仓库时 Install 禁用，至少必须选择一个。本轮只选已创建且只有虚构密文的 **BesLedger-Data-Acceptance-20261022**；不要选 BesLedger 源码仓库或其他业务仓库。安装后应用已真实自动创建 **BesLedger-Data-AppTest-20261022**，GitHub 自动将新仓库加入本 App 范围。新用户零仓库安装路径仍需独立核实，不以扩大授权作为替代。
+实际界面已确认：不选择仓库时 Install 禁用，至少必须选择一个。本轮先选已创建且只有虚构密文的 **BesLedger-Data-Acceptance-20261022**；安装后应用真实自动创建 **BesLedger-Data-AppTest-20261022**，GitHub 自动将新仓库加入本 App 范围。不要选 BesLedger 源码仓库或其他业务仓库。
+
+首次无专用仓库的普通用户：打开 https://github.com/new ，名称 BesLedger-Data，可见性选 Private，确认创建；然后安装时仅选择这个仓库，返回应用登录。这个首次建库确认是当前 GitHub 限制：真实测试中卸载 App 后用户授权仍有效、GET /user/installations 返回空列表，但 POST /user/repos 被 403 Resource not accessible by integration 拒绝。不能宣称零仓库首次全自动，不申请更大范围来隐藏限制。后续应用内自动建库不受这一首次步骤影响。
 
 已注册的 App 为 https://github.com/apps/besledger-sync，App ID 5426577，Client ID Iv23liqKVYOk5K5MFB1j。用户已在 Advanced 将注册改为 Public，API 返回的权限恰好是上述三项。App 注册公开不改变任何数据仓库的私有性。
 

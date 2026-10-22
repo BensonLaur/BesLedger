@@ -20,7 +20,7 @@
 
 源码仓库变量 BESLEDGER_AUTH_SERVICE 使用上述 HTTPS 地址，并设置 BESLEDGER_GITHUB_APP_ID、BESLEDGER_GITHUB_APP_CLIENT_ID、BESLEDGER_GITHUB_APP_SLUG。Pages 和 Android 构建映射为 VITE_AUTH_SERVICE、VITE_GITHUB_APP_ID、VITE_GITHUB_APP_CLIENT_ID、VITE_GITHUB_APP_SLUG。开发可在被忽略的 .env.local 中配置这四个公开值；秘密不得使用 VITE_ 前缀。
 
-GitHub 安装页实际要求 Only select repositories 至少选择一个仓库。安装后应用自动创建新的专用私有仓库已经真实验证；没有现有专用仓库的新用户首次准备仍是独立待解决限制，不能以 All repositories 代替。新版只列出该 App 安装中选定的专用私有仓库。
+GitHub 安装页实际要求 Only select repositories 至少选择一个仓库。已用真实 App 用户令牌验证：卸载后身份授权仍有效、安装列表为空，但 POST /user/repos 返回 403 Resource not accessible by integration。首次没有专用仓库的用户必须在 GitHub 确认创建私有 BesLedger-Data，再只选该库安装。客户端已提供完整首次引导；安装后自动创建新专用私有仓库真实通过。不使用 All repositories 或宽权限 OAuth 绕过这一限制。
 
 已通过的真实 API 测试使用独立私有仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 和虚构加密账。它使用开发凭证验证协议，不作为应用内登录验收证据。
 
