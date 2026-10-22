@@ -18,13 +18,13 @@ Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管
 
 ## 界面预览
 
-以下为实际运行的 Web/PWA 手机布局，与 Android 共用界面。全部账本、账户和金额均为虚构演示数据；工资示例为 6,000 元，另有 400 元奖金。点击图片可查看大图。
+以下为当前 0.1.3 构建实际运行的 Web/PWA 手机布局，与 Android 共用界面；首页柱体已按原型的连续三面、配色和比例重新绘制后截图。全部账本、账户和金额均为虚构演示数据；工资示例为 6,000 元，另有 400 元奖金。点击图片可查看大图。
 
 | 收支日历与月预算 | 分类记账与数字键盘 | 账户与资产总览 |
 | :---: | :---: | :---: |
 | <a href="docs/images/preview-home.png"><img src="docs/images/preview-home.png" width="260" alt="真实运行界面：月度收支、预算水印与每日金额日历，使用虚构数据" /></a> | <a href="docs/images/preview-entry.png"><img src="docs/images/preview-entry.png" width="260" alt="真实运行界面：午餐分类选中、金额、备注、付款账户和数字键盘" /></a> | <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="真实运行界面：现金、信用卡、银行卡和网络账户的虚构余额" /></a> |
 
-当前源码采用「日常钱包」图标；已发布的 0.1.2 APK 仍是原 B 图标，新图标将随下一次安装包更新。
+当前 0.1.3 测试构建采用「日常钱包」图标与新版日历柱体，Android versionCode 11 沿用原包名和长期签名。上方公开 Release 仍为 0.1.2，其 APK 保留原 B 图标；测试迭代不单独新增公开 Release，也不覆盖旧版附件。
 
 ## 登录、解锁与同步
 

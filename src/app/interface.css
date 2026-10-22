@@ -236,7 +236,7 @@ textarea {
   padding: 4px 0 6px;
 }
 .calendar-cell {
-  height: 61px;
+  height: 58px;
   min-width: 0;
   border: 0;
 }
@@ -249,6 +249,7 @@ textarea {
   align-items: center;
   justify-content: center;
   font-size: clamp(30px, 8vw, 42px);
+  font-weight: 600;
   letter-spacing: -2px;
   color: var(--accent);
   opacity: 0.18;
@@ -271,24 +272,6 @@ textarea {
   font-size: 11px;
   bottom: 3px;
   color: var(--accent);
-}
-.day-bar {
-  bottom: 24px;
-  width: 13px;
-  background: #466486;
-  box-shadow: 5px 2px 0 #293f5a;
-  transform: skewX(-12deg);
-}
-.day-bar:before {
-  height: 4px;
-  top: -4px;
-  left: 2px;
-  right: -4px;
-  background: #9eb8d0;
-  transform: skewX(-45deg);
-}
-.negative .day-bar {
-  transform: skewX(-12deg) scaleY(-1);
 }
 .calendar-legend {
   padding: 0 6px;
@@ -903,7 +886,7 @@ textarea {
     margin: 9px 0 0;
   }
   .calendar-cell {
-    height: 59px;
+    height: 58px;
   }
   .calendar-cell small {
     font-size: 11px;
@@ -1028,13 +1011,6 @@ textarea {
   }
   .entry-icon.account-tone-receivable {
     color: #e7c291;
-  }
-  .day-bar {
-    background: #aec6e8;
-    box-shadow: 5px 2px 0 #7699ba;
-  }
-  .day-bar:before {
-    background: #cce2f5;
   }
 }
 

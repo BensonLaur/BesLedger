@@ -11,6 +11,7 @@ import { today } from '../../domain/time';
 import Icon from '../components/Icon.vue';
 import Modal from '../components/Modal.vue';
 import EntryList from '../components/EntryList.vue';
+import CalendarBar from '../components/CalendarBar.vue';
 const route = useRoute();
 const filters = ref(false),
   search = ref(''),
@@ -219,15 +220,8 @@ async function saveBudget() {
                   @click="ui.selectedDay = ui.selectedDay === day ? '' : day"
                 >
                   <span class="date-watermark">{{ Number(day.slice(8)) }}</span
-                  ><span
-                    v-if="day <= today() && value(day)"
-                    class="day-bar"
-                    :class="{ broken: Math.abs(value(day)) > scale }"
-                    :style="{
-                      height: Math.max(2, 24 * Math.min(Math.abs(value(day)) / (scale || 1), 1)) + 'px',
-                    }"
-                  ></span
-                  ><small>{{
+                  ><CalendarBar v-if="day <= today() && value(day)" :amount="value(day)" :ceiling="scale" />
+                  <small>{{
                     day > today() ? '' : days[day] ? money(value(day)).replace('.00', '') : '—'
                   }}</small>
                 </button></template

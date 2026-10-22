@@ -141,7 +141,7 @@ async function restore() {
           卸载、清除应用或站点数据会丢失本地账目，请先导出备份并独立保存恢复密钥。系统权限与安装渠道可能不同，尚未完成应用商店审核。
         </p>
       </details>
-      <p class="hint">BesLedger 0.1.2 · 人民币 · 本地加密</p>
+      <p class="hint">BesLedger 0.1.3 · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
         target="_blank"

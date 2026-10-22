@@ -665,41 +665,6 @@ svg {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.day-bar {
-  position: absolute;
-  bottom: 21px;
-  width: 15px;
-  background: linear-gradient(90deg, #6c85a7, #7992b2);
-  border-radius: 2px 0 0 0;
-  box-shadow: 3px 1px 0 #4a658b55;
-}
-.day-bar:before {
-  content: '';
-  position: absolute;
-  top: -3px;
-  height: 3px;
-  left: 1px;
-  right: -2px;
-  transform: skewX(-32deg);
-  background: #aac0d8;
-}
-.day-bar.broken:after {
-  content: '≋';
-  position: absolute;
-  bottom: 5px;
-  left: -2px;
-  right: -3px;
-  color: var(--surface);
-  font-size: 21px;
-  font-weight: 900;
-  line-height: 8px;
-  transform: rotate(-12deg);
-}
-.negative .day-bar {
-  background: var(--green);
-  box-shadow: 3px -1px 0 #367b6933;
-  transform: scaleY(-1);
-}
 .negative small {
   color: var(--green);
 }
@@ -1969,9 +1934,6 @@ svg {
   }
   .income-track i {
     background: #91c9ae33;
-  }
-  .day-bar {
-    background: linear-gradient(90deg, #7293c1, #8eabd1);
   }
   .danger {
     color: #32201e;
