@@ -16,9 +16,11 @@
 
 开启 Device Flow 和 Expire user access tokens，关闭 Webhook。本版只请求 offline_access，登录及续期均不需要 Client Secret 或 App 私钥。Web 服务配置 GITHUB_CLIENT_ID、GITHUB_APP_ID、GITHUB_APP_SLUG，以及固定来源 ALLOWED_ORIGINS；Android 使用原生网络直连 GitHub 授权端点，不依赖该中转。旧 OAuth App 的 repo 授权不再使用，用户已确认撤销旧 BesLedger。
 
-实际原生验收发现：当前模拟器直连网络访问托管中转时被平台边缘返回 403，导致 WebView 预检缺少 CORS 头，Worker 的允许来源配置并无遗漏。Android 已改为官方原生 HTTP 直连；Web/PWA 仍需要中转服务可达，受托管平台拦截的网络无法完成 Web 登录，可由维护者在可达环境部署同一服务。没有通过更换请求身份或关闭安全校验绕过托管平台限制。
+2026-10-23：Web/PWA 的共享中转已迁到 Cloudflare Pages Functions，地址 https://besledger-github-auth.pages.dev，由维护者统一部署并内置到发布包。普通用户无需托管账号、手机号验证、部署或配置服务。当前网络匿名健康检查和三项跨域预检已通过；真实浏览器迁移验收进度见 IMPLEMENTATION_STATUS.md。现有 GitHub App 身份保持不变，迁移本身不清除已保存登录。
 
-授权服务源代码在 services/auth-relay/src/index.ts；可用 Wrangler 部署，也已通过 Sites 部署。当前 Sites project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd，地址 https://besledger-github-auth.bensonlaur.chatgpt.site。更新运行环境后重新部署既有版本，不重复创建 Site。
+授权服务源码在 services/auth-relay/src/index.ts，Pages 入口与配置在 services/auth-relay/pages/，维护命令见 services/auth-relay/README.md。使用锁定的 Wrangler 4.152.0，凭证通过 Windows Credential Manager 加密保护，授权限于用户/账号读取、Workers 脚本及 Pages 管理。免费额度为每天共用 100,000 次函数请求，不引入数据库或付费绑定。
+
+历史原因：Sites 域名在部分网络被托管边缘返回 403；Vercel 因注册短信不可达未部署；Cloudflare 单独 Worker 的 workers.dev 在当前网络解析异常，改用 Pages Functions 的 pages.dev。没有要求用户修改代理、关闭浏览器安全检查或自行搭服务。旧 Sites 仅保留历史，不作为新版本默认或自动回退端点。
 
 源码仓库变量 BESLEDGER_AUTH_SERVICE 使用上述 HTTPS 地址，并设置 BESLEDGER_GITHUB_APP_ID、BESLEDGER_GITHUB_APP_CLIENT_ID、BESLEDGER_GITHUB_APP_SLUG。Pages 和 Android 构建映射为 VITE_AUTH_SERVICE、VITE_GITHUB_APP_ID、VITE_GITHUB_APP_CLIENT_ID、VITE_GITHUB_APP_SLUG。开发可在被忽略的 .env.local 中配置这四个公开值；秘密不得使用 VITE_ 前缀。
 

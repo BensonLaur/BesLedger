@@ -1,0 +1,13 @@
+{
+  "name": "besledger-github-auth",
+  "pages_build_output_dir": "./public",
+  "compatibility_date": "2026-10-21",
+  "send_metrics": false,
+  "upload_source_maps": false,
+  "vars": {
+    "GITHUB_CLIENT_ID": "Iv23liqKVYOk5K5MFB1j",
+    "GITHUB_APP_ID": "5426577",
+    "GITHUB_APP_SLUG": "besledger-sync",
+    "ALLOWED_ORIGINS": "https://bensonlaur.github.io"
+  }
+}

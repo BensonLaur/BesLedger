@@ -51,3 +51,6 @@ android/app/build/
 artifacts/
 .tools/
 .cache/
+.wrangler/
+.dev.vars
+.dev.vars.*

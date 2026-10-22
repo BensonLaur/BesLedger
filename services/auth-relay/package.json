@@ -3,5 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": "24.x" }
+  "scripts": {
+    "dev": "wrangler pages dev --cwd pages --ip 127.0.0.1 --port 8787",
+    "check": "wrangler pages functions build --cwd pages --outdir ../.wrangler/pages-build --sourcemap=false",
+    "deploy": "wrangler pages deploy --cwd pages --project-name besledger-github-auth --branch main --upload-source-maps=false"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  }
 }

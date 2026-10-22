@@ -1,12 +1,15 @@
 {
-  "name": "besledger-auth",
+  "name": "besledger-github-auth",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-21",
+  "workers_dev": true,
+  "preview_urls": false,
+  "send_metrics": false,
   "observability": { "enabled": false },
   "vars": {
-    "GITHUB_CLIENT_ID": "",
-    "GITHUB_APP_ID": "",
-    "GITHUB_APP_SLUG": "",
-    "ALLOWED_ORIGINS": "https://bensonlaur.github.io,https://localhost,http://localhost,http://127.0.0.1:4173",
+    "GITHUB_CLIENT_ID": "Iv23liqKVYOk5K5MFB1j",
+    "GITHUB_APP_ID": "5426577",
+    "GITHUB_APP_SLUG": "besledger-sync",
+    "ALLOWED_ORIGINS": "https://bensonlaur.github.io",
   },
 }

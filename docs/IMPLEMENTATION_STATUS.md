@@ -1,6 +1,6 @@
 # 实施状态
 
-追加任务（2026-10-22）：用户要求 Web/PWA 普通用户无需部署或配置中转。已复现现有公开 Sites 在平台边缘返回 403，应用内 CORS 无法解除；已准备 Vercel Node 适配、平台访客限流和发布前匿名可达性检查，相关 25 项测试及类型检查通过。维护者已表示将连接 Vercel；等待连接后部署、切换内置服务地址并完成真实 Web 验收。此迁移尚未上线，不能把准备完成写成可达性已修复。
+追加任务（2026-10-23）：Web/PWA 中转改用 Cloudflare Pages Functions，生产地址 https://besledger-github-auth.pages.dev。Vercel 因短信验证不可达取消；Cloudflare 账号已注册并授权，部署凭证由 Windows Credential Manager 保护。单独 Worker 已上传，但 workers.dev 在当前网络解析异常、连接超时，改为同账号免费的 Pages Functions。首次 Pages 部署 1697998a 已成功，当前网络匿名健康检查、固定 App 身份及三项跨域预检通过；65 项核心测试通过、1 项默认集成跳过，Wrangler 依赖审计 0 漏洞。仓库发布变量已切换，接下来发布新版 Web 并做真实浏览器授权、续期和同步，尚未以服务探针代替完整验收。
 
 更新：2026-10-22。0.1.0 正式交付版已发布，必需功能和可用环境中的验收完成。Web/PWA 与长期签名 Android APK 可下载；真实 GitHub App 授权、自动私有建库、Web/Android 双向同步和安全保持登录通过。物理 Android/iPad 未接入，网络及设备边界见逐项验收记录。所有阶段提交标题和正文均为中文。
 

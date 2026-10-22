@@ -4,11 +4,7 @@ export interface Env {
   GITHUB_APP_SLUG: string;
   ALLOWED_ORIGINS: string;
 }
-export function createRelay(
-  transport: typeof fetch = fetch,
-  clientAddress: (request: Request) => string = (request) =>
-    request.headers.get('CF-Connecting-IP') || 'local',
-) {
+export function createRelay(transport: typeof fetch = fetch) {
   const rates = new Map<string, { count: number; reset: number }>();
   return {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -61,8 +57,8 @@ export function createRelay(
       if (!configured) return Response.json({ error: 'app_not_configured' }, { status: 503, headers });
       if (Number(request.headers.get('Content-Length') || 0) > 8192)
         return new Response('Too large', { status: 413, headers });
-      // 由部署适配器选择平台保证的真实地址，不能在新平台上让所有用户共用 local 限流桶。
-      const ip = clientAddress(request);
+      // 只使用 Cloudflare 覆写的平台头；调用者自行传入的 X-Forwarded-For 不参与限流身份。
+      const ip = request.headers.get('CF-Connecting-IP') || 'local';
       const now = Date.now(),
         rate = rates.get(ip);
       if (rate && rate.reset > now && rate.count >= 90)
