@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { WebBackend } from '../src/storage/backend';
 import { Vault, migrate } from '../src/storage/vault';
 import { emptyState, put } from '../src/domain/model';
-import { decrypt, encrypt, importKey } from '../src/crypto/vault';
+import { decode, decrypt, encode, encrypt, importKey } from '../src/crypto/vault';
 import { fixture, entry } from './fixtures';
 import { saveEntry, deleteEntry, accountBalance } from '../src/domain/ledger';
 import { list } from '../src/domain/model';
@@ -83,8 +83,14 @@ describe('加密存储和失败恢复', () => {
     await b.unlock('fictional-test-password');
     expect(Object.keys(b.state!.entities)).toHaveLength(1);
     const backup = JSON.parse(await b.exportBackup());
-    backup.data.ciphertext = `A${backup.data.ciphertext.slice(1)}`;
-    await expect(b.inspectBackup(JSON.stringify(backup), 'fictional-test-password')).rejects.toThrow();
+    // 翻转实际字节，避免随机密文原本以 A 开头时测试没有发生任何篡改。
+    const tampered = decode(backup.data.ciphertext);
+    tampered[0] ^= 1;
+    backup.data.ciphertext = encode(tampered);
+    await expect(
+      // 失败断言也不输出 inspectBackup 返回的临时测试密钥。
+      b.inspectBackup(JSON.stringify(backup), 'fictional-test-password').then(() => undefined),
+    ).rejects.toThrow();
     backend.close();
   });
   it('完整备份支持独立恢复密钥，恢复后设备身份不同；失败保持原数据库', async () => {
