@@ -14,7 +14,9 @@
 
 2026-10-22 改用公开的 [BesLedger Sync](https://github.com/apps/besledger-sync) GitHub App。App ID 为 5426577，公开 Client ID 为 Iv23liqKVYOk5K5MFB1j。仅 Contents 写入、Repository creation 写入、Metadata 只读；按用户最新决定，默认选择 All repositories 以实现首次自动建库。范围包含其他私有仓库的内容读写，必须如实说明。维护者注册步骤见 GITHUB_APP_SETUP.md，普通用户无需注册应用。
 
-开启 Device Flow 和 Expire user access tokens，关闭 Webhook。本版只请求 offline_access，登录及续期均不需要 Client Secret 或 App 私钥。服务配置 GITHUB_CLIENT_ID、GITHUB_APP_ID、GITHUB_APP_SLUG，以及固定来源 ALLOWED_ORIGINS。旧 OAuth App 的 repo 授权不再使用；用户应从 Authorized OAuth Apps 撤销旧 BesLedger。
+开启 Device Flow 和 Expire user access tokens，关闭 Webhook。本版只请求 offline_access，登录及续期均不需要 Client Secret 或 App 私钥。Web 服务配置 GITHUB_CLIENT_ID、GITHUB_APP_ID、GITHUB_APP_SLUG，以及固定来源 ALLOWED_ORIGINS；Android 使用原生网络直连 GitHub 授权端点，不依赖该中转。旧 OAuth App 的 repo 授权不再使用，用户已确认撤销旧 BesLedger。
+
+实际原生验收发现：当前模拟器直连网络访问托管中转时被平台边缘返回 403，导致 WebView 预检缺少 CORS 头，Worker 的允许来源配置并无遗漏。Android 已改为官方原生 HTTP 直连；Web/PWA 仍需要中转服务可达，受托管平台拦截的网络无法完成 Web 登录，可由维护者在可达环境部署同一服务。没有通过更换请求身份或关闭安全校验绕过托管平台限制。
 
 授权服务源代码在 services/auth-relay/src/index.ts；可用 Wrangler 部署，也已通过 Sites 部署。当前 Sites project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd，地址 https://besledger-github-auth.bensonlaur.chatgpt.site。更新运行环境后重新部署既有版本，不重复创建 Site。
 

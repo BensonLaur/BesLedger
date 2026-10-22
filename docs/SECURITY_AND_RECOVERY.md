@@ -32,7 +32,9 @@ Web 使用 Dexie/IndexedDB；Android 使用独立 SQLite 原生适配。两者�
 
 ## GitHub 授权与密钥隔离
 
-2026-10-22 改用 GitHub App 的 Device Flow：Web 和 Android 使用同一公开 App ID/client ID/slug，用户安装后在 GitHub 官方页面输入一次性授权码。默认安装范围按用户最新明确选择为 All repositories，以实现首次自动建库。服务只转发固定设备码、token 与续期端点，不接收账目或恢复密钥，不落盘或记录 token；校验来源、请求大小及短时限流。服务会短暂处理令牌，因此不能宣称维护者在技术上绝不可能接触令牌。Device Flow 和其续期均无需 client secret 或 App 私钥。
+2026-10-22 改用 GitHub App 的 Device Flow：Web 和 Android 使用同一公开 App ID/client ID/slug，用户安装后在 GitHub 官方页面输入一次性授权码。默认安装范围按用户最新明确选择为 All repositories，以实现首次自动建库。Web 通过固定授权中转端点处理跨域；服务不接收账目或恢复密钥，不落盘或记录 token，但会短暂处理令牌，因此不能宣称维护者在技术上绝不可能接触令牌。
+
+Android versionCode 8 起使用 CapacitorHttp 原生网络直接请求 GitHub 的设备码、换取令牌和续期端点，不经过 Web 中转。固定 HTTPS GitHub 地址、禁用重定向、设置连接/读取超时；不携带 client secret 或 App 私钥。已将 Capacitor loggingBehavior 设为 none，包括调试验收包，避免原生桥接将令牌参数写入日志。原生直连不改变已解锁设备、恶意代码和系统管理员的风险边界。
 
 仅接受 Contents write、Repository creation write、Metadata read 三项能力，不申请 Administration、Workflows、Actions、组织或账号管理权限。All repositories 使令牌具有账号全部及未来仓库内容的读写能力；这是扩大后的真实权限，不属于平台单仓库隔离。开源代码可审查当前行为，但不能保证部署、后续更新或被盗令牌仍遵守代码约束。未授予 Administration 限制整仓管理能力，Contents 写入仍允许修改和删除文件。
 

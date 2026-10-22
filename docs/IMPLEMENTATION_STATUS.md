@@ -59,7 +59,9 @@ D 是可用的预览产物验收，不代表 C 可以省略。全量功能、实
 
 旧 OAuth 浏览器验收目录 private/oauth-acceptance/alpha、beta 已主动退出并关闭。新 App 验收目录 private/app-acceptance/alpha、beta 及临时测试恢复材料受当前 Windows 用户/SYSTEM ACL 保护且被忽略，未输出或入库。所有账目均虚构，禁止用真实财务文件补 fixture。
 
-当前自动准备版本：60 项核心测试、三类浏览器自动准备与登录保持通过；真实 All repositories 安装中自动识别既有虚构账本通过。Android versionCode 已升至 7，构建及首次自动准备实测待完成。v6 产物仅保留为内部验收，不发布为最终版本。
+自动准备版 caeb02250ee27d541e8a84faa5d1a24118d53661：60 项核心测试、15 条浏览器流程通过；真实 All repositories 自动创建 BesLedger-Data（private，id 1429836113）、重复准备复用同库、上传虚构新账本通过。v7 构建与原生 SQLite/虚构登录保持脚本通过，APK 8,364,071 字节、SHA256 9d667d0972051066e89f826ec223063bd93fa99782fde7d52e92c46fcf278987；尚未发布 Release。
+
+原生真实登录发现托管中转边缘 403/CORS 拦截，现改为 CapacitorHttp 直连 GitHub，禁用重定向与桥接日志。63 项核心测试通过。versionCode 升为 8，需重新构建并完成 Android 真实授权与同步，不能以 v7 的模拟凭证持久化测试代替。Web/PWA 的中转可达性限制见 DEPLOYMENT.md。
 
 ## 有效命令与恢复
 

@@ -1,9 +1,10 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { AuthorizationInvalid, parseTokenReply, type AuthTokens } from './tokens';
 import { githubApp } from './app';
+import { nativeAuthorization } from './native-auth';
 const service = import.meta.env.VITE_AUTH_SERVICE as string | undefined;
-export const authConfigured = !!service && !!githubApp;
+export const authConfigured = !!githubApp && (Capacitor.isNativePlatform() || !!service);
 export const installationUrl = githubApp ? `https://github.com/apps/${githubApp.slug}/installations/new` : '';
 export type DeviceCode = {
   device_code: string;
@@ -12,8 +13,12 @@ export type DeviceCode = {
   expires_in: number;
   interval: number;
 };
-async function relay<T>(path: string, payload: unknown): Promise<T> {
+async function relay<T>(path: string, payload: Record<string, unknown>): Promise<T> {
   if (!authConfigured) throw new Error('GitHub App 尚未配置；本地记账不受影响');
+  if (Capacitor.isNativePlatform())
+    return (await nativeAuthorization(githubApp!, path, payload, (options) =>
+      CapacitorHttp.post(options),
+    )) as T;
   const url = new URL(service!);
   if (url.protocol !== 'https:' && url.hostname !== '127.0.0.1' && url.hostname !== 'localhost')
     throw new Error('授权服务必须使用 HTTPS');
