@@ -12,7 +12,7 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 当前完整版本为 **0.1.3**：统一采用「日常钱包」图标，首页轻立体日历恢复原型的连续三面、配色与比例。包含五项底部导航、分步创建账户、分类选择反馈，以及本地加密记账、登录保持、设备保存同步密钥和跨端同步。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.3 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-release.apk)（Android 10 起）。[0.1.3 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 11 已验签，与原正式预览包及 0.1.0–0.1.2 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/SHA256SUMS.txt)。0.1.2 及更早 Release 已归档清理，页面只保留 0.1.3，源码标签保留；旧说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.3 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-release.apk)（Android 10 起）。[0.1.3 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 11 已验签，与原正式预览包及 0.1.0–0.1.2 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/SHA256SUMS.txt)。0.1.2 及更早 Release 已清理，页面只保留 0.1.3，源码标签保留；旧版本信息见 [历史版本记录](docs/RELEASE_ARCHIVE.md)。
 
 Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 

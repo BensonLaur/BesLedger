@@ -1,8 +1,6 @@
-# 历史 Release 归档
+# 历史版本记录
 
-当前新版为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)。2026-10-23 完成旧版归档清理。以下五个历史 Release 的说明、附件、原校验文件和元数据已打包归档。历史安装包仅用于追溯，普通用户请下载当前新版。
-
-[下载 0.1.1 及更早发布归档](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-legacy-releases-20261023.zip)。归档内 `ARCHIVE_MANIFEST.json` 记录全部 15 个原附件的大小和 SHA-256；各目录同时保留原 `release.json`、更新说明和原有校验文件。Git 标签及提交历史继续保留。
+当前版本为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)。旧 Release 及两份历史归档附件均已按用户要求移除，不再提供旧版下载。以下保留版本与校验记录，源码提交和标签继续保留。
 
 ## v0.1.0-preview.1
 
@@ -51,9 +49,7 @@
 
 原名称：Bes记账 0.1.2 · 统一界面与跨端同步。发布时间：2026-10-22T19:06:38Z。源码标签：[查看 v0.1.2](https://github.com/BensonLaur/BesLedger/tree/v0.1.2)。
 
-[下载 0.1.2 完整归档](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.2-archive.zip)，13,535,221 字节，SHA-256：`bbcf1f77b845144cefd4b0d50c8db0446d179b6bf55fb79051e3a2647884bf87`。
-
-包含原 Release 元数据、说明、全部 5 个附件及原校验文件；更早四版的 ZIP 作为原附件完整保留。归档内 `ARCHIVE_MANIFEST.json` 记录逐项校验值，公开下载后再次解压核对通过。
+以下为原附件的历史校验值，仅用于追溯。
 
 | 原附件 | 字节 | SHA-256 |
 | --- | ---: | --- |
@@ -65,6 +61,6 @@
 
 ## 清理范围
 
-两批归档均在公开下载、SHA-256 与 ZIP 完整性验证通过后才删除旧 Release。先清理早期四版，再按用户追加授权归档删除 0.1.2；Releases 页面只保留 0.1.3。五个历史标签与提交对象保持不变，0.1.3 标签仍指向原应用构建提交。
+旧五版 Release 已删除。两份归档曾在上传并核验后用于保留旧产物，随后按用户要求移除；当前 Release 只提供 APK、Web/PWA 生产包、校验文件与签名说明。
 
-本次只调整发布说明、历史归档与校验清单，0.1.3 的 APK 和 Web/PWA 生产包内容及校验值保持不变。源码仓库、私有数据仓库、用户账目与签名材料均未改动。执行证据见 [逐项验收记录](DELIVERY_VERIFICATION.md)。
+源码提交与标签保留。0.1.3 的 APK 和 Web/PWA 内容及校验值保持不变，私有账本与签名材料未改动。执行记录见 [逐项验收](DELIVERY_VERIFICATION.md)。

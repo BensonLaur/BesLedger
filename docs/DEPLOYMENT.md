@@ -2,9 +2,9 @@
 
 当前阶段 Web：https://bensonlaur.github.io/BesLedger/。源码：https://github.com/BensonLaur/BesLedger。
 
-当前统一下载入口为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)：长期签名 Android versionCode 11、对应 Web/PWA、SHA-256、签名说明及历史发布归档。包名与原签名不变，可直接覆盖升级；先独立保存加密备份及恢复密钥，不先卸载或清空数据。
+当前统一下载入口为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)：长期签名 Android versionCode 11、对应 Web/PWA、SHA-256 与签名说明。包名与原签名不变，可直接覆盖升级；先独立保存加密备份及恢复密钥，不先卸载或清空数据。
 
-旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1、v0.1.2 的说明、附件和校验信息见 [历史归档](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/；两个站点各自保存本地数据，已有用户继续使用原网址。
+旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1、v0.1.2 的版本与校验信息见 [历史版本记录](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/；两个站点各自保存本地数据，已有用户继续使用原网址。
 
 ## Web/PWA
 
@@ -62,12 +62,12 @@ package ID：com.bensoftware.besledger；Android 10/API 29 起，compile/target 
 
 短信权限受系统和安装渠道限制，当前仅侧载/模拟器验证；没有 Google Play 审核批准。权限拒绝不阻止备注粘贴。真实设备矩阵、APK 最终哈希与完整范围逐项结果见 IMPLEMENTATION_STATUS.md 和 DELIVERY_VERIFICATION.md。
 
-## 统一版本发布与历史归档
+## 统一版本发布与历史记录
 
 完成工程验证后，用相同应用源文件构建 APK 和 Web/PWA。发布前检查版本标签是否已存在，不为单项修复创建重复 Release。生产包只包含 dist；签名 APK 沿用长期证书和包名，versionCode 必须递增。
 
-先下载旧 Release 的 release.json、说明、全部附件与校验文件，核对附件大小和 GitHub 提供的 SHA-256，生成归档清单和 ZIP。新 Release 连同归档上传并读回验证成功后，才删除明确授权的旧 Release；删除时不使用删除标签的选项。最后复核对应旧标签的提交对象未改变。
+清理旧 Release 须依据用户授权，保留源码标签与提交。需要归档时，先保存说明、附件和校验信息并核对；移除公开附件时同步清理下载链接与校验清单。
 
-当前发布附件固定包含 APK、Web/PWA ZIP、SHA256SUMS.txt、signature.txt 与历史归档文件。当前归档分为 0.1.1 及更早版本、0.1.2 两份 ZIP，Releases 页面只保留 0.1.3。GitHub Pages 和 Cloudflare 备用站点均更新到同一构建；历史验收文档使用归档入口，不能继续指向已删除附件。
+当前公开附件仅包含 APK、Web/PWA ZIP、SHA256SUMS.txt 和 signature.txt，Releases 页面只保留 0.1.3。两份历史归档 ZIP 已按用户要求移除。GitHub Pages 与 Cloudflare 备用站点使用同一构建，历史文档不再引导下载旧附件。
 
 本轮额外验证入口：`scripts/test-android-interface.mjs` 限定 emulator-5558 / BesLedgerUiApi36；`scripts/test-android-sync-keys.mjs` 可用 BESLEDGER_TEST_SERIAL 指定同一隔离模拟器。`scripts/create-android-upgrade-fixture.mjs` 仅生成虚构的旧格式加密 SQLite 样本，输出到已忽略的 artifacts；仅在隔离模拟器建立基线后进行正式签名包的覆盖升级，禁止注入任何真实用户设备。
