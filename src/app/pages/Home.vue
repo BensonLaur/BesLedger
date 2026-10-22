@@ -119,39 +119,32 @@ async function saveBudget() {
           "
         /><button class="icon-button" aria-label="下个月" @click="shift(1)"><Icon name="right" /></button>
       </div>
-      <div class="pills">
-        <button
-          :class="{ active: !ui.allTime && ui.month === today().slice(0, 7) }"
-          @click="
-            ui.month = today().slice(0, 7);
-            ui.allTime = false;
-            ui.selectedDay = '';
-          "
-        >
-          本月</button
-        ><button
-          :class="{ active: ui.allTime }"
-          @click="
-            ui.allTime = true;
-            ui.selectedDay = '';
-          "
-        >
-          全部时间
-        </button>
-      </div>
+      <button
+        class="home-current-month"
+        @click="
+          ui.month = today().slice(0, 7);
+          ui.allTime = false;
+          ui.selectedDay = '';
+        "
+      >
+        本月
+      </button>
     </div>
     <div class="home-columns">
       <section class="overview-column">
         <div class="overview">
           <div class="overview-top">
-            <span>{{ ui.allTime ? '全部时间' : ui.month.replace('-', ' 年 ') + ' 月' }} · 净支出</span
+            <span
+              >{{ ui.allTime ? '全部时间' : ui.month.replace('-', ' 年 ') + ' 月' }}净支出 · 已抵减退款</span
             ><button
               v-if="!ui.allTime"
               class="budget-toggle"
+              :aria-label="budget?.data.enabled ? '预算 开' : '预算 关'"
               :aria-pressed="!!budget?.data.enabled"
               @click="toggleBudget"
             >
-              预算 {{ budget?.data.enabled ? '开' : '关' }}
+              <span>预算</span><span class="budget-switch" :class="{ on: budget?.data.enabled }"></span
+              ><span class="sr-only">{{ budget?.data.enabled ? '开' : '关' }}</span>
             </button>
           </div>
           <div class="hero-amount" :class="{ budgeted: budget?.data.enabled && !ui.allTime }">
@@ -185,11 +178,24 @@ async function saveBudget() {
           </div>
         </div>
         <section v-if="!ui.allTime" class="calendar-card">
-          <div class="section-heading">
-            <button class="text-button" @click="collapsed = !collapsed">
-              每日{{ metric === 'expense' ? '净支出' : '收入' }}<Icon name="down" :size="15" /></button
-            ><button class="text-button" @click="metric = metric === 'expense' ? 'income' : 'expense'">
-              切换为{{ metric === 'expense' ? '收入' : '净支出' }}
+          <div class="calendar-toolbar">
+            <div class="pills">
+              <button
+                :class="{ active: metric === 'expense' }"
+                :aria-pressed="metric === 'expense'"
+                @click="metric = 'expense'"
+              >
+                净支出</button
+              ><button
+                :class="{ active: metric === 'income' }"
+                :aria-pressed="metric === 'income'"
+                @click="metric = 'income'"
+              >
+                收入
+              </button>
+            </div>
+            <button class="text-button" :aria-expanded="!collapsed" @click="collapsed = !collapsed">
+              {{ collapsed ? '展开日历' : '收起日历' }}
             </button>
           </div>
           <template v-if="!collapsed"
@@ -235,6 +241,25 @@ async function saveBudget() {
         </section>
       </section>
       <section class="details-column">
+        <div class="home-scope">
+          <button
+            :aria-pressed="!ui.allTime && !ui.selectedDay"
+            @click="
+              ui.allTime = false;
+              ui.selectedDay = '';
+            "
+          >
+            整月</button
+          ><button
+            :aria-pressed="ui.allTime"
+            @click="
+              ui.allTime = true;
+              ui.selectedDay = '';
+            "
+          >
+            全部时间</button
+          ><span v-if="ui.selectedDay">已选择 {{ ui.selectedDay }}</span>
+        </div>
         <div class="section-heading details-heading">
           <h2>{{ ui.selectedDay || (ui.allTime ? '全部时间' : ui.month) }} 明细</h2>
           <button class="icon-button" aria-label="搜索与筛选" @click="filters = !filters">

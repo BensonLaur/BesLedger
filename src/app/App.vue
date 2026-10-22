@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import { closeTopModal } from './modal-stack';
 import { useRegisterSW } from 'virtual:pwa-register/vue';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
@@ -13,12 +15,13 @@ import RuleForm from './components/RuleForm.vue';
 import Modal from './components/Modal.vue';
 import SmsPicker from './components/SmsPicker.vue';
 const offline = ref(!navigator.onLine);
+const route = useRoute();
 const navigation = [
   { path: '/', name: '明细', icon: 'book' },
   { path: '/accounts', name: '账户', icon: 'wallet' },
-  { path: '/events', name: '事件', icon: 'calendar' },
-  { path: '/statistics', name: '统计', icon: 'chart' },
-  { path: '/settings', name: '我的', icon: 'settings' },
+  { path: '/events', name: '事件', icon: 'events' },
+  { path: '/statistics', name: '统计', icon: 'statistics' },
+  { path: '/settings', name: '我的', icon: 'user' },
 ];
 const { needRefresh, updateServiceWorker } = useRegisterSW({ immediate: true });
 async function applyUpdate() {
@@ -40,11 +43,8 @@ onMounted(() => {
   });
   if (Capacitor.isNativePlatform()) {
     void NativeApp.addListener('backButton', () => {
-      if (ui.editor) ui.confirm = 'discard';
-      else if (ui.detailId) ui.detailId = '';
-      else if (ui.accountForm) ui.accountForm = false;
-      else if (ui.ruleForm) ui.ruleForm = false;
-      else if (location.hash && location.hash !== '#/') history.back();
+      if (closeTopModal()) return;
+      if (location.hash && location.hash !== '#/') history.back();
       else void NativeApp.minimizeApp();
     });
   }
@@ -52,7 +52,7 @@ onMounted(() => {
 </script>
 <template>
   <Unlock v-if="!state" />
-  <div v-else class="app-shell">
+  <div v-else class="app-shell" :class="{ 'is-home': route.path === '/' }">
     <aside class="sidebar">
       <RouterLink class="brand" to="/"
         ><img src="/icon.svg" alt="" /><span>Bes记账<small>BesLedger</small></span></RouterLink
@@ -95,15 +95,16 @@ onMounted(() => {
       </div>
       <main class="page"><RouterView /></main>
     </div>
-    <nav class="bottom-nav">
-      <RouterLink v-for="item in navigation.slice(0, 2)" :key="item.path" :to="item.path"
+    <nav class="bottom-nav" aria-label="底部导航">
+      <RouterLink v-for="item in navigation.slice(1, 3)" :key="item.path" :to="item.path"
         ><Icon :name="item.icon" /><span>{{ item.name }}</span></RouterLink
-      ><button class="fab" aria-label="记一笔" @click="newEntry()"><Icon name="plus" :size="26" /></button
-      ><RouterLink v-for="item in navigation.slice(2, 4)" :key="item.path" :to="item.path"
+      ><button v-if="route.path === '/'" class="fab" aria-label="记一笔" @click="newEntry()">
+        <Icon name="plus" :size="26" /><span>记一笔</span>
+      </button>
+      <RouterLink v-else to="/" class="home-return"><Icon name="home" /><span>首页</span></RouterLink
+      ><RouterLink v-for="item in navigation.slice(3)" :key="item.path" :to="item.path"
         ><Icon :name="item.icon" /><span>{{ item.name }}</span></RouterLink
-      ><RouterLink class="mobile-settings" to="/settings" aria-label="我的"
-        ><Icon name="settings"
-      /></RouterLink>
+      >
     </nav>
     <EntryEditor v-if="ui.editor && ui.draft" :key="ui.editingId || ui.draft.createdAt" />
     <EntryDetail v-if="ui.detailId" />

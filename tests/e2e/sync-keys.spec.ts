@@ -60,10 +60,14 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     await initialize(b, '虚构电脑本地账', async () => {
       await b.goto('./#/accounts');
       await b.getByRole('button', { name: '添加账户', exact: true }).click();
-      const account = b.getByRole('dialog', { name: '添加共用账户' });
+      await b
+        .getByRole('dialog', { name: '选择账户类型' })
+        .getByRole('button', { name: '现金 随身现金、备用金' })
+        .click();
+      const account = b.getByRole('dialog', { name: '添加账户', exact: true });
       await account.getByLabel('账户名称').fill('虚构仅本地现金');
-      await account.getByLabel('期初余额（元）').fill('1000');
-      await account.getByLabel('起算日期时间').fill('2026-01-01T00:00');
+      await account.getByLabel('账户里有多少钱（元）').fill('1000');
+      await account.getByLabel('从什么时候开始记').fill('2026-01-01T00:00');
       await account.getByRole('button', { name: '保存账户' }).click();
       await expect(account).toBeHidden();
       await b.goto('./#/');
@@ -154,7 +158,7 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     await b.goto('./#/');
     await expect(b.getByRole('button').filter({ hasText: '虚构仅本地流水' })).toContainText('9.87');
     await b.goto('./#/accounts');
-    await expect(b.getByText('余额 ¥ 990.13', { exact: true })).toBeVisible();
+    await expect(b.getByRole('button', { name: /余额 ¥ 990[.]13/ })).toBeVisible();
     await b.goto('./#/books');
     await localCard.getByRole('button', { name: '首次上传', exact: true }).click();
     await expect(localCard.getByText('已同步', { exact: true })).toBeVisible();

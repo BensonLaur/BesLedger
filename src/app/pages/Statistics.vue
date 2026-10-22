@@ -6,6 +6,7 @@ import { groupReport, filterEntries } from '../../domain/reports';
 import { totals, contribution } from '../../domain/ledger';
 import { money } from '../../domain/money';
 import EntryList from '../components/EntryList.vue';
+const filtersOpen = ref(false);
 const dimension = ref<'category' | 'account' | 'month'>('category'),
   selected = ref(''),
   account = ref(''),
@@ -68,17 +69,21 @@ function label(id: string) {
       <option :value="true">全部时间</option>
     </select>
   </div>
-  <div class="filter-panel">
-    <input v-if="!ui.allTime" v-model="ui.month" type="month" aria-label="统计月份" /><select
-      v-model="account"
-      aria-label="统计账户"
-    >
+  <div class="report-period">
+    <input v-if="!ui.allTime" v-model="ui.month" type="month" aria-label="统计月份" /><span v-else
+      >全部记录</span
+    ><button class="text-button" :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen">
+      筛选
+    </button>
+  </div>
+  <div v-if="filtersOpen" class="filter-panel">
+    <select v-model="account" aria-label="统计账户">
       <option value="">全部账户</option>
       <option v-for="a in accounts" :value="a.id">{{ a.data.name }}</option></select
     ><label>起始<input v-model="start" type="date" /></label
     ><label>截止<input v-model="end" type="date" /></label>
   </div>
-  <div class="summary-grid">
+  <div class="summary-grid report-summary">
     <div class="card">
       <small>净支出</small><strong>¥ {{ money(summary.expense) }}</strong>
     </div>
@@ -95,6 +100,7 @@ function label(id: string) {
   <div class="pills wide-pills">
     <button
       :class="{ active: dimension === 'category' }"
+      :aria-pressed="dimension === 'category'"
       @click="
         dimension = 'category';
         selected = '';
@@ -103,6 +109,7 @@ function label(id: string) {
       分类</button
     ><button
       :class="{ active: dimension === 'account' }"
+      :aria-pressed="dimension === 'account'"
       @click="
         dimension = 'account';
         selected = '';
@@ -111,6 +118,7 @@ function label(id: string) {
       账户</button
     ><button
       :class="{ active: dimension === 'month' }"
+      :aria-pressed="dimension === 'month'"
       @click="
         dimension = 'month';
         selected = '';
@@ -125,6 +133,7 @@ function label(id: string) {
       v-for="group in groups"
       class="chart-row"
       :class="{ selected: selected === group.id }"
+      :aria-pressed="selected === group.id"
       @click="selected = selected === group.id ? '' : group.id"
     >
       <span>{{ label(group.id) }}</span>

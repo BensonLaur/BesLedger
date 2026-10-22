@@ -9,6 +9,8 @@ import { recognize, type Recognition } from '../../recognition/sms';
 import { localTime } from '../../domain/time';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
+import { entryIcon, loanIcons, transferIcons } from '../entry-presentation';
+import { accountIcon } from '../account-presentation';
 const draft = reactive(structuredClone(toRaw(ui.draft!)));
 const amount = ref(draft.amount ? decimal(draft.amount) : ''),
   interest = ref(decimal(draft.interest));
@@ -19,6 +21,19 @@ const tab = ref(
       ? 'refund'
       : draft.type,
 );
+const datePicker = ref(false),
+  dateInput = ref(draft.at),
+  expandedGroup = ref('餐饮');
+const keypadTarget = ref<'amount' | 'interest'>('amount');
+function keypress(key: string) {
+  const target = keypadTarget.value === 'interest' ? interest : amount;
+  let value = target.value;
+  if (key === 'delete') value = value.slice(0, -1);
+  else if (key === '.') {
+    if (!value.includes('.')) value = (value || '0') + '.';
+  } else value = value === '0' ? key : value + key;
+  if (/^\d{0,12}(?:\.\d{0,2})?$/.test(value)) target.value = value;
+}
 const showInterest = ref(draft.interest > 0),
   categoryPicker = ref(false),
   categorySearch = ref(''),
@@ -59,6 +74,7 @@ const interestSummary = computed(() => {
 const filteredCategories = computed(() =>
   allCategories.value.filter((c) => `${c.group}${c.name}`.includes(categorySearch.value)),
 );
+const categoryGroups = computed(() => [...new Set(filteredCategories.value.map((c) => c.group))]);
 const counterpartSide = computed(() => (['borrow', 'collect'].includes(draft.type) ? 'from' : 'to'));
 const availableAccounts = computed(() =>
   accounts.value.filter(
@@ -110,6 +126,7 @@ function switchType(type: Entry['type']) {
     draft.due = undefined;
     interest.value = '0';
   }
+  keypadTarget.value = 'amount';
   tab.value = isLoan.value ? 'loan' : type;
   showInterest.value = interest.value !== '0' && interest.value !== '0.00';
   if (draft.type !== 'refund') delete draft.originalId;
@@ -225,44 +242,51 @@ async function save(again = false) {
 }
 </script>
 <template>
-  <Modal :title="ui.editingId ? '编辑账目' : '记一笔'" wide @close="close"
+  <Modal :title="ui.editingId ? '编辑账目' : '记一笔'" page wide @close="close"
     ><form class="entry-form" @submit.prevent="save()">
       <div class="type-tabs">
         <button
           v-for="item in [
-            { type: 'expense', name: '支出' },
             { type: 'income', name: '收入' },
+            { type: 'expense', name: '支出' },
             { type: 'transfer', name: '转账' },
             { type: 'loan', name: '借贷' },
           ]"
           :key="item.type"
           type="button"
           :class="{ active: tab === item.type }"
+          :aria-pressed="tab === item.type"
           @click="switchType(item.type === 'loan' ? 'borrow' : (item.type as Entry['type']))"
         >
           {{ item.name }}</button
         ><button v-if="draft.type === 'refund'" type="button" class="active">退款</button>
       </div>
-      <div class="amount-input">
-        <span class="entry-icon"
-          ><Icon :name="draft.type === 'income' ? 'income' : twoAccounts ? 'transfer' : 'food'" :size="26"
-        /></span>
-        <div>
-          <small
-            >{{ category?.name || typeLabels[draft.type]
-            }}{{ ['repay', 'collect'].includes(draft.type) ? '总额' : '金额' }}</small
-          ><label class="sr-only" for="entry-amount">金额</label>
-          <div>
-            <span>¥</span
-            ><input
-              id="entry-amount"
-              v-model="amount"
-              inputmode="decimal"
-              placeholder="0.00"
-              autocomplete="off"
-              required
-            />
-          </div>
+      <div class="entry-amount-card">
+        <button
+          class="selected-category"
+          type="button"
+          :disabled="twoAccounts"
+          :aria-label="'当前分类：' + (category?.name || (twoAccounts ? typeLabels[draft.type] : '未选择'))"
+          @click="categoryPicker = true"
+        >
+          <span class="entry-icon"><Icon :name="entryIcon(state!, draft)" :size="24" /></span>
+          <strong aria-live="polite">{{
+            category?.name ||
+            (twoAccounts ? (draft.type === 'transfer' ? draft.behavior : typeLabels[draft.type]) : '选择分类')
+          }}</strong>
+          <Icon v-if="!twoAccounts" name="down" :size="13" />
+        </button>
+        <div class="entry-amount-value">
+          <span>¥</span><label class="sr-only" for="entry-amount">金额</label
+          ><input
+            id="entry-amount"
+            v-model="amount"
+            inputmode="none"
+            placeholder="0.00"
+            autocomplete="off"
+            required
+            @focus="keypadTarget = 'amount'"
+          />
         </div>
       </div>
       <div v-if="draft.type === 'expense' || draft.type === 'income'" class="category-grid">
@@ -270,10 +294,10 @@ async function save(again = false) {
           v-for="c in quickItems"
           type="button"
           :class="{ active: draft.categoryId === c.id }"
+          :aria-pressed="draft.categoryId === c.id"
           @click="draft.categoryId = c.id"
         >
-          <span><Icon :name="c.group === '餐饮' ? 'food' : c.group === '收入' ? 'income' : 'receipt'" /></span
-          >{{ c.name }}</button
+          <span><Icon :name="c.icon" /></span>{{ c.name }}</button
         ><button type="button" @click="categoryPicker = true">
           <span><Icon name="more" /></span>全部
         </button>
@@ -283,9 +307,10 @@ async function save(again = false) {
           v-for="t in ['borrow', 'lend', 'repay', 'collect'] as Entry['type'][]"
           type="button"
           :class="{ active: draft.type === t }"
+          :aria-pressed="draft.type === t"
           @click="switchType(t)"
         >
-          <span><Icon name="users" /></span>{{ typeLabels[t] }}
+          <span><Icon :name="loanIcons[t]" /></span>{{ typeLabels[t] }}
         </button>
       </div>
       <div v-if="draft.type === 'transfer'" class="behavior-grid five">
@@ -293,9 +318,10 @@ async function save(again = false) {
           v-for="b in ['转账', '投资', '赎回', '存钱', '取钱']"
           type="button"
           :class="{ active: draft.behavior === b }"
+          :aria-pressed="draft.behavior === b"
           @click="draft.behavior = b"
         >
-          <span><Icon name="transfer" /></span>{{ b }}
+          <span><Icon :name="transferIcons[b]" /></span>{{ b }}
         </button>
       </div>
       <div v-if="twoAccounts" class="account-direction">
@@ -316,7 +342,8 @@ async function save(again = false) {
         </button>
       </div>
       <label
-        >备注 · 粘贴银行短信即可识别<textarea
+        >备注<textarea
+          aria-label="备注 · 粘贴银行短信即可识别"
           v-model="draft.note"
           placeholder="写点说明，或在这里粘贴一条交易短信"
           rows="3"
@@ -376,18 +403,29 @@ async function save(again = false) {
           ><button type="button" class="primary" @click="applyRecognition">采用并继续核对</button>
         </div>
       </div>
-      <div class="form-grid">
-        <label>发生时间<input v-model="draft.at" type="datetime-local" step="1" required /></label
-        ><label v-if="!twoAccounts"
-          >{{ draft.type === 'refund' ? '退款入账账户' : draft.type === 'income' ? '收款账户' : '付款账户'
-          }}<button
-            type="button"
-            class="select-button"
-            @click="accountPicker = draft.type === 'expense' ? 'from' : 'to'"
-          >
-            {{ accountName(draft.type === 'expense' ? draft.from : draft.to)
-            }}<Icon name="down" :size="16" /></button
-        ></label>
+      <div class="entry-chips">
+        <button
+          type="button"
+          class="entry-chip"
+          aria-label="修改发生时间"
+          @click="
+            dateInput = draft.at;
+            datePicker = true;
+          "
+        >
+          <Icon name="calendar" :size="15" />{{ draft.at.slice(0, 16).replace('T', ' ') }}
+        </button>
+        <button
+          v-if="!twoAccounts"
+          type="button"
+          class="entry-chip"
+          :aria-label="
+            draft.type === 'expense' ? '付款账户' : draft.type === 'refund' ? '退款入账账户' : '收款账户'
+          "
+          @click="accountPicker = draft.type === 'expense' ? 'from' : 'to'"
+        >
+          <Icon name="credit" :size="15" />{{ accountName(draft.type === 'expense' ? draft.from : draft.to) }}
+        </button>
       </div>
       <label v-if="draft.type === 'refund'"
         >关联原支出<select v-model="draft.originalId" required>
@@ -402,10 +440,20 @@ async function save(again = false) {
       /></label>
       <template v-if="['repay', 'collect'].includes(draft.type)"
         ><p v-if="interestSummary" class="hint">{{ interestSummary }}</p>
-        <button type="button" class="text-button" @click="showInterest = !showInterest">
+        <button
+          type="button"
+          class="text-button"
+          @click="
+            showInterest = !showInterest;
+            keypadTarget = showInterest ? 'interest' : 'amount';
+          "
+        >
           包含利息{{ showInterest ? ' ▴' : ' ▾' }}</button
         ><label v-if="showInterest"
-          >包含利息（已计入总额）<input v-model="interest" inputmode="decimal"
+          >包含利息（已计入总额）<input
+            v-model="interest"
+            inputmode="none"
+            @focus="keypadTarget = 'interest'"
         /></label>
         <p v-if="showInterest" class="hint">
           本金为总额减利息；只有利息计入收支。利息等于总额表示仅付息。
@@ -426,27 +474,89 @@ async function save(again = false) {
         />早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额</label
       >
       <p v-if="error || ui.error" class="field-error" role="alert">{{ error || ui.error }}</p>
-      <div class="save-actions">
-        <button type="button" class="secondary" :disabled="ui.busy" @click="save(true)">保存并再记</button
-        ><button class="primary" :disabled="ui.busy">{{ ui.busy ? '保存中…' : '保存账目' }}</button>
+      <p v-if="keypadTarget === 'interest' && showInterest" class="hint">
+        正在输入利息 <button type="button" class="text-button" @click="keypadTarget = 'amount'">完成</button>
+      </p>
+      <div class="entry-keypad" aria-label="金额键盘">
+        <template
+          v-for="key in [
+            '7',
+            '8',
+            '9',
+            'delete',
+            '4',
+            '5',
+            '6',
+            'again',
+            '1',
+            '2',
+            '3',
+            'save',
+            '0',
+            '.',
+            '00',
+          ]"
+          :key="key"
+        >
+          <button v-if="key === 'save'" class="key-save" :disabled="ui.busy" aria-label="保存账目">
+            {{ ui.busy ? '保存中…' : '保存' }}
+          </button>
+          <button
+            v-else-if="key === 'again'"
+            type="button"
+            class="key-again"
+            :disabled="ui.busy"
+            aria-label="保存并再记"
+            @click="save(true)"
+          >
+            再记
+          </button>
+          <button
+            v-else
+            type="button"
+            :aria-label="key === 'delete' ? '删除末位金额' : key"
+            @click="keypress(key)"
+          >
+            <Icon v-if="key === 'delete'" name="backspace" /><template v-else>{{ key }}</template>
+          </button>
+        </template>
       </div>
     </form></Modal
   >
-  <Modal v-if="categoryPicker" title="全部分类" @close="categoryPicker = false"
+  <Modal v-if="categoryPicker" title="全部分类" page @close="categoryPicker = false"
     ><input v-model="categorySearch" aria-label="搜索分类" placeholder="搜索大类或分类" />
-    <div class="all-categories">
-      <button
-        v-for="c in filteredCategories"
-        :key="c.id"
-        :class="{ active: draft.categoryId === c.id }"
-        @click="
-          draft.categoryId = c.id;
-          categoryPicker = false;
-        "
-      >
-        <small>{{ c.group }}</small
-        >{{ c.name }}
-      </button>
+    <div class="category-groups">
+      <section v-for="group in categoryGroups" :key="group">
+        <button
+          type="button"
+          class="category-group-heading"
+          :aria-expanded="expandedGroup === group || !!categorySearch || draft.type === 'income'"
+          @click="expandedGroup = expandedGroup === group ? '' : group"
+        >
+          <span>{{ group }}</span
+          ><Icon :name="expandedGroup === group ? 'chevron-up' : 'down'" :size="16" />
+        </button>
+        <div
+          v-if="expandedGroup === group || categorySearch || draft.type === 'income'"
+          class="all-categories"
+        >
+          <button
+            v-for="c in filteredCategories.filter((c) => c.group === group)"
+            :key="c.id"
+            type="button"
+            :aria-label="c.group + ' ' + c.name"
+            :aria-pressed="draft.categoryId === c.id"
+            :class="{ active: draft.categoryId === c.id }"
+            @click="
+              draft.categoryId = c.id;
+              categoryPicker = false;
+            "
+          >
+            <Icon :name="c.icon" :size="21" />{{ c.name }}
+          </button>
+        </div>
+      </section>
+      <p v-if="!filteredCategories.length" class="hint">没有找到，可以在下方添加。</p>
     </div>
     <form class="inline-form" @submit.prevent="createCategory">
       <input
@@ -467,7 +577,7 @@ async function save(again = false) {
           accountPicker = '';
         "
       >
-        <Icon :name="a.data.type === 'receivable' ? 'users' : 'wallet'" /><span
+        <Icon :name="accountIcon(a.data)" /><span
           >{{ a.data.name }}<small>{{ a.data.tail ? '尾号 ' + a.data.tail : '' }}</small></span
         ><Icon name="right" />
       </button>
@@ -484,5 +594,17 @@ async function save(again = false) {
     >
       ＋ 添加账户
     </button></Modal
+  >
+  <Modal v-if="datePicker" title="发生时间" @close="datePicker = false"
+    ><form
+      @submit.prevent="
+        draft.at = dateInput;
+        datePicker = false;
+      "
+    >
+      <label>发生时间<input v-model="dateInput" type="datetime-local" step="1" required /></label>
+      <p class="hint">按实际发生时间记账，补记旧账时请核对年份。</p>
+      <button class="primary full">确定</button>
+    </form></Modal
   >
 </template>

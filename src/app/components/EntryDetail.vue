@@ -6,6 +6,7 @@ import { money, sum } from '../../domain/money';
 import { deleteEntry } from '../../domain/ledger';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
+import { entryIcon } from '../entry-presentation';
 const deleting = ref(false);
 const entity = computed(() => entries.value.find((e) => e.id === ui.detailId));
 const refunds = computed(() => entries.value.filter((e) => e.data.originalId === ui.detailId));
@@ -40,7 +41,7 @@ async function remove() {
 <template>
   <Modal v-if="entity" title="账目详情" @close="ui.detailId = ''"
     ><div class="detail-hero">
-      <span class="entry-icon"><Icon name="receipt" :size="26" /></span>
+      <span class="entry-icon"><Icon :name="entryIcon(state!, entity.data)" :size="26" /></span>
       <p>
         {{ labels[entity.data.type] }} ·
         {{ categoryName(state!, entity.data.ledgerId, entity.data.categoryId) }}

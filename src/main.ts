@@ -8,6 +8,7 @@ import Statistics from './app/pages/Statistics.vue';
 import Settings from './app/pages/Settings.vue';
 import Books from './app/pages/Books.vue';
 import './app/style.css';
+import './app/interface.css';
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [

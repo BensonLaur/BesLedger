@@ -1,46 +1,94 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { state, ui, mutate, run } from '../store';
-import { put, type Account } from '../../domain/model';
+import { put } from '../../domain/model';
 import { decimal, minor } from '../../domain/money';
 import { localTime } from '../../domain/time';
+import { accountKind, accountKinds, type AccountKind } from '../account-presentation';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
 const existing = ui.accountId ? state.value?.entities[ui.accountId] : undefined;
 const original = existing?.data.kind === 'account' ? existing.data : undefined;
-const name = ref(original?.name || ''),
-  type = ref<Account['type']>(original?.type || 'cash'),
-  opening = ref(original ? decimal(original.opening) : '0'),
-  openedAt = ref(original?.openedAt || localTime()),
-  bank = ref(original?.bank || ''),
-  tail = ref(original?.tail || ''),
-  due = ref(original?.repaymentDay?.toString() || ''),
-  debt = ref(false);
-const types: { id: Account['type']; name: string; icon: string }[] = [
-  { id: 'cash', name: '现金', icon: 'wallet' },
-  { id: 'bank', name: '储蓄卡', icon: 'bank' },
-  { id: 'wallet', name: '网络钱包', icon: 'wallet' },
-  { id: 'credit', name: '信用卡', icon: 'credit' },
-  { id: 'receivable', name: '应收应付', icon: 'users' },
-  { id: 'asset', name: '自定义资产', icon: 'chart' },
-  { id: 'liability', name: '自定义负债', icon: 'receipt' },
-];
+const kind = ref<AccountKind>(original ? accountKind(original) : 'cash');
+const choosing = ref(!original);
+type Draft = {
+  name: string;
+  opening: string;
+  openedAt: string;
+  bank: string;
+  tail: string;
+  due: string;
+  owes: boolean;
+};
+const drafts = reactive<Partial<Record<AccountKind, Draft>>>({});
+function blank(selected: AccountKind): Draft {
+  return {
+    name: '',
+    opening: '',
+    openedAt: localTime(),
+    bank: '',
+    tail: '',
+    due: '',
+    owes: selected === 'credit',
+  };
+}
+if (original)
+  drafts[kind.value] = {
+    name: original.name,
+    opening: decimal(
+      ['credit', 'receivable', 'liability'].includes(original.type) || kind.value === 'other'
+        ? Math.abs(original.opening)
+        : original.opening,
+    ),
+    openedAt: original.openedAt,
+    bank: original.bank,
+    tail: original.tail,
+    due: original.repaymentDay?.toString() || '',
+    owes:
+      original.opening < 0 ||
+      original.type === 'liability' ||
+      (original.type === 'credit' && original.opening === 0),
+  };
+const draft = computed(() => drafts[kind.value] ?? (drafts[kind.value] = blank(kind.value)));
+const info = computed(() => accountKinds[kind.value]);
+const directional = computed(() => ['credit', 'receivable', 'other'].includes(kind.value));
+const amountLabel = computed(() =>
+  kind.value === 'credit'
+    ? draft.value.owes
+      ? '还欠多少钱（元）'
+      : '卡里多存的钱（元）'
+    : kind.value === 'receivable'
+      ? draft.value.owes
+        ? '我欠对方多少钱（元）'
+        : '对方欠我多少钱（元）'
+      : kind.value === 'other' && draft.value.owes
+        ? '还欠多少钱（元）'
+        : '账户里有多少钱（元）',
+);
+function choose(selected: AccountKind) {
+  kind.value = selected;
+  choosing.value = false;
+}
 async function save() {
   await run(async () => {
-    let amount = minor(opening.value);
-    if (debt.value && amount > 0) amount = -amount;
+    const d = draft.value;
+    let amount = minor(d.opening || '0');
+    if (directional.value && amount < 0) throw new Error('只需填写金额大小，再选择是谁欠谁的钱。');
+    // 用户只选择生活中的资金方向，保存时才转换为余额符号；编辑时不再次翻转。
+    if (directional.value && d.owes) amount = -amount;
     await mutate((s) =>
       put(
         s,
         {
           kind: 'account',
-          name: name.value,
-          type: type.value,
+          name: d.name.trim(),
+          type: kind.value === 'other' && d.owes ? 'liability' : info.value.type,
+          displayType: kind.value,
           opening: amount,
-          openedAt: openedAt.value.length === 16 ? `${openedAt.value}:00` : openedAt.value,
-          bank: bank.value,
-          tail: tail.value,
-          ...(due.value ? { repaymentDay: Number(due.value) } : {}),
+          openedAt: d.openedAt.length === 16 ? `${d.openedAt}:00` : d.openedAt,
+          bank: ['bank', 'credit'].includes(kind.value) ? d.bank : '',
+          tail: ['bank', 'credit'].includes(kind.value) ? d.tail : '',
+          ...(['credit', 'other'].includes(kind.value) && d.due ? { repaymentDay: Number(d.due) } : {}),
         },
         ui.accountId || undefined,
       ),
@@ -50,35 +98,84 @@ async function save() {
 }
 </script>
 <template>
-  <Modal :title="original ? '编辑共用账户' : '添加共用账户'" @close="ui.accountForm = false"
-    ><form @submit.prevent="save">
-      <div class="account-types">
-        <button v-for="t in types" type="button" :class="{ active: type === t.id }" @click="type = t.id">
-          <Icon :name="t.icon" :size="24" />{{ t.name }}
-        </button>
-      </div>
-      <label>账户名称<input v-model="name" required maxlength="100" placeholder="例如：日常银行卡" /></label>
-      <div class="form-grid">
-        <label>期初余额（元）<input v-model="opening" inputmode="decimal" required /></label
-        ><label>起算日期时间<input v-model="openedAt" type="datetime-local" step="1" required /></label>
-      </div>
-      <label class="checkbox"><input v-model="debt" type="checkbox" />将正数作为期初欠款保存</label>
-      <p class="hint">
-        期初不计收入或支出；早于起算时间的流水不会重复叠加。负数表示欠款，信用卡正数表示溢缴款。
-      </p>
-      <template v-if="['bank', 'credit'].includes(type)"
-        ><label>银行名称<input v-model="bank" placeholder="例如：工商银行" /></label
-        ><label
-          >卡尾号（可选，仅末四位）<input
-            v-model="tail"
-            maxlength="4"
-            pattern="[0-9]{4}|"
-            inputmode="numeric" /></label></template
-      ><label v-if="['credit', 'liability'].includes(type)"
-        >每月还款日（可选）<input v-model="due" type="number" min="1" max="31"
-      /></label>
-      <p v-if="ui.error" class="field-error">{{ ui.error }}</p>
-      <button class="primary full" :disabled="ui.busy">保存账户</button>
-    </form></Modal
+  <Modal
+    :title="choosing ? '选择账户类型' : original ? '编辑账户' : '添加账户'"
+    page
+    @close="choosing || original ? (ui.accountForm = false) : (choosing = true)"
   >
+    <div class="account-flow">
+      <template v-if="choosing">
+        <p class="flow-caption">添加账户 · 先选择类型</p>
+        <div class="account-type-list">
+          <button v-for="(item, key) in accountKinds" :key="key" type="button" @click="choose(key)">
+            <span class="entry-icon" :class="'account-tone-' + key"
+              ><Icon :name="item.icon" :size="25"
+            /></span>
+            <span
+              ><strong>{{ item.name }}</strong
+              ><small>{{ item.hint }}</small></span
+            ><Icon name="right" :size="18" />
+          </button>
+        </div>
+      </template>
+      <form v-else @submit.prevent="save">
+        <p class="flow-caption">{{ original ? '编辑账户' : '添加账户 · 填写信息' }}</p>
+        <div class="account-fields-card">
+          <div class="chosen-account-kind">
+            <span class="entry-icon"><Icon :name="info.icon" /></span><strong>{{ info.name }}</strong
+            ><button class="text-button" type="button" @click="choosing = true">更换类型</button>
+          </div>
+          <label
+            >{{ kind === 'receivable' ? '对方怎么称呼' : '账户名称'
+            }}<input v-model="draft.name" required maxlength="100" :placeholder="info.placeholder"
+          /></label>
+          <fieldset v-if="directional" class="account-direction-choice">
+            <legend>{{ kind === 'credit' ? '这张卡目前的情况' : '这笔钱的情况' }}</legend>
+            <button type="button" :aria-pressed="draft.owes" @click="draft.owes = true">
+              {{ kind === 'credit' ? '还有钱没还' : '我欠别人的钱' }}
+            </button>
+            <button type="button" :aria-pressed="!draft.owes" @click="draft.owes = false">
+              {{
+                kind === 'credit' ? '卡里有多存的钱' : kind === 'receivable' ? '别人欠我的钱' : '这是我的钱'
+              }}
+            </button>
+          </fieldset>
+          <div class="account-opening-fields">
+            <label
+              >{{ amountLabel }}<input v-model="draft.opening" inputmode="decimal" placeholder="0.00"
+            /></label>
+            <label
+              >从什么时候开始记<input v-model="draft.openedAt" type="datetime-local" step="1" required
+            /></label>
+          </div>
+          <p class="hint">
+            填写开始记账时的金额，以后每笔收支会在此基础上增减。这笔起始金额不会算作收入或支出。
+          </p>
+          <template v-if="['bank', 'credit'].includes(kind)">
+            <label>银行名称（选填）<input v-model="draft.bank" placeholder="例如：工商银行" /></label>
+            <label
+              >卡号后四位（选填）<input
+                v-model="draft.tail"
+                maxlength="4"
+                pattern="[0-9]{4}|"
+                inputmode="numeric"
+                placeholder="用来匹配银行短信"
+            /></label>
+          </template>
+          <label v-if="kind === 'credit' || (kind === 'other' && draft.owes)"
+            >每月还款日（选填）<input
+              v-model="draft.due"
+              type="number"
+              min="1"
+              max="31"
+              placeholder="例如：每月 10 日，填 10"
+          /></label>
+        </div>
+        <p v-if="ui.error" class="field-error" role="alert">{{ ui.error }}</p>
+        <button class="primary full account-save" :disabled="ui.busy">
+          {{ ui.busy ? '保存中…' : '保存账户' }}
+        </button>
+      </form>
+    </div>
+  </Modal>
 </template>

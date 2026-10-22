@@ -11,10 +11,14 @@ async function initialize(page: Page) {
 async function createAccount(page: Page) {
   await page.goto('./#/accounts');
   await page.getByRole('button', { name: '添加账户', exact: true }).click();
-  const form = page.getByRole('dialog', { name: '添加共用账户' });
+  await page
+    .getByRole('dialog', { name: '选择账户类型' })
+    .getByRole('button', { name: '现金 随身现金、备用金' })
+    .click();
+  const form = page.getByRole('dialog', { name: '添加账户', exact: true });
   await form.getByLabel('账户名称').fill('虚构现金');
-  await form.getByLabel('期初余额（元）').fill('1000');
-  await form.getByLabel('起算日期时间').fill('2026-01-01T00:00');
+  await form.getByLabel('账户里有多少钱（元）').fill('1000');
+  await form.getByLabel('从什么时候开始记').fill('2026-01-01T00:00');
   await form.getByRole('button', { name: '保存账户' }).click();
   await expect(page.getByText('虚构现金', { exact: true })).toBeVisible();
 }
@@ -61,10 +65,18 @@ test('短信确认与日期不被分类选择重置', async ({ page }) => {
   await page.goto('./#/');
   await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
   const editor = page.getByRole('dialog', { name: '记一笔', exact: true });
-  await editor.getByLabel('发生时间').fill('2026-10-01T12:00');
+  await editor.getByRole('button', { name: '修改发生时间' }).click();
+  await page
+    .getByRole('dialog', { name: '发生时间', exact: true })
+    .getByLabel('发生时间')
+    .fill('2026-10-01T12:00');
+  await page
+    .getByRole('dialog', { name: '发生时间', exact: true })
+    .getByRole('button', { name: '确定' })
+    .click();
   await editor.getByRole('button', { name: '全部', exact: true }).click();
   await page.getByRole('dialog', { name: '全部分类' }).getByRole('button', { name: '餐饮 早餐' }).click();
-  await expect(editor.getByLabel('发生时间')).toHaveValue('2026-10-01T12:00');
+  await expect(editor.getByRole('button', { name: '修改发生时间' })).toContainText('2026-10-01 12:00');
   await editor
     .getByLabel('备注 · 粘贴银行短信即可识别')
     .fill('尾号1234卡2026年10月20日08:09支出(消费示例店)6.50元，余额2,800.50元。【工商银行】');
@@ -72,7 +84,7 @@ test('短信确认与日期不被分类选择重置', async ({ page }) => {
   await expect(editor.getByText('金额 ¥ 6.50 · 支出')).toBeVisible();
   await editor.getByRole('button', { name: '采用并继续核对' }).click();
   await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('6.50');
-  await expect(editor.getByLabel('发生时间')).toHaveValue(/^2026-10-20T08:09(?::00)?$/);
+  await expect(editor.getByRole('button', { name: '修改发生时间' })).toContainText('2026-10-20 08:09');
 });
 test('四种借贷草稿独立保留，预算取消不生效且关闭保留金额', async ({ page }) => {
   await initialize(page);
@@ -103,10 +115,13 @@ test('借还总额与统计利息同源，资金账户余额保持准确', async
   await initialize(page);
   await createAccount(page);
   await page.getByRole('button', { name: '添加账户', exact: true }).click();
-  const accountForm = page.getByRole('dialog', { name: '添加共用账户' });
-  await accountForm.getByRole('button', { name: '应收应付', exact: true }).click();
-  await accountForm.getByLabel('账户名称').fill('虚构往来');
-  await accountForm.getByLabel('起算日期时间').fill('2026-01-01T00:00');
+  await page
+    .getByRole('dialog', { name: '选择账户类型' })
+    .getByRole('button', { name: '应收 / 应付 别人欠我的钱、我欠别人的钱' })
+    .click();
+  const accountForm = page.getByRole('dialog', { name: '添加账户', exact: true });
+  await accountForm.getByLabel('对方怎么称呼').fill('虚构往来');
+  await accountForm.getByLabel('从什么时候开始记').fill('2026-01-01T00:00');
   await accountForm.getByRole('button', { name: '保存账户' }).click();
   await expect(accountForm).toBeHidden();
   await page.goto('./#/');
@@ -135,7 +150,7 @@ test('借还总额与统计利息同源，资金账户余额保持准确', async
     await expect(form).toBeHidden();
   }
   await page.goto('./#/accounts');
-  await expect(page.getByText('余额 ¥ 990.00', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /余额 ¥ 990[.]00/ })).toBeVisible();
   await page.goto('./#/statistics');
   await expect(page.locator('.entry-row')).toHaveCount(1);
   await expect(page.locator('.entry-row').getByText('还款利息', { exact: true })).toBeVisible();

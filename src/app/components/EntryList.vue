@@ -6,6 +6,7 @@ import { categoryName } from '../../domain/categories';
 import { money } from '../../domain/money';
 import { state, ui } from '../store';
 import Icon from './Icon.vue';
+import { entryIcon } from '../entry-presentation';
 const props = defineProps<{ items: Entity<Entry>[]; statistical?: boolean }>();
 const labels: Record<Entry['type'], string> = {
   expense: '支出',
@@ -49,10 +50,7 @@ function account(id: string) {
     <div class="entry-list">
       <button v-for="e in group.items" :key="e.id" class="entry-row" @click="ui.detailId = e.id">
         <span class="entry-icon" :class="{ inflow: contribution(e.data).income || e.data.type === 'refund' }"
-          ><Icon
-            :name="
-              e.data.type === 'expense' ? 'food' : e.data.type === 'income' ? 'income' : 'transfer'
-            " /></span
+          ><Icon :name="entryIcon(state!, e.data)" /></span
         ><span class="entry-main"
           ><strong
             >{{ name(e.data) }} <em v-if="e.data.type === 'refund'">退款</em

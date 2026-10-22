@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import Icon from './Icon.vue';
-defineProps<{ title: string; wide?: boolean }>();
+import { registerModal } from '../modal-stack';
+defineProps<{ title: string; wide?: boolean; page?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const root = ref<HTMLElement>();
 const previous = document.activeElement as HTMLElement | null;
+let unregister: (() => void) | undefined;
 function keyboard(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.stopPropagation();
@@ -27,16 +29,20 @@ function keyboard(event: KeyboardEvent) {
   }
 }
 onMounted(() => {
+  if (root.value) unregister = registerModal(root.value, () => emit('close'));
   root.value?.focus();
 });
-onUnmounted(() => previous?.focus());
+onUnmounted(() => {
+  unregister?.();
+  if (previous?.isConnected) previous.focus();
+});
 </script>
 <template>
-  <div class="modal-backdrop" @click.self="emit('close')">
+  <div class="modal-backdrop" :class="{ 'page-backdrop': page }" @click.self="emit('close')">
     <section
       ref="root"
       class="modal"
-      :class="{ wide }"
+      :class="{ wide, 'page-dialog': page }"
       role="dialog"
       aria-modal="true"
       :aria-label="title"
@@ -44,8 +50,13 @@ onUnmounted(() => previous?.focus());
       @keydown="keyboard"
     >
       <header class="modal-header">
+        <button v-if="page" class="icon-button page-back" aria-label="返回" @click="emit('close')">
+          <Icon name="left" />
+        </button>
         <h2>{{ title }}</h2>
-        <button class="icon-button" aria-label="关闭" @click="emit('close')"><Icon name="close" /></button>
+        <button v-if="!page" class="icon-button" aria-label="关闭" @click="emit('close')">
+          <Icon name="close" />
+        </button>
       </header>
       <div class="modal-content"><slot /></div>
     </section>

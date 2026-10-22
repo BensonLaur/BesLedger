@@ -67,6 +67,25 @@ async function restore() {
     </div>
     <button class="secondary" @click="lock"><Icon name="lock" />锁定</button>
   </div>
+  <div class="settings-profile">
+    <span class="entry-icon"><Icon name="book" :size="26" /></span>
+    <div>
+      <h2>Bes记账</h2>
+      <p>自己的账，自己掌握。</p>
+    </div>
+  </div>
+  <section class="settings-shortcuts">
+    <h2>日常记账</h2>
+    <div class="settings-actions">
+      <RouterLink to="/accounts"
+        ><Icon name="wallet" /><span>账户管理<small>现金、银行卡和往来款</small></span
+        ><Icon name="right" /></RouterLink
+      ><RouterLink to="/events"
+        ><Icon name="events" /><span>事件与周期账<small>还款日期和固定收支</small></span
+        ><Icon name="right"
+      /></RouterLink>
+    </div>
+  </section>
   <div class="settings-grid">
     <GitHubConnection />
     <section class="card">
@@ -74,11 +93,10 @@ async function restore() {
       <p>本机只保存加密账目。浏览器清理、设备损坏或忘记口令都可能造成数据不可用，请定期备份。</p>
       <div class="settings-actions">
         <button @click="exportBackup">
-          <Icon name="download" /><span
-            >导出完整加密备份<small>包含账户期初、关联退款、周期规则和删除标记</small></span
+          <Icon name="download" /><span>导出完整加密备份<small>账户、账目、退款和周期账一起备份</small></span
           ><Icon name="right" /></button
         ><button @click="restoreOpen = true">
-          <Icon name="upload" /><span>校验并恢复备份<small>先验证内容，再确认替换当前本机空间</small></span
+          <Icon name="upload" /><span>校验并恢复备份<small>先检查备份内容，再确认恢复</small></span
           ><Icon name="right" /></button
         ><button @click="recovery = vault.recovery">
           <Icon name="shield" /><span>查看恢复密钥<small>请与备份文件分开保存</small></span
@@ -93,11 +111,11 @@ async function restore() {
       <h2>记账与隐私</h2>
       <button v-if="Capacitor.isNativePlatform()" class="secondary" @click="ui.smsPicker = true">
         从银行短信导入</button
-      ><button class="text-button full" @click="recycleOpen = true">回收站 · 显式恢复已删除记录</button>
+      ><button class="text-button full" @click="recycleOpen = true">回收站 · 找回已删除的账目</button>
       <p>所有短信在本机识别。账户余额为本机已知范围；GitHub 连接不等于账本同步。</p>
       <p>日期使用中国标准时间。周期账在打开应用时补生成，不承诺关闭应用后准时推送。</p>
       <p>Android 可按日期和银行范围申请短信读取；系统拒绝时继续使用备注粘贴。此权限未获应用商店审核批准。</p>
-      <p class="hint">BesLedger 0.1.1 · 人民币 · 本地加密</p>
+      <p class="hint">BesLedger 0.1.2 · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
         target="_blank"

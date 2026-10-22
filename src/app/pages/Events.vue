@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { state, ui, mutate, run, newEntry, currentLedgerId } from '../store';
 import { events, generateDue, saveRule, type FinancialEvent } from '../../domain/recurring';
 import { list } from '../../domain/model';
 import { today } from '../../domain/time';
 import { money } from '../../domain/money';
 import Icon from '../components/Icon.vue';
+const tab = ref<'events' | 'rules'>('events');
 const rules = computed(() =>
   list(state.value!, 'rule').filter((r) => r.data.ledgerId === currentLedgerId.value),
 );
@@ -60,26 +61,32 @@ function open(event: FinancialEvent) {
       <Icon name="plus" />周期账
     </button>
   </div>
-  <p class="scope-note">到期仅表示需要核对，不代表已经付款或真实逾期。关闭应用后不会承诺准时后台推送。</p>
-  <section v-for="section in sections" :key="section.title" class="section">
-    <h2>{{ section.title }}</h2>
-    <div v-if="section.items.length" class="event-list">
-      <button v-for="event in section.items" :key="event.id" class="event-card" @click="open(event)">
-        <span class="event-date"
-          ><strong>{{ event.day.slice(8) }}</strong
-          ><small>{{ event.day.slice(0, 7) }}</small></span
-        ><span class="entry-main"
-          ><strong>{{ event.name }}</strong
-          ><small>{{ event.kind === 'rule' ? '预计期次' : '核对后记入实际账目' }}</small></span
-        ><span
-          >{{ event.amount === undefined ? '待核对' : '¥ ' + money(event.amount)
-          }}<Icon name="right" :size="16"
-        /></span>
-      </button>
-    </div>
-    <p v-else class="hint">暂无事项</p>
-  </section>
-  <section class="section">
+  <div class="section-tabs">
+    <button :aria-pressed="tab === 'events'" @click="tab = 'events'">事件</button
+    ><button :aria-pressed="tab === 'rules'" @click="tab = 'rules'">周期账</button>
+  </div>
+  <template v-if="tab === 'events'">
+    <p class="scope-note">有日期的财务事项，核对后再记下实际收支。</p>
+    <section v-for="section in sections" :key="section.title" class="section">
+      <h2>{{ section.title }}</h2>
+      <div v-if="section.items.length" class="event-list">
+        <button v-for="event in section.items" :key="event.id" class="event-card" @click="open(event)">
+          <span class="event-date"
+            ><strong>{{ event.day.slice(8) }}</strong
+            ><small>{{ event.day.slice(0, 7) }}</small></span
+          ><span class="entry-main"
+            ><strong>{{ event.name }}</strong
+            ><small>{{ event.kind === 'rule' ? '预计期次' : '核对后记入实际账目' }}</small></span
+          ><span
+            >{{ event.amount === undefined ? '待核对' : '¥ ' + money(event.amount)
+            }}<Icon name="right" :size="16"
+          /></span>
+        </button>
+      </div>
+      <p v-else class="hint">暂无事项</p>
+    </section>
+  </template>
+  <section v-else class="section">
     <div class="section-heading">
       <h2>周期规则</h2>
       <button class="text-button" :disabled="ui.busy" @click="checkDue">检查到期期次</button>

@@ -37,10 +37,14 @@ try {
   await page.goto('https://localhost/#/accounts');
   if (!(await page.getByText('虚构 Android 现金', { exact: true }).count())) {
     await page.getByRole('button', { name: '添加账户', exact: true }).click();
-    const form = page.getByRole('dialog', { name: '添加共用账户' });
+    await page
+      .getByRole('dialog', { name: '选择账户类型' })
+      .getByRole('button', { name: '现金 随身现金、备用金' })
+      .click();
+    const form = page.getByRole('dialog', { name: '添加账户', exact: true });
     await form.getByLabel('账户名称').fill('虚构 Android 现金');
-    await form.getByLabel('期初余额（元）').fill('1000');
-    await form.getByLabel('起算日期时间').fill('2026-01-01T00:00');
+    await form.getByLabel('账户里有多少钱（元）').fill('1000');
+    await form.getByLabel('从什么时候开始记').fill('2026-01-01T00:00');
     await form.getByRole('button', { name: '保存账户' }).click();
   }
   await page.goto('https://localhost/#/');
@@ -71,7 +75,7 @@ try {
   await page.getByRole('button', { name: '解锁账本', exact: true }).click();
   await expect(page.getByText('−37.25', { exact: true })).toBeVisible();
   await page.goto('https://localhost/#/accounts');
-  await expect(page.getByText('余额 ¥ 962.75', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /余额 ¥ 962[.]75/ })).toBeVisible();
   const files = adb('shell', 'run-as', pkg, 'ls', 'databases');
   if (!files.includes('besledger-vault.db')) throw new Error('Native SQLite file missing');
   console.log(
@@ -81,6 +85,8 @@ try {
   try {
     adb('shell', 'svc', 'wifi', 'enable');
     adb('shell', 'svc', 'data', 'enable');
-  } catch { console.warn('Isolated emulator unavailable during network cleanup'); }
+  } catch {
+    console.warn('Isolated emulator unavailable during network cleanup');
+  }
   await browser.close().catch(() => undefined);
 }

@@ -14,6 +14,10 @@ export const accountSchema = z.object({
   kind: z.literal('account'),
   name: title,
   type: z.enum(['cash', 'bank', 'wallet', 'credit', 'receivable', 'asset', 'liability']),
+  // 只补充展示分类；旧账本缺省时仍按原账户类型解释余额与流水。
+  displayType: z
+    .enum(['cash', 'credit', 'bank', 'wallet', 'investment', 'receivable', 'stored', 'other'])
+    .optional(),
   opening: amount,
   openedAt: instant,
   bank: z.string().max(100).default(''),
