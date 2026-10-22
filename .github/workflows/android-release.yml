@@ -39,9 +39,11 @@ jobs:
           chmod 600 "$BESLEDGER_KEYSTORE"
           bash android/gradlew -p android --no-daemon assembleRelease
           mkdir -p artifacts
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/BesLedger-0.1.0-release.apk
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs artifacts/BesLedger-0.1.0-release.apk > artifacts/signature.txt
-          sha256sum artifacts/BesLedger-0.1.0-release.apk > artifacts/SHA256SUMS.txt
+          version=$(node -p "require('./package.json').version")
+          release_apk="artifacts/BesLedger-${version}-release.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$release_apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$release_apk" > artifacts/signature.txt
+          sha256sum "$release_apk" > artifacts/SHA256SUMS.txt
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: besledger-signed-release

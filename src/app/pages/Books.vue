@@ -1,8 +1,20 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { auth, conflicts, currentLedgerId, ledgers, mutate, run, state, ui, vault } from '../store';
+import { computed, onUnmounted, ref, watch } from 'vue';
+import {
+  auth,
+  conflicts,
+  currentLedgerId,
+  ledgers,
+  mutate,
+  refresh,
+  rememberSyncKey,
+  run,
+  state,
+  ui,
+  vault,
+} from '../store';
 import { list, put, tombstone, type Binding } from '../../domain/model';
-import { digest, importKey, parseRecovery } from '../../crypto/vault';
+import { digest } from '../../crypto/vault';
 import { downloadLedger, syncLedger } from '../../sync/engine';
 import { ledgerProjection, mainStatus, mergeEntities, resolveConflict } from '../../sync/merge';
 import { type Repository } from '../../providers/github/client';
@@ -17,12 +29,16 @@ const bookName = ref(''),
   selectedRepo = ref(''),
   repoName = ref('BesLedger-Data'),
   recovery = ref(''),
-  keyConfirmed = ref(false),
+  savedKeys = ref<Record<string, boolean>>({}),
+  forgettingKey = ref(''),
   status = ref<Record<string, string>>({}),
   conflictLedger = ref(''),
   removing = ref(''),
   deleteCloud = ref('');
 let preparedFor = 0;
+onUnmounted(() => {
+  recovery.value = '';
+});
 function knownRepositories(): string[] {
   return Object.values(state.value!.bindings)
     .filter(
@@ -55,6 +71,8 @@ watch(
   async (s) => {
     if (!s) return;
     const next: Record<string, string> = {};
+    const saved: Record<string, boolean> = {};
+    for (const [id, binding] of Object.entries(s.bindings)) saved[id] = await vault.hasSyncKey(id, binding);
     for (const book of list(s, 'ledger')) {
       const binding = s.bindings[book.id];
       next[book.id] = mainStatus(
@@ -63,7 +81,10 @@ watch(
         !binding?.syncedDigest || binding.syncedDigest !== (await digest(ledgerProjection(s, book.id))),
       );
     }
-    if (state.value === s) status.value = next;
+    if (state.value === s) {
+      status.value = next;
+      savedKeys.value = saved;
+    }
   },
   { immediate: true },
 );
@@ -142,14 +163,22 @@ async function discoverContents() {
   });
   ui.notice = `已发现 ${files.length} 个加密账本；名称在解密后可见`;
 }
-async function key() {
-  if (recovery.value.trim()) return importKey(parseRecovery(recovery.value));
-  if (!keyConfirmed.value) throw new Error('请选择使用本机恢复密钥，或输入原设备的同步恢复密钥');
-  return vault.encryptionKey;
+async function forgetKey() {
+  await run(async () => {
+    const id = forgettingKey.value,
+      binding = state.value!.bindings[id];
+    if (!binding) throw new Error('此账本尚未绑定云端存储');
+    await vault.forgetSyncKey(id, binding);
+    refresh();
+    forgettingKey.value = '';
+    recovery.value = '';
+    ui.notice = '已忘记此设备保存的同步密钥；本地账目和云端数据未删除';
+  });
 }
 async function sync(id: string) {
   await run(async () => {
     if (!auth.value) throw new Error('请先登录 GitHub');
+    const login = auth.value;
     const previous = state.value!.bindings[id],
       repo = selectedRepository.value;
     const binding: Binding =
@@ -159,20 +188,20 @@ async function sync(id: string) {
         : (() => {
             throw new Error('首次上传请先选择私有数据仓库');
           })());
-    const result = await syncLedger(
-      structuredClone(state.value!),
-      id,
-      binding,
-      await key(),
-      auth.value.github,
-    );
+    const lease = await vault.prepareSyncKey(id, binding, recovery.value, true);
+    const result = await syncLedger(structuredClone(state.value!), id, binding, lease.key, login.github);
+    lease.assertCurrent();
+    if (auth.value !== login) throw new Error('GitHub 登录状态已改变，请重新同步');
     if (result.conflicts.length) {
+      // 已成功解密，冲突不影响密钥验证；保存后下次解决冲突无需重复输入。
+      await rememberSyncKey(lease, () => undefined);
+      recovery.value = '';
       conflicts.value = result.conflicts;
       conflictLedger.value = id;
       ui.notice = '发现冲突，已保留双方版本，尚未上传';
       return;
     }
-    await mutate((s) => {
+    await rememberSyncKey(lease, (s) => {
       const merge = mergeEntities(s.entities, result.entities);
       if (merge.conflicts.length) throw new Error('同步期间本机又有修改，请重新同步后处理冲突');
       s.entities = merge.entities;
@@ -180,28 +209,36 @@ async function sync(id: string) {
       if (s.entities[s.preferences.currentLedger]?.deleted)
         s.preferences.currentLedger = list(s, 'ledger')[0]?.id || '';
     });
+    recovery.value = '';
     ui.notice = '同步成功，已确认远端完整版本';
   });
 }
 async function download(id: string) {
   await run(async () => {
     if (!auth.value) throw new Error('请先登录 GitHub');
-    const binding = state.value!.bindings[id],
-      entities = await downloadLedger(id, binding, await key(), auth.value.github);
+    const login = auth.value;
+    const binding = state.value!.bindings[id];
+    const lease = await vault.prepareSyncKey(id, binding, recovery.value);
+    const entities = await downloadLedger(id, binding, lease.key, login.github);
+    lease.assertCurrent();
+    if (auth.value !== login) throw new Error('GitHub 登录状态已改变，请重新下载');
     const result = mergeEntities(state.value!.entities, entities);
     if (result.conflicts.length) {
+      await rememberSyncKey(lease, () => undefined);
+      recovery.value = '';
       conflicts.value = result.conflicts;
       conflictLedger.value = id;
       return;
     }
     const contentDigest = await digest(entities);
-    await mutate((s) => {
+    await rememberSyncKey(lease, (s) => {
       const latest = mergeEntities(s.entities, entities);
       if (latest.conflicts.length) throw new Error('共用账户存在并发修改，请重新下载处理');
       s.entities = latest.entities;
       s.bindings[id] = { ...binding, syncedDigest: contentDigest, lastChecked: new Date().toISOString() };
       if (!entities[id].deleted) s.preferences.currentLedger = id;
     });
+    recovery.value = '';
     ui.notice = entities[id].deleted ? '此云端账本已删除，删除标记已同步' : '账本已校验并下载，可离线编辑';
   });
 }
@@ -272,6 +309,7 @@ const deletedBooks = computed(() =>
       <small v-if="state!.bindings[book.id]" class="muted"
         >绑定：{{ state!.bindings[book.id].owner }}/{{ state!.bindings[book.id].repo }}</small
       >
+      <small v-if="savedKeys[book.id]" class="muted">同步密钥已在此设备加密保存</small>
       <div class="book-actions">
         <button
           class="text-button"
@@ -289,6 +327,13 @@ const deletedBooks = computed(() =>
           @click="removing = book.id"
         >
           移除本机</button
+        ><button
+          v-if="savedKeys[book.id]"
+          class="text-button"
+          :disabled="ui.busy"
+          @click="forgettingKey = book.id"
+        >
+          同步密钥</button
         ><button class="text-button danger-text" @click="deleteCloud = book.id">删除账本</button>
       </div>
     </article>
@@ -297,6 +342,9 @@ const deletedBooks = computed(() =>
       <h3>加密账本 · {{ id.slice(-8) }}</h3>
       <p class="hint">{{ binding.owner }}/{{ binding.repo }}</p>
       <button class="primary" :disabled="!auth || ui.busy" @click="download(id)">解密并下载</button>
+      <button v-if="savedKeys[id]" class="text-button" :disabled="ui.busy" @click="forgettingKey = id">
+        同步密钥
+      </button>
     </article>
   </div>
   <section v-if="deletedBooks.length" class="card section">
@@ -339,15 +387,21 @@ const deletedBooks = computed(() =>
           v-model="recovery"
           type="password"
           autocomplete="off"
-          placeholder="64 位恢复密钥" /></label
-      ><label class="checkbox"
-        ><input v-model="keyConfirmed" type="checkbox" />首次上传使用本机恢复密钥，已独立备份</label
-      >
+          placeholder="首次下载或更换密钥时填写，之后留空即可"
+      /></label>
       <p class="hint">
-        此密钥不会发送给 GitHub 授权服务。原设备上传使用的恢复密钥是跨端解密凭据；新设备本地解锁口令可不同。
+        首次上传自动使用本机恢复密钥，请先独立备份。首次从另一设备下载时输入原设备密钥，验证成功后按账本加密保存在此设备；返回页面、重启或锁定解锁后无需重复输入。留空会自动使用已保存密钥。
+      </p>
+      <p class="hint">
+        密钥不会发送给授权服务，也不附加到云端账本或导出备份。更换设备时仍需原设备的同步恢复密钥；输入新密钥只有验证成功后才替换旧副本。
       </p>
     </section>
   </div>
+  <Modal v-if="forgettingKey" title="此设备的同步密钥" @close="forgettingKey = ''">
+    <p>同步密钥已由本地解锁口令保护。更换密钥可在账本管理页输入原设备密钥后再次同步，验证成功才会替换。</p>
+    <p>忘记只移除此设备保存的密钥，不删除账目或云端数据；之后可能需要重新输入原设备密钥。</p>
+    <button class="danger" :disabled="ui.busy" @click="forgetKey">忘记此设备密钥</button>
+  </Modal>
   <Modal
     v-if="creating || renameId"
     :title="renameId ? '账本改名' : '新建本地账本'"

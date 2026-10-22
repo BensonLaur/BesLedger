@@ -97,7 +97,7 @@ async function restore() {
       <p>所有短信在本机识别。账户余额为本机已知范围；GitHub 连接不等于账本同步。</p>
       <p>日期使用中国标准时间。周期账在打开应用时补生成，不承诺关闭应用后准时推送。</p>
       <p>Android 可按日期和银行范围申请短信读取；系统拒绝时继续使用备注粘贴。此权限未获应用商店审核批准。</p>
-      <p class="hint">BesLedger 0.1.0 · 人民币 · 本地加密</p>
+      <p class="hint">BesLedger 0.1.1 · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
         target="_blank"

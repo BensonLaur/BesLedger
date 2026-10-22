@@ -49,6 +49,25 @@ jobs:
           VITE_GITHUB_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
           VITE_GITHUB_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
       - run: bash android/gradlew -p android --no-daemon assembleDebug lintDebug
+      - name: 为隔离模拟器启用 KVM
+        run: sudo chmod 666 /dev/kvm
+      - run: npx playwright install android
+      - name: 原生 SQLite 同步密钥与重启验证
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          BESLEDGER_TEST_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}
+          BESLEDGER_TEST_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
+          BESLEDGER_TEST_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          avd-name: BesLedgerTestApi36
+          emulator-port: 5556
+          disable-animations: true
+          script: |
+            adb -s emulator-5556 install -r android/app/build/outputs/apk/debug/app-debug.apk
+            BESLEDGER_ADB="$ANDROID_HOME/platform-tools/adb" node scripts/test-android-sync-keys.mjs
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: besledger-android-debug-verification-only

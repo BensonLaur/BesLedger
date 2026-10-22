@@ -2,6 +2,8 @@ import { z } from 'zod';
 import {
   decrypt,
   deriveCredentialKey,
+  deriveSyncKeyStorageKey,
+  digest,
   encrypt,
   envelopeSchema,
   importKey,
@@ -11,8 +13,9 @@ import {
   unlockKey,
   wrapKey,
   type KeyHeader,
+  type Envelope,
 } from '../crypto/vault';
-import { emptyState, stateSchema, type State } from '../domain/model';
+import { bindingSchema, emptyState, stateSchema, type Binding, type State } from '../domain/model';
 import { validateState } from '../domain/ledger';
 import type { Backend } from './backend';
 
@@ -21,8 +24,20 @@ const archiveSchema = z.object({
   version: z.literal(1),
   header: keyHeaderSchema,
   data: envelopeSchema,
+  // 仅本机归档的可选扩展；旧归档可直接读取，导出备份不包含此字段。
+  deviceSyncKeys: z.record(z.string().regex(/^[0-9a-f]{64}$/), envelopeSchema).optional(),
 });
 type Archive = z.infer<typeof archiveSchema>;
+export type SyncKeyLease = {
+  key: CryptoKey;
+  source: 'provided' | 'saved' | 'local';
+  assertCurrent(): void;
+};
+async function syncKeyId(ledgerId: string, binding: Binding): Promise<string> {
+  const b = bindingSchema.parse(binding);
+  if (!ledgerId || ledgerId.length > 180) throw new Error('同步账本身份无效');
+  return digest([ledgerId, b.userId, b.owner.toLowerCase(), b.repo.toLowerCase()]);
+}
 export function migrate(input: unknown): State {
   if (!input || typeof input !== 'object') throw new Error('备份内容无效');
   const value = structuredClone(input) as Record<string, unknown>;
@@ -43,6 +58,8 @@ export class Vault {
   private revision = 0;
   private queue: Promise<unknown> = Promise.resolve();
   private generation = 0;
+  private deviceSyncKeys: Record<string, Envelope> = {};
+  private syncLeases = new WeakMap<SyncKeyLease, { id: string; envelope: Envelope; previous?: string }>();
   constructor(private backend: Backend) {}
   async exists(): Promise<boolean> {
     return !!(await this.backend.read());
@@ -70,11 +87,13 @@ export class Vault {
     const archive = archiveSchema.parse(JSON.parse(stored.payload));
     const { key, raw } = await unlockKey(archive.header, password);
     const state = migrate(await decrypt(archive.data, key, 'local-state'));
+    this.lock();
     this.key = key;
     this.raw = raw;
     this.header = archive.header;
     this.state = state;
     this.revision = stored.revision;
+    this.deviceSyncKeys = archive.deviceSyncKeys ?? {};
   }
   lock(): void {
     this.generation++;
@@ -83,6 +102,8 @@ export class Vault {
     this.key = undefined;
     this.header = undefined;
     this.state = undefined;
+    this.deviceSyncKeys = {};
+    this.syncLeases = new WeakMap();
   }
   get recovery(): string {
     if (!this.raw) throw new Error('请先解锁');
@@ -99,31 +120,109 @@ export class Vault {
     if (generation !== this.generation) throw new Error('账本已锁定');
     return key;
   }
-  private async archive(state: State, key: CryptoKey, header: KeyHeader): Promise<Archive> {
+  async hasSyncKey(ledgerId: string, binding: Binding): Promise<boolean> {
+    return !!this.key && !!this.deviceSyncKeys[await syncKeyId(ledgerId, binding)];
+  }
+  async prepareSyncKey(
+    ledgerId: string,
+    binding: Binding,
+    recovery = '',
+    allowLocal = false,
+  ): Promise<SyncKeyLease> {
+    if (!this.raw) throw new Error('请先解锁');
+    const generation = this.generation;
+    const assertCurrent = () => {
+      if (!this.key || generation !== this.generation)
+        throw new Error('账本已锁定或本地空间已改变，请解锁后重试');
+    };
+    const id = await syncKeyId(ledgerId, binding);
+    assertCurrent();
+    const wrappingKey = await deriveSyncKeyStorageKey(this.raw!);
+    assertCurrent();
+    const saved = this.deviceSyncKeys[id];
+    const source = recovery.trim() ? 'provided' : saved ? 'saved' : 'local';
+    let raw: Uint8Array<ArrayBuffer>;
+    if (source === 'provided') raw = parseRecovery(recovery);
+    else if (saved) {
+      try {
+        raw = parseRecovery(await decrypt<string>(saved, wrappingKey, `sync-key:${id}`));
+      } catch {
+        throw new Error('此设备保存的同步密钥无法读取，请输入原设备的恢复密钥后重试；本地账目保持不变');
+      }
+    } else {
+      if (!allowLocal) throw new Error('首次下载请填写原设备的同步恢复密钥，验证成功后将在此设备加密保存');
+      raw = this.raw!.slice();
+    }
+    try {
+      const key = await importKey(raw);
+      const envelope =
+        source === 'saved' ? saved! : await encrypt(recoveryText(raw), wrappingKey, `sync-key:${id}`);
+      assertCurrent();
+      const lease: SyncKeyLease = { key, source, assertCurrent };
+      this.syncLeases.set(lease, { id, envelope, previous: saved && JSON.stringify(saved) });
+      return lease;
+    } finally {
+      raw.fill(0);
+    }
+  }
+  async rememberSyncKey<T>(lease: SyncKeyLease, operation: (state: State) => T): Promise<T> {
+    lease.assertCurrent();
+    const saved = this.syncLeases.get(lease);
+    if (!saved) throw new Error('同步密钥会话已失效，请重试');
+    // 只有调用方完成远端解密或首次上传后才能提交；与账目在同一次 CAS 中落盘。
+    return this.update((state, keys) => {
+      lease.assertCurrent();
+      if (JSON.stringify(keys[saved.id]) !== saved.previous)
+        throw new Error('此设备的同步密钥已改变，请重新同步；旧请求不会恢复已忘记的密钥');
+      keys[saved.id] = saved.envelope;
+      return operation(state);
+    });
+  }
+  async forgetSyncKey(ledgerId: string, binding: Binding): Promise<void> {
+    const generation = this.generation;
+    const id = await syncKeyId(ledgerId, binding);
+    if (generation !== this.generation) throw new Error('账本已锁定或本地空间已改变');
+    await this.update((_state, keys) => {
+      delete keys[id];
+    });
+  }
+  private async archive(
+    state: State,
+    key: CryptoKey,
+    header: KeyHeader,
+    deviceSyncKeys?: Record<string, Envelope>,
+  ): Promise<Archive> {
     const archive: Archive = {
       format: 'BesLedger.vault',
       version: 1,
       header,
       data: await encrypt(state, key, 'local-state'),
+      ...(deviceSyncKeys && Object.keys(deviceSyncKeys).length ? { deviceSyncKeys } : {}),
     };
     if (JSON.stringify(archive).length > 50_000_000)
       throw new Error('本机加密空间达到 50 MB 上限，请先备份并整理已同步副本');
     return archive;
   }
   async mutate<T>(operation: (state: State) => T): Promise<T> {
+    return this.update((state) => operation(state));
+  }
+  private async update<T>(operation: (state: State, keys: Record<string, Envelope>) => T): Promise<T> {
+    const generation = this.generation;
     const task = this.queue.then(async () => {
       if (!this.state || !this.key || !this.header) throw new Error('请先解锁');
-      const generation = this.generation;
+      if (generation !== this.generation) throw new Error('本地空间已改变，本次操作未提交');
       const draft = structuredClone(this.state);
-      const result = operation(draft);
+      const keys = structuredClone(this.deviceSyncKeys);
+      const result = operation(draft, keys);
       validateState(stateSchema.parse(draft));
-      const payload = JSON.stringify(await this.archive(draft, this.key, this.header));
+      const payload = JSON.stringify(await this.archive(draft, this.key, this.header, keys));
       if (generation !== this.generation) throw new Error('账本已锁定，本次保存尚未提交');
       // 加密在事务外完成；提交通过版本比较，避免多个标签页最后写入者覆盖。
       const revision = await this.backend.compareSwap(this.revision, payload);
       if (generation !== this.generation) throw new Error('保存期间已锁定，请重新解锁核对结果');
       this.state = draft;
       this.revision = revision;
+      this.deviceSyncKeys = keys;
       return result;
     });
     this.queue = task.catch(() => undefined);
@@ -157,6 +256,7 @@ export class Vault {
       existing?.revision ?? 0,
       JSON.stringify(await this.archive(verified.state, verified.key, header)),
     );
+    this.lock();
     this.key = verified.key;
     this.raw = verified.raw;
     this.header = header;
@@ -167,7 +267,12 @@ export class Vault {
     const stored = await this.backend.read();
     if (!stored?.previous) throw new Error('没有可恢复的上一版本');
     const verified = await this.inspectBackup(stored.previous, password);
-    const revision = await this.backend.compareSwap(stored.revision, stored.previous);
+    // 上一版本只恢复业务数据，不让已忘记的设备密钥随历史归档重新出现。
+    const revision = await this.backend.compareSwap(
+      stored.revision,
+      JSON.stringify(await this.archive(verified.state, verified.key, verified.header)),
+    );
+    this.lock();
     this.key = verified.key;
     this.raw = verified.raw;
     this.header = verified.header;

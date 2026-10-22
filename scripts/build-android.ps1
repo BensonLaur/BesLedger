@@ -21,10 +21,12 @@ try {
         & ./android/gradlew.bat -p android --no-daemon assembleRelease
         if ($LASTEXITCODE -ne 0) { throw 'Android 发布构建失败' }
         New-Item -ItemType Directory -Force artifacts | Out-Null
-        Copy-Item -LiteralPath android/app/build/outputs/apk/release/app-release.apk -Destination artifacts/BesLedger-0.1.0-release.apk
-        & "$env:ANDROID_HOME/build-tools/36.0.0/apksigner.bat" verify --verbose --print-certs artifacts/BesLedger-0.1.0-release.apk
+        $releaseVersion = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+        $releaseApk = "artifacts/BesLedger-$releaseVersion-release.apk"
+        Copy-Item -LiteralPath android/app/build/outputs/apk/release/app-release.apk -Destination $releaseApk
+        & "$env:ANDROID_HOME/build-tools/36.0.0/apksigner.bat" verify --verbose --print-certs $releaseApk
         if ($LASTEXITCODE -ne 0) { throw 'APK 签名校验失败' }
-        Get-FileHash artifacts/BesLedger-0.1.0-release.apk -Algorithm SHA256
+        Get-FileHash $releaseApk -Algorithm SHA256
     } finally { Pop-Location }
 } finally {
     foreach ($name in $names) { [Environment]::SetEnvironmentVariable($name, $oldVariables[$name], 'Process') }

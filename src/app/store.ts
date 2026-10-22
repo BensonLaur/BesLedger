@@ -1,5 +1,5 @@
 import { computed, reactive, shallowRef } from 'vue';
-import { Vault } from '../storage/vault';
+import { Vault, type SyncKeyLease } from '../storage/vault';
 import { backend } from '../storage/backend';
 import { list, type Entry, type State } from '../domain/model';
 import { draftTime, localTime, today } from '../domain/time';
@@ -65,6 +65,11 @@ export function refresh(): void {
 }
 export async function mutate<T>(operation: (s: State) => T): Promise<T> {
   const result = await vault.mutate(operation);
+  refresh();
+  return result;
+}
+export async function rememberSyncKey<T>(lease: SyncKeyLease, operation: (s: State) => T): Promise<T> {
+  const result = await vault.rememberSyncKey(lease, operation);
   refresh();
   return result;
 }

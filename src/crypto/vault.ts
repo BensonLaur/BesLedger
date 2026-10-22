@@ -26,14 +26,20 @@ export async function importKey(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey
   return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
 }
 export async function deriveCredentialKey(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  return deriveLocalKey(raw, 'BesLedger:local-auth:v1', 'github-credentials');
+}
+export async function deriveSyncKeyStorageKey(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  return deriveLocalKey(raw, 'BesLedger:local-sync-keys:v1', 'ledger-sync-keys');
+}
+async function deriveLocalKey(raw: Uint8Array<ArrayBuffer>, salt: string, info: string): Promise<CryptoKey> {
   const material = await crypto.subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
   // 用途隔离：凭证不使用账目加密密钥，也不进入账本快照或恢复文件。
   return crypto.subtle.deriveKey(
     {
       name: 'HKDF',
       hash: 'SHA-256',
-      salt: encoder.encode('BesLedger:local-auth:v1'),
-      info: encoder.encode('github-credentials'),
+      salt: encoder.encode(salt),
+      info: encoder.encode(info),
     },
     material,
     { name: 'AES-GCM', length: 256 },
