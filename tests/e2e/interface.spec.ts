@@ -45,7 +45,10 @@ test('手机五个对称入口、当前页反馈和中心返回首页', async ({
     await expect(nav.getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(nav.getByRole('link', { name: '首页' })).toBeVisible();
     const selected = nav.getByRole('link', { name, exact: true });
-    expect(await selected.evaluate((e) => getComputedStyle(e).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
+    // 选中状态有 140ms 过渡，等待实际绘制，避免在首帧误判为透明。
+    await expect
+      .poll(() => selected.evaluate((e) => getComputedStyle(e).backgroundColor))
+      .not.toBe('rgba(0, 0, 0, 0)');
     await noOverflow(page);
   }
   await nav.getByRole('link', { name: '首页' }).click();

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import brandIcon from '../../assets/brand.svg?no-inline';
 import { catchUp, refresh, restoreLogin, run, ui, vault } from '../store';
 import { put } from '../../domain/model';
 import Icon from './Icon.vue';
@@ -62,7 +63,7 @@ async function choose(event: Event) {
 <template>
   <main class="welcome">
     <div class="welcome-brand">
-      <img src="/icon.svg" alt="" /><span>Bes记账<small>让每一笔，都心中有数。</small></span>
+      <img :src="brandIcon" alt="Bes记账钱包图标" /><span>Bes记账<small>让每一笔，都心中有数。</small></span>
     </div>
     <section v-if="loaded" class="welcome-card">
       <template v-if="recovery"

@@ -7,6 +7,7 @@ const emit = defineEmits<{ close: [] }>();
 const root = ref<HTMLElement>();
 const previous = document.activeElement as HTMLElement | null;
 let unregister: (() => void) | undefined;
+const backdropPressed = ref(false);
 function keyboard(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.stopPropagation();
@@ -38,7 +39,13 @@ onUnmounted(() => {
 });
 </script>
 <template>
-  <div class="modal-backdrop" :class="{ 'page-backdrop': page }" @click.self="emit('close')">
+  <div
+    class="modal-backdrop"
+    :class="{ 'page-backdrop': page }"
+    @pointerdown="backdropPressed = $event.target === $event.currentTarget"
+    @pointercancel="backdropPressed = false"
+    @click.self="backdropPressed && emit('close')"
+  >
     <section
       ref="root"
       class="modal"

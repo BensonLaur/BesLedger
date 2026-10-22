@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import sharp from 'sharp';
 const root = 'android/app/src/main/res';
-const source = fs.readFileSync('public/icon.svg', 'utf8');
+const source = fs.readFileSync('src/assets/brand.svg', 'utf8');
 const paths = [...source.matchAll(/<path fill="([^"]+)" d="([^"]+)"\/>/g)];
-if (paths.length !== 5) throw new Error('Expected the five wallet paths from public/icon.svg');
+if (paths.length !== 5) throw new Error('Expected the five wallet paths from src/assets/brand.svg');
 // 自适应图标由系统裁切背景；缩放前景以保留钱包扣，避免圆形蒙版裁掉边缘。
 const foreground = `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="256" android:viewportHeight="256">
     <group android:pivotX="128" android:pivotY="128" android:scaleX="0.75" android:scaleY="0.75">
@@ -19,7 +19,7 @@ for (const directory of fs.readdirSync(root)) {
     const path = `${root}/${directory}/${name}`;
     const { width, height } = await sharp(path).metadata();
     const size = name === 'splash.png' ? Math.round(Math.min(width, height) * 0.2) : Math.min(width, height);
-    const icon = await sharp('public/icon.svg').resize(size, size).png().toBuffer();
+    const icon = await sharp('src/assets/brand.svg').resize(size, size).png().toBuffer();
     await sharp({
       create: { width, height, channels: 4, background: '#f6f5ef' },
     })

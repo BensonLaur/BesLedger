@@ -10,9 +10,9 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-本轮统一版本为 **0.1.2**：恢复原型的五项底部导航、分类图标与数字键盘，账户创建改为分步填写，“我的”清楚区分本地解锁、GitHub 登录和账本同步。保留本地加密记账、登录保持、设备保存同步密钥及跨端同步。
+当前完整版本为 **0.1.3**：统一采用「日常钱包」图标，首页轻立体日历恢复原型的连续三面、配色与比例。包含五项底部导航、分步创建账户、分类选择反馈，以及本地加密记账、登录保持、设备保存同步密钥和跨端同步。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.2 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-release.apk)（Android 10 起）。[0.1.2 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 10 已验签，与原正式预览包、0.1.0 和 0.1.1 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-0.1.2-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/SHA256SUMS.txt)。原四个阶段性 Release 已归档清理，源码标签保留；旧说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.3 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-release.apk)（Android 10 起）。[0.1.3 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 11 已验签，与原正式预览包、0.1.0 和 0.1.1 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/SHA256SUMS.txt)。原四个阶段性 Release 已归档清理，源码标签保留；旧说明及附件见 [历史归档](docs/RELEASE_ARCHIVE.md)。
 
 Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
@@ -24,7 +24,7 @@ Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管
 | :---: | :---: | :---: |
 | <a href="docs/images/preview-home.png"><img src="docs/images/preview-home.png" width="260" alt="真实运行界面：月度收支、预算水印与每日金额日历，使用虚构数据" /></a> | <a href="docs/images/preview-entry.png"><img src="docs/images/preview-entry.png" width="260" alt="真实运行界面：午餐分类选中、金额、备注、付款账户和数字键盘" /></a> | <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="真实运行界面：现金、信用卡、银行卡和网络账户的虚构余额" /></a> |
 
-当前 0.1.3 测试构建采用「日常钱包」图标与新版日历柱体，Android versionCode 11 沿用原包名和长期签名。上方公开 Release 仍为 0.1.2，其 APK 保留原 B 图标；测试迭代不单独新增公开 Release，也不覆盖旧版附件。
+Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统一使用「日常钱包」图标。当前 APK 为 versionCode 11，沿用原包名与长期签名，可覆盖升级。
 
 ## 登录、解锁与同步
 
@@ -36,7 +36,7 @@ Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管
 
 默认安装选择 **All repositories**，令牌具备其他及未来仓库内容的读写能力。当前代码只使用确认过的账本存储，应用行为限制不等同平台隔离；也可自行选择 Only select repositories 限定范围，但首次须已有专用仓库。GitHub App 仅申请 Contents 写入、Repository creation 写入、Metadata 只读，已不使用旧 OAuth 的 repo 授权。
 
-真实 GitHub App 登录、自动私有建库、Android 与 Web 双向同步及令牌续期已验收。本轮 73 项核心测试、33 条浏览器流程、API 36 原生界面/SQLite/密钥检查，以及正式签名包从 0.1.1 到 0.1.2 的覆盖升级均通过；物理 Android/iPad 的验收仍待用户实测，不将模拟器或浏览器尺寸测试视为真机结果。产物与证据见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
+真实 GitHub App 登录、自动私有建库、Android 与 Web 双向同步及令牌续期已验收。0.1.3 的 73 项核心测试、相关界面与离线浏览器流程、20 组原型渲染像素对照，以及正式签名包从 0.1.2 到 0.1.3 的覆盖升级均通过；物理 Android/iPad 的验收仍待用户实测，不将模拟器或浏览器尺寸测试视为真机结果。产物与证据见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
 
 ## 开始使用
 

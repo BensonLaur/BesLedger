@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import brandIcon from '../assets/brand.svg?no-inline';
 import { useRoute } from 'vue-router';
 import { closeTopModal } from './modal-stack';
 import { useRegisterSW } from 'virtual:pwa-register/vue';
@@ -55,7 +56,9 @@ onMounted(() => {
   <div v-else class="app-shell" :class="{ 'is-home': route.path === '/' }">
     <aside class="sidebar">
       <RouterLink class="brand" to="/"
-        ><img src="/icon.svg" alt="" /><span>Bes记账<small>BesLedger</small></span></RouterLink
+        ><img :src="brandIcon" alt="Bes记账钱包图标" /><span
+          >Bes记账<small>BesLedger</small></span
+        ></RouterLink
       >
       <nav>
         <RouterLink v-for="item in navigation" :key="item.path" :to="item.path"

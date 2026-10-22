@@ -9,6 +9,14 @@ import { today } from '../../domain/time';
 import GitHubConnection from '../components/GitHubConnection.vue';
 import Icon from '../components/Icon.vue';
 import Modal from '../components/Modal.vue';
+import SupportPanel from '../components/SupportPanel.vue';
+import brandIcon from '../../assets/brand.svg?no-inline';
+const supportOpen = ref(false);
+function openSupport(event: MouseEvent) {
+  // Safari 的触摸点击不一定聚焦按钮；显式记录入口，关闭面板后可回到原位置。
+  (event.currentTarget as HTMLElement).focus({ preventScroll: true });
+  supportOpen.value = true;
+}
 const deleted = computed(() =>
   Object.values(state.value!.entities).filter((e) => e.deleted && ['ledger', 'entry'].includes(e.data.kind)),
 );
@@ -68,7 +76,7 @@ async function restore() {
     <button class="secondary" @click="lock"><Icon name="lock" />锁定</button>
   </div>
   <div class="settings-profile">
-    <span class="entry-icon"><Icon name="book" :size="26" /></span>
+    <img class="settings-brand-icon" :src="brandIcon" alt="Bes记账钱包图标" width="48" height="48" />
     <div>
       <h2>Bes记账</h2>
       <p>本地已解锁 · 只在本机记账也可以</p>
@@ -141,6 +149,15 @@ async function restore() {
           卸载、清除应用或站点数据会丢失本地账目，请先导出备份并独立保存恢复密钥。系统权限与安装渠道可能不同，尚未完成应用商店审核。
         </p>
       </details>
+    </section>
+    <section class="support-entry-section">
+      <button class="support-entry" aria-haspopup="dialog" :aria-expanded="supportOpen" @click="openSupport">
+        <img :src="brandIcon" alt="" width="44" height="44" />
+        <span><strong>支持 Bes记账</strong><small>一起把记账做得更顺手</small></span>
+        <Icon name="right" />
+      </button>
+    </section>
+    <section class="settings-version">
       <p class="hint">BesLedger 0.1.3 · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
@@ -151,6 +168,7 @@ async function restore() {
       >
     </section>
   </div>
+  <SupportPanel v-if="supportOpen" @close="supportOpen = false" />
   <Modal v-if="recycleOpen" title="回收站" @close="recycleOpen = false"
     ><p>
       恢复会形成新版本；需先恢复所属账本和退款原单。恢复整本账时，先恢复账本，再选择需要的流水，不自动复活此前已删除的记录。

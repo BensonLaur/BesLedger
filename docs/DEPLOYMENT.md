@@ -2,7 +2,7 @@
 
 当前阶段 Web：https://bensonlaur.github.io/BesLedger/。源码：https://github.com/BensonLaur/BesLedger。
 
-当前统一下载入口为 [0.1.2](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2)：长期签名 Android versionCode 10、对应 Web/PWA、SHA-256、签名说明及历史发布归档。包名与原签名不变，可直接覆盖升级；先独立保存加密备份及恢复密钥，不先卸载或清空数据。
+当前统一下载入口为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)：长期签名 Android versionCode 11、对应 Web/PWA、SHA-256、签名说明及历史发布归档。包名与原签名不变，可直接覆盖升级；先独立保存加密备份及恢复密钥，不先卸载或清空数据。
 
 旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1 的说明、附件和校验信息见 [历史归档](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/；两个站点各自保存本地数据，已有用户继续使用原网址。
 

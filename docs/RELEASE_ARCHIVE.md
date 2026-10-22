@@ -1,8 +1,8 @@
 # 历史 Release 归档
 
-2026-10-23：统一新版为 [0.1.2](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.2)。以下四个历史 Release 的说明、附件、原校验文件和元数据已打包归档。历史安装包仅用于追溯，普通用户请下载当前新版。
+当前新版为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)。2026-10-23 完成旧版归档清理。以下四个历史 Release 的说明、附件、原校验文件和元数据已打包归档。历史安装包仅用于追溯，普通用户请下载当前新版。
 
-[下载历史发布归档](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.2/BesLedger-legacy-releases-20261023.zip)。归档内 `ARCHIVE_MANIFEST.json` 记录全部 15 个原附件的大小和 SHA-256；各目录同时保留原 `release.json`、更新说明和原有校验文件。Git 标签及提交历史继续保留。
+[下载历史发布归档](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-legacy-releases-20261023.zip)。归档内 `ARCHIVE_MANIFEST.json` 记录全部 15 个原附件的大小和 SHA-256；各目录同时保留原 `release.json`、更新说明和原有校验文件。Git 标签及提交历史继续保留。
 
 ## v0.1.0-preview.1
 

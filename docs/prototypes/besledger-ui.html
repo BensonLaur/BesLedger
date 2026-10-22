@@ -437,6 +437,25 @@
 #besledger-preview .bl-demo-state{margin:16px 0;font-size:12px;color:var(--bl-muted)}
 #besledger-preview .bl-demo-state select{width:100%;margin-top:8px}
 #besledger-preview .bl-sync-explanation{font-size:12px;color:var(--bl-muted);margin:12px 0}
+
+#besledger-preview .bl-support-brand{flex-shrink:0;border-radius:13px}
+#besledger-preview .bl-modal-host[data-panel="support"] .bl-sheet{max-height:calc(100% - 20px);padding:0;overflow:auto}
+#besledger-preview .bl-modal-host[data-panel="support"] .bl-sheet-head{position:sticky;top:0;z-index:1;padding:20px 22px;margin:0;background:var(--bl-surface)}
+#besledger-preview .bl-support-layout{padding:0 22px 22px;display:grid;gap:20px}
+#besledger-preview .bl-support-intro{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+#besledger-preview .bl-support-copy p{margin:12px 0;font-size:13px;line-height:1.8}
+#besledger-preview .bl-support-source{white-space:nowrap;font-size:12px}
+#besledger-preview .bl-support-source a{color:var(--bl-accent)}
+#besledger-preview .bl-support-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+#besledger-preview .bl-support-methods button{min-height:44px;border:1px solid var(--bl-line);border-radius:12px;text-align:center}
+#besledger-preview .bl-support-methods [aria-pressed="true"]{background:var(--bl-soft);color:var(--bl-accent);border-color:var(--bl-accent);box-shadow:inset 0 0 0 1px var(--bl-accent);font-weight:650}
+#besledger-preview .bl-support-actions{display:flex;flex-wrap:wrap;gap:10px}
+#besledger-preview .bl-support-payment{margin:0;padding:12px;border:1px solid var(--bl-line);border-radius:18px;background:#fff;text-align:center}
+#besledger-preview .bl-support-payment img{width:100%;height:auto;max-height:400px;object-fit:contain;display:block}
+#besledger-preview .bl-support-payment figcaption{font-size:11px;color:#65768a;margin-top:10px}
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-modal-host[data-panel="support"] .bl-sheet{max-width:800px}
+#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-support-layout{grid-template-columns:minmax(0,1fr) minmax(0,.85fr);align-items:center;gap:28px}
+@media(max-width:699px){#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-support-layout{grid-template-columns:minmax(0,1fr)}}
 </style>
 <script>
 (() => {
@@ -552,7 +571,7 @@
     return `<div class="bl-header-left">${left}</div><div class="bl-header-actions">${actions}${state.device==='desktop'&&isRoot?button(icon('plus')+' 记一笔','go','data-page="entry"','bl-primary'):''}</div>`;
   }
   function sidebar(){
-    return `<div class="bl-brand"><span>${icon('book-open')}</span>BesLedger</div><div class="bl-caption" style="padding:0 10px">${esc(state.book)}</div><div class="bl-side-label">日常记账</div>${[['home','house','首页明细'],['accounts','wallet','账户'],['recurring','calendar-clock','事件'],['reports','chart-pie','统计']].map(([p,i,n])=>button(icon(i)+n,'go',`data-page="${p}"`,'bl-side-nav'+(state.page===p?' active':''))).join('')}<div class="bl-side-label">管理</div>${[['books','notebook','我的账本'],['categories','shapes','分类管理'],['settings','settings-2','设置']].map(([p,i,n])=>button(icon(i)+n,'go',`data-page="${p}"`,'bl-side-nav'+(state.page===p?' active':''))).join('')}<div class="bl-side-foot">${icon('hard-drive')} 本地账本<br><span style="display:block;margin-top:6px">示例数据 · 界面预览</span></div>`;
+    return `<div class="bl-brand"><img src="../../src/assets/brand.svg" width="34" height="34" alt="" />BesLedger</div><div class="bl-caption" style="padding:0 10px">${esc(state.book)}</div><div class="bl-side-label">日常记账</div>${[['home','house','首页明细'],['accounts','wallet','账户'],['recurring','calendar-clock','事件'],['reports','chart-pie','统计']].map(([p,i,n])=>button(icon(i)+n,'go',`data-page="${p}"`,'bl-side-nav'+(state.page===p?' active':''))).join('')}<div class="bl-side-label">管理</div>${[['books','notebook','我的账本'],['categories','shapes','分类管理'],['settings','settings-2','设置']].map(([p,i,n])=>button(icon(i)+n,'go',`data-page="${p}"`,'bl-side-nav'+(state.page===p?' active':''))).join('')}<div class="bl-side-foot">${icon('hard-drive')} 本地账本<br><span style="display:block;margin-top:6px">示例数据 · 界面预览</span></div>`;
   }
   function bottom(){
     if(['entry','loan','refund','rule','categories','accountTypes','accountForm'].includes(state.page)) return '';
@@ -861,7 +880,7 @@
     const card=(name,note,status,action,label)=>`<div class="bl-book-card"><div class="bl-cover">${icon('notebook')}</div><div class="bl-book-body"><h3>${name}</h3><div class="bl-caption">${note}</div><div class="bl-book-actions"><span class="bl-status-pill">${status}</span>${button(label,action,`data-book="${esc(name)}"`)}</div></div></div>`;
     return `<p class="bl-note">界面原型 · 状态模拟。登录不会上传账本，修改后仍需点击“同步”。</p>${card('日常账本','本机原有账本 A',status,connected?'preview-upload':'book-enter',connected?(state.previewUploaded?'同步':'首次上传'):'进入账本')}${connected?card('旅行账本','其他设备的账本 B，与 A 独立并存',state.previewDownloaded?'已同步':'仅云端','preview-download',state.previewDownloaded?'同步':'解密并下载'):''}${state.previewKeySaved?`<p class="bl-note">同步密钥已在此设备加密保存（模拟）</p>${button('同步密钥','preview-key','','bl-link')}`:''}${phase==='offline'?'<p class="bl-note">当前离线，以上为最近确认的状态。</p>':''}${phase==='error'?'<p class="bl-note">暂时无法访问同步存储，请检查安装范围。原绑定与账目已保留。</p>':''}${phase==='conflict'?`<div class="bl-card"><h3>同步冲突 · 请核对双方内容</h3><p class="bl-note">本机：虚构午餐 32 元；云端：虚构午餐 35 元。</p>${button('保留本机（模拟）','preview-resolve','','bl-secondary')}${button('保留云端（模拟）','preview-resolve','','bl-secondary')}</div>`:''}<section class="bl-section"><div class="bl-list">${row('GitHub 连接',connectionStates[phase],icon('chevron-right'),'cloud','sync-settings')}</div></section>`;
   }
-  function settings(){return `<div class="bl-card"><div class="bl-row" style="padding:0;border:0">${circle('notebook')}<div class="bl-row-main"><h2>Bes记账</h2><p class="bl-row-meta">${state.previewLocked?'本地已锁定':'本地已解锁'} · 只在本机记账也可以</p></div><span class="bl-badge">状态模拟</span></div></div><section class="bl-section">${titleRow('日常记账')}<div class="bl-list">${row('账户管理','现金、银行卡和往来款',icon('chevron-right'),'wallet','go','data-page="accounts"')}${row('事件与周期账','还款日期和固定收支',icon('chevron-right'),'calendar-clock','go','data-page="recurring"')}</div></section><section class="bl-section">${titleRow('数据与同步')}<div class="bl-list">${row('账本管理','选择上传、下载或同步哪本账',icon('chevron-right'),'notebook','go','data-page="books"')}${row('GitHub 连接',connectionStates[state.previewConnection],icon('chevron-right'),'cloud','sync-settings')}</div></section><section class="bl-section">${titleRow('数据保护')}<div class="bl-list">${row('导出完整加密备份','账户、账目、退款和周期账一起备份',icon('chevron-right'),'download','backup-demo')}${row('校验并恢复备份','先检查备份内容，再确认恢复',icon('chevron-right'),'upload','restore-demo')}${row('查看本机恢复密钥','用于恢复这台设备的本地空间',icon('chevron-right'),'shield-check','preview-local-key')}</div></section><section class="bl-section">${titleRow('隐私与帮助')}<div class="bl-list">${row('回收站','找回已删除的账目',icon('chevron-right'),'trash-2','preview-recycle')}${row('记账、登录与同步有什么区别？','三种状态分别查看',icon('chevron-right'),'circle-help','preview-help')}</div></section><p class="bl-note" style="text-align:center;margin-top:25px">Bes记账 0.1.2 · 界面原型 · 演示数据均为虚构</p>`;}
+  function settings(){return `<div class="bl-card"><div class="bl-row" style="padding:0;border:0"><img class="bl-support-brand" src="../../src/assets/brand.svg" width="48" height="48" alt="" /><div class="bl-row-main"><h2>Bes记账</h2><p class="bl-row-meta">${state.previewLocked?'本地已锁定':'本地已解锁'} · 只在本机记账也可以</p></div><span class="bl-badge">状态模拟</span></div></div><section class="bl-section">${titleRow('日常记账')}<div class="bl-list">${row('账户管理','现金、银行卡和往来款',icon('chevron-right'),'wallet','go','data-page="accounts"')}${row('事件与周期账','还款日期和固定收支',icon('chevron-right'),'calendar-clock','go','data-page="recurring"')}</div></section><section class="bl-section">${titleRow('数据与同步')}<div class="bl-list">${row('账本管理','选择上传、下载或同步哪本账',icon('chevron-right'),'notebook','go','data-page="books"')}${row('GitHub 连接',connectionStates[state.previewConnection],icon('chevron-right'),'cloud','sync-settings')}</div></section><section class="bl-section">${titleRow('数据保护')}<div class="bl-list">${row('导出完整加密备份','账户、账目、退款和周期账一起备份',icon('chevron-right'),'download','backup-demo')}${row('校验并恢复备份','先检查备份内容，再确认恢复',icon('chevron-right'),'upload','restore-demo')}${row('查看本机恢复密钥','用于恢复这台设备的本地空间',icon('chevron-right'),'shield-check','preview-local-key')}</div></section><section class="bl-section">${titleRow('隐私与帮助')}<div class="bl-list">${row('回收站','找回已删除的账目',icon('chevron-right'),'trash-2','preview-recycle')}${row('记账、登录与同步有什么区别？','三种状态分别查看',icon('chevron-right'),'circle-help','preview-help')}</div></section><section class="bl-section"><div class="bl-list">${button('<img class="bl-support-brand" src="../../src/assets/brand.svg" width="44" height="44" alt="" /><span class="bl-row-main"><strong>支持 Bes记账</strong><span class="bl-row-meta">一起把记账做得更顺手</span></span>'+icon('chevron-right'),'support-open','aria-haspopup="dialog"','bl-row')}</div></section><p class="bl-note" style="text-align:center;margin-top:25px">Bes记账 0.1.3 · 界面原型 · 演示数据均为虚构</p>`;}
   const renderers={home,entry,categories:categoryPage,accounts,account:accountDetail,accountTypes,accountForm,loan,detail,refund,recurring,rule,reports,books,settings,features};
   function render(){
     closeQuickPanel(false);
@@ -882,7 +901,26 @@
     root.querySelector('.bl-modal-host').innerHTML='';
     refreshIcons();
   }
+  let supportReturnTarget=null,supportBackground=[];
+  function closeSupportPanel(restoreFocus=true){
+    const host=root.querySelector('.bl-modal-host');if(host.dataset.panel!=='support')return;
+    host.innerHTML='';delete host.dataset.panel;
+    for(const [el,previous] of supportBackground)el.inert=previous;
+    supportBackground=[];
+    if(restoreFocus&&supportReturnTarget?.isConnected)supportReturnTarget.focus({preventScroll:true});
+  }
+  function supportPanel(method='wechat',trigger=null){
+    closeSupportPanel(false);
+    if(trigger)supportReturnTarget=trigger;
+    const label=method==='wechat'?'微信':'支付宝',payee=method==='wechat'?'Benson(**城)':'Bes软件';
+    showSheet('让记账更顺手',`<div class="bl-support-layout"><div class="bl-support-copy"><div class="bl-support-intro"><img class="bl-support-brand" src="../../src/assets/brand.svg" width="48" height="48" alt="" /><div><span class="bl-note">自愿支持 · Bes记账</span><h3>把每一笔，都记得更轻松</h3></div></div><p>Bes记账开源<span class="bl-support-source">（<a href="https://github.com/BensonLaur/BesLedger" target="_blank" rel="noopener noreferrer">查看 GitHub 源代码 ↗</a>）</span>、免费、无广告。如果它让你补账少费一点力，把每一笔看得更清楚，欢迎自愿支持后续打磨。</p><p class="bl-note">金额由你决定；使用、分享和认真反馈，也都是支持。</p><div class="bl-support-methods" role="group" aria-label="选择收款方式">${['wechat','alipay'].map(key=>button(key==='wechat'?'微信':'支付宝','support-method',`data-method="${key}" aria-pressed="${key===method}"`)).join('')}</div><p>${label} · 收款人：<strong>${payee}</strong></p><div class="bl-support-actions">${button('保存收款码','support-save','','bl-primary')}${button('查看大图','support-large',`data-method="${method}"`,'bl-secondary')}</div><p class="bl-note">电脑上用手机扫码；手机上保存图片，再在微信或支付宝的“扫一扫”中从相册识别。付款前请核对收款人。</p><p class="bl-note">原型预览：保存操作为模拟，不会付款或更改账目。</p></div><figure class="bl-support-payment"><img src="../../src/assets/support/${method}.webp" alt="${label}收款码，收款人 ${payee}" /><figcaption>随心支持，感谢有你</figcaption></figure></div>`);
+    const host=root.querySelector('.bl-modal-host');host.dataset.panel='support';
+    supportBackground=[...root.querySelectorAll('.bl-header,.bl-main,.bl-bottom,.bl-status,.bl-sidebar')].map(el=>[el,el.inert]);
+    for(const [el] of supportBackground)el.inert=true;
+    host.querySelector(trigger?'[data-action="close-sheet"]':`[data-method="${method}"]`).focus({preventScroll:true});
+  }
   function showSheet(title,content){
+    closeSupportPanel(false);
     closeQuickPanel(false);
     root.querySelector('.bl-modal-host').innerHTML=`<section class="bl-sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="bl-sheet-head"><h2>${title}</h2>${navIcon('x','close-sheet','关闭')}</div>${content}</section>`;refreshIcons();
   }
@@ -910,10 +948,10 @@
     dialog.querySelector('[data-action="close-sheet"]').focus({preventScroll:true});
   }
   root.addEventListener('keydown',event=>{
-    const host=root.querySelector('.bl-modal-host');if(host.dataset.panel!=='quick')return;
-    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeQuickPanel();return;}
+    const host=root.querySelector('.bl-modal-host');if(!['quick','support'].includes(host.dataset.panel))return;
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();if(host.dataset.panel==='support')closeSupportPanel();else closeQuickPanel();return;}
     if(event.key==='Tab'){
-      const controls=[...host.querySelectorAll('button:not(:disabled)')],first=controls[0],last=controls.at(-1);
+      const controls=[...host.querySelectorAll('button:not(:disabled),a[href]')],first=controls[0],last=controls.at(-1);
       if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     }
@@ -950,10 +988,14 @@
   // 当前示例解析器只覆盖普通收支；转账备注不触发自动改写类型或两端账户。
   root.addEventListener('paste',e=>{if(e.target.dataset.field==='note'&&state.entryType!=='转账')setTimeout(()=>{state.note=e.target.value;if(parseSms())render();},0);});
   root.addEventListener('click',e=>{
-    if(e.target===root.querySelector('.bl-modal-host')){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else host.innerHTML='';return;}
+    if(e.target===root.querySelector('.bl-modal-host')){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else if(host.dataset.panel==='support')closeSupportPanel();else host.innerHTML='';return;}
     const homeAction=e.target.closest('[data-home-action]');if(homeAction){ledgerHome.handle(homeAction);return;}
     const el=e.target.closest('[data-action]');if(!el)return;
     const action=el.dataset.action;
+    if(action==='support-open'){supportPanel('wechat',el);return;}
+    if(action==='support-method'){supportPanel(el.dataset.method);return;}
+    if(action==='support-save'){toast('保存操作模拟：正式应用会保存完整 PNG 图片');return;}
+    if(action==='support-large'){window.open(`../../src/assets/support/${el.dataset.method}.webp`,'_blank','noopener');return;}
     if(action==='home-shortcuts'){showQuickPanel();return;}
     if(root.querySelector('.bl-modal-host').dataset.panel==='quick'&&action==='open-feature')closeQuickPanel(false);
     if(action==='go'){
@@ -964,7 +1006,7 @@
       go(el.dataset.page);if(sms)root.querySelector('#bl-note-input').focus();return;
     }
     if(action==='back'){if(state.page==='rule')state.planTab=1;go(({entry:'home',loan:'home',categories:'entry',account:'accounts',accountTypes:'accounts',accountForm:'accountTypes',detail:'home',refund:'detail',rule:'recurring',books:'home',features:'home'})[state.page]||'home');return;}
-    if(action==='close-sheet'){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else host.innerHTML='';return;}
+    if(action==='close-sheet'){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else if(host.dataset.panel==='support')closeSupportPanel();else host.innerHTML='';return;}
     if(action==='entry-type'){state.entryType=el.dataset.type;state.recognized=false;if(state.entryType==='借贷'){go('loan');return;}state.category=state.entryType==='收入'?'工资薪水':'午餐';state.categoryGroup=state.entryType==='收入'?'收入':'餐饮';refreshQuickOrder();go('entry');return;}
     if(action==='category-type'){state.entryType=el.dataset.type;state.categoryGroup=state.entryType==='收入'?'收入':'餐饮';state.categoryQuery='';render();return;}
     if(action==='transfer-kind'){if(!transferKinds[el.dataset.kind])return;state.transferKind=el.dataset.kind;render();keepState();return;}

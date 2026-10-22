@@ -773,6 +773,67 @@ textarea {
 .settings-profile h2 {
   font-size: 18px;
 }
+.settings-brand-icon {
+  flex-shrink: 0;
+  border-radius: 13px;
+}
+.support-entry-section,
+.settings-version {
+  grid-column: 1 / -1;
+}
+.support-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+.support-entry > img {
+  border-radius: 12px;
+}
+.support-entry > span {
+  flex: 1;
+  min-width: 0;
+}
+.support-entry strong {
+  display: block;
+  font-size: 15px;
+}
+.support-entry small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.support-entry:hover,
+.support-entry:active {
+  background: var(--soft);
+}
+.settings-version {
+  padding: 0 4px 12px;
+}
+.support-dialog > .modal {
+  max-width: 800px;
+}
+@media (max-width: 699px) {
+  .support-dialog {
+    align-items: end;
+    padding: 0;
+  }
+  .support-dialog > .modal {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 24px 24px 0 0;
+  }
+  .support-dialog .modal-header {
+    flex-shrink: 0;
+  }
+}
 .settings-profile p {
   margin: 3px 0 0;
   color: var(--muted);
