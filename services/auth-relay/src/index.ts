@@ -4,7 +4,11 @@ export interface Env {
   GITHUB_APP_SLUG: string;
   ALLOWED_ORIGINS: string;
 }
-export function createRelay(transport: typeof fetch = fetch) {
+export function createRelay(
+  transport: typeof fetch = fetch,
+  clientAddress: (request: Request) => string = (request) =>
+    request.headers.get('CF-Connecting-IP') || 'local',
+) {
   const rates = new Map<string, { count: number; reset: number }>();
   return {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -18,16 +22,29 @@ export function createRelay(transport: typeof fetch = fetch) {
         clientId: env.GITHUB_CLIENT_ID,
         slug: env.GITHUB_APP_SLUG,
       };
-      if (url.pathname === '/health' && request.method === 'GET')
-        return Response.json(
-          { service: 'BesLedger GitHub App device relay', configured, ...(configured ? { app } : {}) },
-          { headers: { 'Cache-Control': 'no-store' } },
-        );
       const origin = request.headers.get('Origin') || '';
       const allowed = (env.ALLOWED_ORIGINS || '')
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
+      if (['/', '/health'].includes(url.pathname) && request.method === 'GET')
+        return Response.json(
+          {
+            service: 'BesLedger GitHub App device relay',
+            configured,
+            ...(configured ? { app } : {}),
+            homepage: 'https://bensonlaur.github.io/BesLedger/',
+          },
+          {
+            status: configured ? 200 : 503,
+            headers: {
+              'Cache-Control': 'no-store',
+              'X-Content-Type-Options': 'nosniff',
+              Vary: 'Origin',
+              ...(allowed.includes(origin) ? { 'Access-Control-Allow-Origin': origin } : {}),
+            },
+          },
+        );
       if (!allowed.includes(origin)) return new Response('Origin denied', { status: 403 });
       const headers = {
         'Access-Control-Allow-Origin': origin,
@@ -44,7 +61,8 @@ export function createRelay(transport: typeof fetch = fetch) {
       if (!configured) return Response.json({ error: 'app_not_configured' }, { status: 503, headers });
       if (Number(request.headers.get('Content-Length') || 0) > 8192)
         return new Response('Too large', { status: 413, headers });
-      const ip = request.headers.get('CF-Connecting-IP') || 'local';
+      // 由部署适配器选择平台保证的真实地址，不能在新平台上让所有用户共用 local 限流桶。
+      const ip = clientAddress(request);
       const now = Date.now(),
         rate = rates.get(ip);
       if (rate && rate.reset > now && rate.count >= 90)
@@ -85,6 +103,7 @@ export function createRelay(transport: typeof fetch = fetch) {
           },
           body: params,
           signal: AbortSignal.timeout(15000),
+          redirect: 'error',
         });
         if (!upstream.ok && upstream.status !== 400 && upstream.status !== 401)
           return Response.json({ error: 'github_unavailable' }, { status: 502, headers });

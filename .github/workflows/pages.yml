@@ -24,6 +24,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: 验证公开授权服务与浏览器跨域
+        run: node scripts/check-auth-service.mjs
+        env:
+          BESLEDGER_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
+          BESLEDGER_GITHUB_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}
+          BESLEDGER_GITHUB_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
+          BESLEDGER_GITHUB_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
       - run: npm run build
         env:
           VITE_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
