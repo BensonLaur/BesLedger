@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   decrypt,
+  deriveCredentialKey,
   encrypt,
   envelopeSchema,
   importKey,
@@ -90,6 +91,13 @@ export class Vault {
   get encryptionKey(): CryptoKey {
     if (!this.key) throw new Error('请先解锁');
     return this.key;
+  }
+  async credentialKey(): Promise<CryptoKey> {
+    if (!this.raw) throw new Error('请先解锁');
+    const generation = this.generation;
+    const key = await deriveCredentialKey(this.raw);
+    if (generation !== this.generation) throw new Error('账本已锁定');
+    return key;
   }
   private async archive(state: State, key: CryptoKey, header: KeyHeader): Promise<Archive> {
     const archive: Archive = {

@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
-import { GitHub } from './client';
+import { AuthorizationInvalid, parseTokenReply, type AuthTokens } from './tokens';
 const service = import.meta.env.VITE_AUTH_SERVICE as string | undefined;
 export const authConfigured = !!service;
 export type DeviceCode = {
@@ -42,7 +42,9 @@ export async function openAuthorization(url: string): Promise<void> {
   if (Capacitor.isNativePlatform()) await Browser.open({ url });
   else window.open(url, '_blank', 'noopener,noreferrer');
 }
-export async function pollAuthorization(code: DeviceCode): Promise<{ github?: GitHub; interval?: number }> {
+export async function pollAuthorization(
+  code: DeviceCode,
+): Promise<{ tokens?: AuthTokens; interval?: number }> {
   const token = await relay<{ access_token?: string; scope?: string; error?: string; interval?: number }>(
     'token',
     { device_code: code.device_code },
@@ -52,6 +54,12 @@ export async function pollAuthorization(code: DeviceCode): Promise<{ github?: Gi
   if (token.error === 'access_denied') throw new Error('你已取消 GitHub 授权，可重新连接');
   if (token.error === 'expired_token') throw new Error('授权码已过期，请重新连接');
   if (!token.access_token) throw new Error('GitHub 授权失败，请重新连接');
-  if (!token.scope?.split(/[ ,]+/).includes('repo')) throw new Error('未授予私有仓库权限，无法启用同步');
-  return { github: new GitHub(token.access_token) };
+  return { tokens: parseTokenReply(token) };
+}
+export async function refreshAuthorization(refreshToken: string): Promise<AuthTokens> {
+  const reply = await relay<{ error?: string }>('refresh', { refresh_token: refreshToken });
+  if (['bad_refresh_token', 'invalid_grant', 'expired_token', 'access_denied'].includes(reply.error || ''))
+    throw new AuthorizationInvalid();
+  if (reply.error) throw new Error('GitHub 暂时无法续期，请稍后重试；登录状态已保留');
+  return parseTokenReply(reply);
 }

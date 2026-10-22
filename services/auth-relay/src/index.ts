@@ -28,11 +28,11 @@ export function createRelay(transport: typeof fetch = fetch) {
         'Referrer-Policy': 'no-referrer',
       };
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-      if (request.method !== 'POST' || !['/device', '/token'].includes(url.pathname))
+      if (request.method !== 'POST' || !['/device', '/token', '/refresh'].includes(url.pathname))
         return new Response('Not found', { status: 404, headers });
       if (!env.GITHUB_CLIENT_ID)
         return Response.json({ error: 'app_not_configured' }, { status: 503, headers });
-      if (Number(request.headers.get('Content-Length') || 0) > 2048)
+      if (Number(request.headers.get('Content-Length') || 0) > 8192)
         return new Response('Too large', { status: 413, headers });
       const ip = request.headers.get('CF-Connecting-IP') || 'local';
       const now = Date.now(),
@@ -44,13 +44,19 @@ export function createRelay(transport: typeof fetch = fetch) {
       if (rates.size > 5000) for (const [key, r] of rates) if (r.reset < now) rates.delete(key);
       try {
         const text = await request.text();
-        if (text.length > 2048) return new Response('Too large', { status: 413, headers });
+        if (text.length > 8192) return new Response('Too large', { status: 413, headers });
         const body = JSON.parse(text || '{}') as Record<string, unknown>;
         const params = new URLSearchParams({ client_id: env.GITHUB_CLIENT_ID });
         let endpoint: string;
         if (url.pathname === '/device') {
           endpoint = 'https://github.com/login/device/code';
-          params.set('scope', 'repo');
+          params.set('scope', 'repo offline_access');
+        } else if (url.pathname === '/refresh') {
+          if (typeof body.refresh_token !== 'string' || !/^[a-zA-Z0-9_.-]{1,4096}$/.test(body.refresh_token))
+            return new Response('Invalid refresh token', { status: 400, headers });
+          endpoint = 'https://github.com/login/oauth/access_token';
+          params.set('refresh_token', body.refresh_token);
+          params.set('grant_type', 'refresh_token');
         } else {
           if (typeof body.device_code !== 'string' || !/^[a-zA-Z0-9_-]{10,200}$/.test(body.device_code))
             return new Response('Invalid device code', { status: 400, headers });
@@ -69,7 +75,8 @@ export function createRelay(transport: typeof fetch = fetch) {
           body: params,
           signal: AbortSignal.timeout(15000),
         });
-        if (!upstream.ok) return Response.json({ error: 'github_unavailable' }, { status: 502, headers });
+        if (!upstream.ok && upstream.status !== 400 && upstream.status !== 401)
+          return Response.json({ error: 'github_unavailable' }, { status: 502, headers });
         const data = (await upstream.json()) as Record<string, unknown>;
         const allowedKeys = [
           'device_code',
@@ -78,6 +85,8 @@ export function createRelay(transport: typeof fetch = fetch) {
           'expires_in',
           'interval',
           'access_token',
+          'refresh_token',
+          'refresh_token_expires_in',
           'token_type',
           'scope',
           'error',

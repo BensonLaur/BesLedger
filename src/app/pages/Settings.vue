@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import { restoreEntity } from '../../domain/ledger';
 import { list } from '../../domain/model';
-import { lock, refresh, run, ui, vault, state, mutate } from '../store';
+import { lock, refresh, restoreLogin, run, ui, vault, state, mutate } from '../store';
 import { saveFile } from '../../inputs/files';
 import { today } from '../../domain/time';
 import GitHubConnection from '../components/GitHubConnection.vue';
@@ -50,6 +50,7 @@ async function restore() {
   if (!consent.value || !preview.value) return;
   await run(async () => {
     await vault.restore(file.value, credential.value, password.value, useRecovery.value);
+    await restoreLogin();
     refresh();
     restoreOpen.value = false;
     credential.value = '';

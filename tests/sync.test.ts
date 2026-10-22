@@ -181,7 +181,7 @@ describe('授权服务隔离', () => {
     );
     expect(calls[0]).toEqual({
       url: 'https://github.com/login/device/code',
-      body: 'client_id=public-client-id&scope=repo',
+      body: 'client_id=public-client-id&scope=repo+offline_access',
     });
     expect(await response.text()).not.toContain('client_secret');
     expect(response.headers.get('Cache-Control')).toBe('no-store');

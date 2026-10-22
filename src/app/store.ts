@@ -4,7 +4,9 @@ import { backend } from '../storage/backend';
 import { list, type Entry, type State } from '../domain/model';
 import { draftTime, localTime, today } from '../domain/time';
 import { generateDue } from '../domain/recurring';
-import type { GitHub, GitHubUser } from '../providers/github/client';
+import { GitHubSession, type Login } from '../providers/github/session';
+import { refreshAuthorization } from '../providers/github/auth';
+import { credentialBackend } from '../storage/credentials';
 import type { Conflict } from '../sync/merge';
 
 export const vault = new Vault(backend());
@@ -28,8 +30,27 @@ export const ui = reactive({
   confirm: '',
   smsPicker: false,
   smsQueue: [] as string[],
+  loginRecovery: false,
 });
-export const auth = shallowRef<{ github: GitHub; user: GitHubUser }>();
+export const auth = shallowRef<Login>();
+export const githubSession = new GitHubSession(
+  credentialBackend(),
+  refreshAuthorization,
+  (login, message) => {
+    auth.value = login;
+    if (login) ui.loginRecovery = false;
+    if (message) ui.notice = message;
+  },
+);
+githubSession.observe();
+export async function restoreLogin(): Promise<void> {
+  try {
+    await githubSession.resume(await vault.credentialKey());
+  } catch (error) {
+    ui.loginRecovery = true;
+    ui.error = error instanceof Error ? error.message : '无法恢复登录状态，请重试';
+  }
+}
 export const conflicts = shallowRef<Conflict[]>([]);
 export const currentLedgerId = computed(() => state.value?.preferences.currentLedger ?? '');
 export const ledgers = computed(() => (state.value ? list(state.value, 'ledger') : []));
@@ -101,9 +122,9 @@ export async function catchUp(): Promise<void> {
     await mutate((s) => generateDue(s));
 }
 export function lock(): void {
+  githubSession.suspend();
   vault.lock();
   state.value = undefined;
-  auth.value = undefined;
   ui.editor = false;
   ui.draft = undefined;
   ui.detailId = '';

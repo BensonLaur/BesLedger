@@ -25,6 +25,22 @@ export function decode(value: string): Uint8Array<ArrayBuffer> {
 export async function importKey(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
 }
+export async function deriveCredentialKey(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  const material = await crypto.subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
+  // 用途隔离：凭证不使用账目加密密钥，也不进入账本快照或恢复文件。
+  return crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: encoder.encode('BesLedger:local-auth:v1'),
+      info: encoder.encode('github-credentials'),
+    },
+    material,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
 export function recoveryText(raw: Uint8Array): string {
   return Array.from(raw)
     .map((x) => x.toString(16).padStart(2, '0'))

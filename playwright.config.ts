@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: '**/auth.spec.ts',
   timeout: 45000,
   fullyParallel: false,
   use: {

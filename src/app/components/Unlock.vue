@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { catchUp, refresh, run, ui, vault } from '../store';
+import { catchUp, refresh, restoreLogin, run, ui, vault } from '../store';
 import { put } from '../../domain/model';
 import Icon from './Icon.vue';
 const exists = ref(false),
@@ -33,21 +33,24 @@ async function enter() {
     }
     password.value = '';
     credential.value = '';
+    await restoreLogin();
     refresh();
     await catchUp();
     void navigator.storage?.persist?.();
   });
 }
-function finish() {
+async function finish() {
   if (confirmed.value) {
     recovery.value = '';
     password.value = '';
+    await restoreLogin();
     refresh();
   }
 }
 async function previousVersion() {
   await run(async () => {
     await vault.recoverPrevious(password.value);
+    await restoreLogin();
     refresh();
   });
 }

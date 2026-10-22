@@ -18,6 +18,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          VITE_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: besledger-web
@@ -38,6 +40,8 @@ jobs:
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - run: npm ci
       - run: npm run android:sync
+        env:
+          VITE_AUTH_SERVICE: ${{ vars.BESLEDGER_AUTH_SERVICE }}
       - run: bash android/gradlew -p android --no-daemon assembleDebug lintDebug
       - uses: actions/upload-artifact@v7.0.2
         with:

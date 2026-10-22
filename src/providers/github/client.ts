@@ -20,7 +20,7 @@ export type RemoteFile = { sha: string; text: string };
 export class GitHub {
   constructor(
     private accessToken: string,
-    private transport: typeof fetch = fetch,
+    private transport: typeof fetch = (input, init) => fetch(input, init),
   ) {}
   async request<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
     const response = await this.transport(`https://api.github.com${path}`, {

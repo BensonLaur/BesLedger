@@ -1,6 +1,6 @@
 # 实施状态
 
-更新：2026-10-22。已发布可安装 Android APK 与 Web/PWA 实施预览版，**完整第一版尚未完成**。剩余必要项是实际 OAuth 应用注册、用户授权及登录后的私有仓库/双端同步验收。采用本轮明确授权；本轮所有新增提交标题和正文均为中文。
+更新：2026-10-22。已发布可安装 Android APK 与 Web/PWA 实施预览版，**完整第一版尚未完成**。用户已完成 OAuth App 注册；真实用户授权与登录后的私有仓库/双端同步验收正在继续。采用本轮明确授权；本轮所有新增提交标题和正文均为中文。
 
 ## 阶段与验收
 
@@ -42,13 +42,13 @@ D 是可用的预览产物验收，不代表 C 可以省略。全量功能、实
 
 ## 当前外部阻塞与继续入口
 
-开发账号 BensonLaur 的 gh 可用，但浏览器 GitHub 注册入口未登录，尚未取得用户 OAuth App 的公开 Client ID；开发 gh 凭证不能替代应用登录。已向用户集中说明外部登录动作，其余可独立工作均已推进至预览发布。
+2026-10-22 用户已实际注册 OAuth App 并提供公开 Client ID，启用 Device Flow 与短期令牌。现有授权服务已配置并部署版本 2，增加自动续期端点；源码仓库 BESLEDGER_AUTH_SERVICE 已配置。开发 gh 凭证仍不作为应用登录。
 
-需要用户在 GitHub 注册 BesLedger OAuth App、开启 Device Flow，并提供**公开 Client ID**（或完成浏览器登录后由实施者继续注册）；无需提供密码、2FA、Client Secret 或长期 token。准确网址及字段见 [DEPLOYMENT.md](DEPLOYMENT.md)。这属于外部账号登录/注册依赖，不是再次申请已经授予的 GitHub、私有仓库或发布权限。
+两个独立受保护的浏览器存储已由真实应用发起 GitHub 设备授权，等待用户在官方页面确认设备码；使用新建虚构测试账，不读取私人财务材料。注册字段与部署步骤见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
-已准备的线上授权服务：https://besledger-github-auth.bensonlaur.chatgpt.site。Sites project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；保留既有项目，不重复创建。当前未配置 GITHUB_CLIENT_ID；生产 Pages 的浏览器跨域 POST 已实际返回预期 503/app_not_configured，证明跨域连通但不能当作授权成功。命令行请求受 Cloudflare 拦截，不代表浏览器调用结果。
+已准备的线上授权服务：https://besledger-github-auth.bensonlaur.chatgpt.site。Sites project_id 为 appgprj_6ad8dc6c8aa0819194ac3849518bc2bd；保留既有项目，不重复创建。已配置 GITHUB_CLIENT_ID；实际浏览器跨域请求已成功取得真实 GitHub 设备码。服务部署 appgdep_6ada0562d01481918f7256e6ef1252a5 成功，源提交 e4b3eebaaf40bc5f7ebab693a8f14002e0080faa。
 
-取得 Client ID 后更新既有服务运行环境并重新部署，设置源码仓库变量 BESLEDGER_AUTH_SERVICE，再发布 Web/APK。随后必须用两个独立实际客户端存储完成真实授权、应用内私有仓库创建/选择与 private 读回、首次上传、发现下载、编辑回传、冲突、拒绝/失效/退出重连验收。
+继续发布新 Web/APK，并用两个独立实际客户端存储完成真实授权、应用内私有仓库创建/选择与 private 读回、首次上传、发现下载、编辑回传、冲突、退出重连验收。登录保持新增 16 项核心测试（合计 43 项）与三类浏览器真实存储流程（模拟 OAuth 响应）已通过，原有 12 条记账流程回归通过。
 
 独立私有测试仓库 BensonLaur/BesLedger-Data-SyncTest-20261021 已实际创建并读回 private；仅含客户端加密的虚构测试账。现有真实 API 测试使用两个独立 Vault/fake-indexeddb 实例及开发凭证，证明同步协议，不冒充登录后的两台实际终端。
 
