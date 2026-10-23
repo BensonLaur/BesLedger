@@ -101,7 +101,7 @@ export class Vault {
       const assertCurrent = () => {
         if (signal?.aborted || generation !== this.generation)
           throw new Error('重设操作已取消或本地空间已改变，请重新解锁');
-        if (this.key || this.state) throw new Error('请先锁定，再使用恢复密钥重设口令');
+        if (this.key || this.state) throw new Error('请先锁定，再使用恢复密钥重设密码');
       };
       assertCurrent();
       const stored = await this.backend.read();
@@ -122,11 +122,11 @@ export class Vault {
         assertCurrent();
         const header = await wrapKey(raw, password);
         assertCurrent();
-        // 只更换口令封装，保留原密文、设备身份和设备同步密钥；凭证派生密钥不变。
+        // 只更换密码封装，保留原密文、设备身份和设备同步密钥；凭证派生密钥不变。
         const payload = JSON.stringify({ ...original, header });
-        // 同次事务建立新口令检查点，避免旧口令经“恢复上一版本”再次打开当前账目。
+        // 同次事务建立新密码检查点，避免旧密码经“恢复上一版本”再次打开当前账目。
         const revision = await this.backend.compareSwap(stored.revision, payload, { resetPrevious: true });
-        // 提交期间锁定或关闭页面时不得重新解锁；已提交的口令以新口令为准。
+        // 提交期间锁定或关闭页面时不得重新解锁；已提交的密码以新密码为准。
         assertCurrent();
         this.lock();
         this.raw = raw;

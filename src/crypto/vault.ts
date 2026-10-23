@@ -94,7 +94,7 @@ export async function decrypt<T = unknown>(input: unknown, key: CryptoKey, conte
   }
 }
 export async function wrapKey(raw: Uint8Array<ArrayBuffer>, password: string): Promise<KeyHeader> {
-  if (password.length < 10) throw new Error('请设置至少 10 个字符的解锁口令');
+  if (password.length < 10) throw new Error('请设置至少 10 个字符的解锁密码');
   const salt = crypto.getRandomValues(new Uint8Array(16));
   return {
     version: 1,

@@ -4,7 +4,7 @@ const oldPassword = 'fictional-browser-old-password';
 const newPassword = 'fictional-browser-new-password';
 async function initialize(page: Page) {
   await page.goto('./');
-  await page.getByLabel('账本名称').fill('虚构口令恢复账本');
+  await page.getByLabel('账本名称').fill('虚构密码恢复账本');
   await page.getByLabel('解锁密码', { exact: true }).fill(oldPassword);
   await page.getByRole('button', { name: '创建账本' }).click();
   const recovery = (await page.locator('.recovery-key').textContent())!.trim();
@@ -39,7 +39,7 @@ async function fillRecovery(page: Page, recovery: string, confirmation = newPass
   await page.getByLabel('再次输入新密码', { exact: true }).fill(confirmation);
 }
 
-test('离线重设口令保留账户流水，错误与取消不改数据，刷新及重开使用新口令', async ({
+test('离线重设密码保留账户流水，错误与取消不改数据，刷新及重开使用新密码', async ({
   page,
   context,
 }, info) => {
@@ -76,7 +76,7 @@ test('离线重设口令保留账户流水，错误与取消不改数据，刷�
   await fillRecovery(page, '00'.repeat(32), 'fictional-mismatched-password');
   await page.getByRole('button', { name: '重设密码并打开', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('两次新密码不一致');
-  expect((await stored(page)) === before, '不一致口令不修改存储').toBe(true);
+  expect((await stored(page)) === before, '不一致密码不修改存储').toBe(true);
   await fillRecovery(page, '00'.repeat(32));
   await page.getByRole('button', { name: '重设密码并打开', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('恢复密钥不正确');
@@ -93,7 +93,7 @@ test('离线重设口令保留账户流水，错误与取消不改数据，刷�
   await expect(page.getByRole('status')).toContainText('密码已重设');
   const after = JSON.parse(await stored(page));
   expect(JSON.parse(after.payload).data).toEqual(JSON.parse(JSON.parse(before).payload).data);
-  expect(after.previous === after.payload, '回退检查点也使用新口令').toBe(true);
+  expect(after.previous === after.payload, '回退检查点也使用新密码').toBe(true);
   await page.goto('./#/accounts');
   await expect(page.getByText('虚构恢复现金', { exact: true })).toBeVisible();
   await page.goto('./#/');
@@ -110,7 +110,7 @@ test('离线重设口令保留账户流水，错误与取消不改数据，刷�
   await reopened.goto('./#/');
   await reopened.getByLabel('解锁密码', { exact: true }).fill(newPassword);
   await reopened.getByRole('button', { name: '打开账本', exact: true }).click();
-  await expect(reopened.getByText('虚构口令恢复账本', { exact: true })).toBeVisible();
+  await expect(reopened.getByText('虚构密码恢复账本', { exact: true })).toBeVisible();
   await expect(reopened.getByRole('button').filter({ hasText: '虚构恢复测试午餐' })).toHaveCount(1);
 });
 

@@ -51,8 +51,8 @@ async function setup() {
   return { disk, vault, recovery, state };
 }
 
-describe('忘记口令后原地恢复本机空间', () => {
-  it('只更换口令封装，保留所有账目、身份、同步密钥和加密登录，重启可继续使用', async () => {
+describe('忘记密码后原地恢复本机空间', () => {
+  it('只更换密码封装，保留所有账目、身份、同步密钥和加密登录，重启可继续使用', async () => {
     const { disk, vault, recovery, state } = await setup();
     const credentials = new WebCredentialBackend(crypto.randomUUID());
     let login: Login | undefined;
@@ -112,7 +112,7 @@ describe('忘记口令后原地恢复本机空间', () => {
     disk.close();
   });
 
-  it('错误密钥、格式不完整和短口令均不写盘、不解锁，随后可重试成功', async () => {
+  it('错误密钥、格式不完整和短密码均不写盘、不解锁，随后可重试成功', async () => {
     const { disk, vault, recovery, state } = await setup();
     const before = await disk.read();
     for (const [key, password] of [
@@ -211,7 +211,7 @@ describe('忘记口令后原地恢复本机空间', () => {
     disk.close();
   });
 
-  it('提交期间再次锁定时不被迟到结果解锁，完整提交后仍可用新口令进入', async () => {
+  it('提交期间再次锁定时不被迟到结果解锁，完整提交后仍可用新密码进入', async () => {
     const { disk, recovery, state } = await setup();
     const entered = gate(),
       release = gate();

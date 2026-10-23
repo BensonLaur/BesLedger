@@ -136,7 +136,7 @@ async function restore() {
         <summary>记账、登录与同步有什么区别？</summary>
         <p>资金账户是现金、银行卡等；账本用来整理账目；GitHub 账号只提供可选同步。</p>
         <p>
-          锁定本地空间后需输入本地口令，GitHub 登录和已记住的同步密钥仍会保留。退出 GitHub
+          锁定本地空间后需输入解锁密码，GitHub 登录和已记住的同步密钥仍会保留。退出 GitHub
           只退出登录；忘记某本账的同步密钥也不会删除账目。
         </p>
         <p>记住登录和密钥不会自动上传。修改后点击账本的“同步”，另一设备再同步获取更新。</p>
@@ -197,13 +197,13 @@ async function restore() {
     ><label class="checkbox"
       ><input v-model="useRecovery" type="checkbox" @change="preview = ''" />使用恢复密钥</label
     ><label
-      >{{ useRecovery ? '恢复密钥' : '原备份口令'
+      >{{ useRecovery ? '恢复密钥' : '备份原密码'
       }}<input v-model="credential" type="password" autocomplete="off" @input="preview = ''" /></label
     ><button class="secondary" :disabled="ui.busy || !file" @click="inspect">先校验备份</button
     ><template v-if="preview"
       ><p class="success-panel">{{ preview }}</p>
       <label
-        >恢复后的解锁口令<input
+        >恢复后的解锁密码<input
           v-model="password"
           type="password"
           minlength="10"

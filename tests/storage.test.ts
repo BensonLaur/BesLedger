@@ -72,7 +72,7 @@ describe('加密存储和失败恢复', () => {
     await vault.unlock('fictional-test-password');
     expect(Object.values(vault.state!.entities)).toHaveLength(1);
   });
-  it('重启恢复、密文不含明文；错误口令和篡改无法解密', async () => {
+  it('重启恢复、密文不含明文；错误密码和篡改无法解密', async () => {
     const backend = new WebBackend(crypto.randomUUID()),
       a = new Vault(backend);
     await a.create('fictional-test-password');

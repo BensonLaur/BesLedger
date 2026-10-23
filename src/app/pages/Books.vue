@@ -444,7 +444,7 @@ const deletedBooks = computed(() =>
     </section>
   </div>
   <Modal v-if="forgettingKey" title="此设备的同步密钥" @close="forgettingKey = ''">
-    <p>同步密钥已由本地解锁口令保护。更换密钥可在账本管理页输入原设备密钥后再次同步，验证成功才会替换。</p>
+    <p>同步密钥已由本地解锁密码保护。更换密钥可在账本管理页输入原设备密钥后再次同步，验证成功才会替换。</p>
     <p>忘记只移除此设备保存的密钥，不删除账目或云端数据；之后可能需要重新输入原设备密钥。</p>
     <button class="danger" :disabled="ui.busy" @click="forgetKey">忘记此设备密钥</button>
   </Modal>
