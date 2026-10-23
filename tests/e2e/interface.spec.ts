@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 async function initialize(page: Page) {
   await page.goto('./');
   await page.getByLabel('账本名称').fill('虚构界面验收账本');
-  await page.getByLabel('解锁口令', { exact: true }).fill('fictional-interface-password');
-  await page.getByRole('button', { name: '创建并继续' }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-interface-password');
+  await page.getByRole('button', { name: '创建账本' }).click();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();
 }
@@ -150,8 +150,8 @@ test('信用卡和往来用生活语言表达方向，编辑和重启不反转�
     await expect(row).toBeVisible();
   }
   await page.reload();
-  await page.getByLabel('解锁口令', { exact: true }).fill('fictional-interface-password');
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-interface-password');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await expect(page.getByRole('button', { name: '虚构欠款卡，待还款 ¥ 123.45' })).toBeVisible();
   await expect(page.getByRole('button', { name: '虚构朋友甲，我欠别人 ¥ 88.00' })).toBeVisible();
 });

@@ -31,8 +31,8 @@ async function noOverflow() {
 try {
   await connect();
   await page.getByLabel('账本名称').fill('虚构 Android 界面验收');
-  await page.getByLabel('解锁口令', { exact: true }).fill(password);
-  await page.getByRole('button', { name: '创建并继续' }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '创建账本' }).click();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();
   const nav = page.getByRole('navigation', { name: '底部导航' });
@@ -91,8 +91,8 @@ try {
   adb('shell', 'am', 'force-stop', pkg);
   adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
   await connect();
-  await page.getByLabel('解锁口令', { exact: true }).fill(password);
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   if (!page.url().endsWith('#/accounts')) await page.goto('https://localhost/#/accounts');
   await expect(page.getByRole('button', { name: '虚构信用卡，待还款 ¥ 132.50' })).toBeVisible();
   expect(adb('shell', 'run-as', pkg, 'ls', 'databases')).toContain('besledger-vault.db');

@@ -18,9 +18,9 @@ try {
   adb('shell', 'settings', 'put', 'secure', 'show_ime_with_hard_keyboard', '1');
   const page = await (await device.webView({ pkg })).page();
   await page.getByRole('heading').first().waitFor();
-  if (await page.getByRole('heading', { name: '解锁 Bes记账' }).isVisible()) {
-    await page.getByLabel('解锁口令', { exact: true }).fill('fictional-android-test-password');
-    await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  if (await page.getByRole('heading', { name: '欢迎回来' }).isVisible()) {
+    await page.getByLabel('解锁密码', { exact: true }).fill('fictional-android-test-password');
+    await page.getByRole('button', { name: '打开账本', exact: true }).click();
   }
   await page.goto('https://localhost/#/');
   await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();

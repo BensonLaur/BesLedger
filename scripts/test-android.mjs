@@ -24,15 +24,15 @@ async function connect() {
 let { browser, page } = await connect();
 try {
   const password = 'fictional-android-test-password';
-  if (await page.getByRole('heading', { name: '创建本地账本' }).isVisible()) {
+  if (await page.getByRole('heading', { name: '开始记账' }).isVisible()) {
     await page.getByLabel('账本名称').fill('虚构 Android 验收账本');
-    await page.getByLabel('解锁口令', { exact: true }).fill(password);
-    await page.getByRole('button', { name: '创建并继续' }).click();
+    await page.getByLabel('解锁密码', { exact: true }).fill(password);
+    await page.getByRole('button', { name: '创建账本' }).click();
     await page.getByLabel('我已独立保存恢复密钥').check();
     await page.getByRole('button', { name: '进入账本' }).click();
-  } else if (await page.getByRole('heading', { name: '解锁 Bes记账' }).isVisible()) {
-    await page.getByLabel('解锁口令', { exact: true }).fill(password);
-    await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  } else if (await page.getByRole('heading', { name: '欢迎回来' }).isVisible()) {
+    await page.getByLabel('解锁密码', { exact: true }).fill(password);
+    await page.getByRole('button', { name: '打开账本', exact: true }).click();
   }
   await page.goto('https://localhost/#/accounts');
   if (!(await page.getByText('虚构 Android 现金', { exact: true }).count())) {
@@ -71,8 +71,8 @@ try {
   adb('shell', 'am', 'force-stop', pkg);
   adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
   ({ browser, page } = await connect());
-  await page.getByLabel('解锁口令', { exact: true }).fill(password);
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await expect(page.getByText('−37.25', { exact: true })).toBeVisible();
   await page.goto('https://localhost/#/accounts');
   await expect(page.getByRole('button', { name: /余额 ¥ 962[.]75/ })).toBeVisible();

@@ -94,7 +94,7 @@ try {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('http://127.0.0.1:4187/BesLedger/');
-  await expect(page.getByRole('button', { name: '创建并继续' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '创建账本' })).toBeVisible();
   // 使用与正式应用相同的加密存储格式；仅向新建的临时浏览器上下文写入虚构数据。
   await page.evaluate(async (value) => {
     await new Promise((resolve, reject) => {
@@ -113,8 +113,8 @@ try {
     });
   }, stored);
   await page.reload();
-  await page.getByLabel('解锁口令', { exact: true }).fill(password);
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await expect(page.locator('.app-shell')).toBeVisible();
   const sizes = [];
   async function capture(name) {

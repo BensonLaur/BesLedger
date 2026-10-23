@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 async function initialize(page: Page) {
   await page.goto('./');
   await page.getByLabel('账本名称').fill('虚构验收账本');
-  await page.getByLabel('解锁口令', { exact: true }).fill('fictional-test-password');
-  await page.getByRole('button', { name: '创建并继续' }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-test-password');
+  await page.getByRole('button', { name: '创建账本' }).click();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();
   await expect(page.getByText('虚构验收账本', { exact: true })).toBeVisible();
@@ -51,11 +51,11 @@ test('空白安装、保存编辑、主要页面和离线重开', async ({ page,
     await navigator.serviceWorker.ready;
   });
   await page.reload();
-  await expect(page.getByRole('heading', { name: '解锁 Bes记账' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '欢迎回来' })).toBeVisible();
   await context.setOffline(true);
   await page.reload();
-  await page.getByLabel('解锁口令', { exact: true }).fill('fictional-test-password');
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-test-password');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await expect(page.getByText('−20.00', { exact: true })).toBeVisible();
   await context.setOffline(false);
 });

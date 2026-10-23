@@ -7,8 +7,8 @@ async function initialize(page: Page) {
   const url = await logo.getAttribute('src');
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', url!);
   await page.getByLabel('账本名称').fill('虚构支持入口测试');
-  await page.getByLabel('解锁口令', { exact: true }).fill('fictional-support-preview');
-  await page.getByRole('button', { name: '创建并继续' }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-support-preview');
+  await page.getByRole('button', { name: '创建账本' }).click();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();
   await page.goto('./#/settings');
@@ -104,8 +104,8 @@ test('手机底部卡片、桌面对话框、深色与离线二维码可用', as
   await page.reload();
   await context.setOffline(true);
   await page.reload();
-  await page.getByLabel('解锁口令', { exact: true }).fill('fictional-support-preview');
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-support-preview');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await page.getByRole('button', { name: '支持 Bes记账 一起把记账做得更顺手' }).click();
   await page.getByRole('button', { name: '支付宝', exact: true }).click();
   await expect

@@ -9,8 +9,8 @@ async function connection(page: Page) {
 }
 const password = 'fictional-browser-auth-password';
 async function unlock(page: Page) {
-  await page.getByLabel('解锁口令', { exact: true }).fill(password);
-  await page.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await connection(page);
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
 }
@@ -103,8 +103,8 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   });
   if (new URL(page.url()).hash !== '#/settings') await page.goto('./#/settings');
   await page.getByLabel('账本名称').fill('虚构登录验收账本');
-  await page.getByLabel('解锁口令', { exact: true }).fill(password);
-  await page.getByRole('button', { name: '创建并继续' }).click();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '创建账本' }).click();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();
   await connection(page);
@@ -149,8 +149,8 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   await reopened.getByRole('button', { name: '退出 GitHub', exact: true }).click();
   await expect(other.getByRole('button', { name: '使用 GitHub 登录' })).toBeVisible();
   await other.reload();
-  await other.getByLabel('解锁口令', { exact: true }).fill(password);
-  await other.getByRole('button', { name: '解锁账本', exact: true }).click();
+  await other.getByLabel('解锁密码', { exact: true }).fill(password);
+  await other.getByRole('button', { name: '打开账本', exact: true }).click();
   await connection(other);
   await expect(other.getByRole('button', { name: '使用 GitHub 登录' })).toBeVisible();
   expect(grants).toBe(1);

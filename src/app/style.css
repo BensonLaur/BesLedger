@@ -1413,27 +1413,27 @@ svg {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 45px 20px;
+  padding: 28px 20px;
   background: radial-gradient(ellipse at 10% 5%, #e0e7f0 0, transparent 55%), var(--bg);
 }
 .welcome-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 25px;
+  gap: 12px;
+  font-size: 23px;
   font-weight: 600;
-  margin: 0 0 30px;
+  margin: 0 0 22px;
 }
 .welcome-brand img {
-  width: 55px;
-  height: 55px;
+  width: 44px;
+  height: 44px;
   box-shadow: 0 8px 16px #30476522;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 .welcome-brand small {
   display: block;
   font-size: 11px;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   font-weight: 400;
   margin-top: 3px;
 }
@@ -1442,27 +1442,150 @@ svg {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   border-radius: 22px;
-  max-width: 440px;
+  max-width: 420px;
   width: 100%;
-  padding: 32px;
+  padding: 28px;
 }
 .welcome-card h1 {
   font-size: 24px;
 }
 .welcome-card p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 .welcome-card .field-error {
   color: var(--red);
 }
-.welcome-footer {
-  font-size: 10px;
+.welcome-field {
+  margin: 18px 0;
+}
+.welcome-field > label,
+.welcome-field-heading label {
+  margin: 0 0 8px;
+}
+.welcome-field-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.welcome-field-heading label {
+  margin: 0;
+}
+.welcome-field-heading .text-button {
+  min-height: 44px;
+  margin: -8px 0;
+}
+.welcome-password {
+  position: relative;
+}
+.welcome-password input {
+  width: 100%;
+  min-height: 48px;
+  padding-right: 48px;
+}
+.welcome-password input::-ms-reveal {
+  display: none;
+}
+.welcome-password > button {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 44px;
+  height: calc(100% - 4px);
+  min-height: 44px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
+}
+.welcome-password > button:hover {
+  background: var(--soft);
+}
+.welcome-card .welcome-hint {
+  margin: 7px 0 0;
+  font-size: 12px;
+}
+.welcome-submit {
+  min-height: 48px;
+  margin-top: 2px;
+}
+.welcome-back {
+  margin: -8px 0 12px;
+  min-height: 44px;
+}
+.welcome-card .welcome-warning {
+  color: var(--red);
+  font-size: 13px;
+}
+.welcome-options {
+  margin-top: 18px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.welcome-options summary,
+.welcome-privacy summary {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 24px;
+  min-height: 44px;
+  list-style: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+}
+.welcome-options summary {
+  justify-content: space-between;
+}
+.welcome-options summary::-webkit-details-marker,
+.welcome-privacy summary::-webkit-details-marker {
+  display: none;
+}
+.welcome-options summary:focus-visible,
+.welcome-privacy summary:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.welcome-options[open] > summary > svg,
+.welcome-privacy[open] > summary > svg:last-child {
+  transform: rotate(180deg);
+}
+.welcome-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 8px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.welcome-option:hover {
+  background: var(--soft);
+}
+.welcome-option span {
+  flex: 1;
+}
+.welcome-option small {
+  display: block;
+  margin-top: 2px;
+}
+.welcome-privacy {
+  max-width: 360px;
+  width: 100%;
+  margin-top: 12px;
+  color: var(--muted);
+}
+.welcome-privacy summary {
+  justify-content: center;
+  font-size: 11px;
+}
+.welcome-privacy p {
+  margin-top: 4px;
+  font-size: 13px;
+  text-align: center;
 }
 @media (min-width: 1500px) {
   .home-columns {
@@ -1849,13 +1972,13 @@ svg {
     padding: 25px 0 30px;
   }
   .welcome {
-    padding: 30px 20px;
+    padding: 24px 16px;
   }
   .welcome-card {
-    padding: 25px;
+    padding: 24px 20px;
   }
   .welcome-brand {
-    font-size: 23px;
+    font-size: 21px;
   }
   .all-categories {
     grid-template-columns: repeat(3, minmax(0, 1fr));
