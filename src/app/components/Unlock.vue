@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Capacitor } from '@capacitor/core';
 import brandIcon from '../../assets/brand.svg?no-inline';
 import { catchUp, refresh, restoreLogin, run, ui, vault } from '../store';
-import { put } from '../../domain/model';
+import { list, put } from '../../domain/model';
 import Icon from './Icon.vue';
 const exists = ref(false),
   loaded = ref(false),
@@ -16,22 +17,61 @@ const exists = ref(false),
   confirmation = ref(''),
   showPassword = ref(false),
   showConfirmation = ref(false),
+  showCredential = ref(false),
+  backupPreview = ref<{ summary: string; revision: number }>(),
+  replaceConfirmed = ref(false),
   mode = ref<'default' | 'backup' | 'reset' | 'previous'>('default');
+const passwordInput = ref<HTMLInputElement>();
+const credentialInput = ref<HTMLInputElement>();
+const confirmationInput = ref<HTMLInputElement>();
+const title = ref<HTMLElement>();
+const standalone =
+  matchMedia('(display-mode: standalone)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone;
+const localSpace = Capacitor.isNativePlatform()
+  ? {
+      place: '此设备上',
+      existing: '此设备已保存账本',
+      detail: '账目保存在这台设备的应用中。更换设备时，请使用加密备份或同步取回账本。',
+    }
+  : standalone
+    ? {
+        place: '此应用中',
+        existing: '此应用中已保存账本',
+        detail: '账目保存在此应用的本地空间中。更换设备或网址时，请使用加密备份或同步取回账本。',
+      }
+    : {
+        place: '此浏览器中',
+        existing: '此浏览器中已保存账本',
+        detail: '网页账目保存在当前浏览器和网址中。换浏览器或网址后，请使用加密备份或同步取回账本。',
+      };
 const restoring = computed(() => mode.value === 'backup');
 const resetting = computed(() => mode.value === 'reset');
 const repairing = computed(() => mode.value === 'previous');
 const newPassword = computed(() => restoring.value || resetting.value || !exists.value);
 const passwordLabel = computed(() => (restoring.value || resetting.value ? '新的解锁密码' : '解锁密码'));
-let recoveryAttempt: AbortController | undefined;
+let operationAttempt: AbortController | undefined;
 onBeforeUnmount(() => {
-  recoveryAttempt?.abort();
+  operationAttempt?.abort();
   credential.value = password.value = confirmation.value = '';
 });
 function changeMode(next: typeof mode.value) {
   if (ui.busy) return;
   mode.value = next;
   credential.value = password.value = confirmation.value = file.value = '';
-  showPassword.value = showConfirmation.value = recoveryMode.value = false;
+  resetBackupPreview();
+  showCredential.value = recoveryMode.value = false;
+  ui.error = '';
+  void nextTick(() => title.value?.focus({ preventScroll: true }));
+}
+function resetBackupPreview() {
+  backupPreview.value = undefined;
+  replaceConfirmed.value = false;
+  password.value = confirmation.value = '';
+  showPassword.value = showConfirmation.value = false;
+}
+function editCredential() {
+  if (restoring.value) resetBackupPreview();
   ui.error = '';
 }
 function back(): boolean {
@@ -46,20 +86,57 @@ onMounted(async () => {
 });
 async function enter() {
   // 提交或切换流程后重新隐藏密码，避免错误提示出现时仍显示明文。
-  showPassword.value = showConfirmation.value = false;
-  await run(async () => {
+  showPassword.value = showConfirmation.value = showCredential.value = false;
+  const succeeded = await run(async () => {
     const reset = resetting.value;
     if (reset) {
       if (password.value !== confirmation.value) throw new Error('两次新密码不一致，请重新确认');
-      recoveryAttempt = new AbortController();
+      operationAttempt = new AbortController();
       try {
-        await vault.resetPasswordWithRecovery(credential.value, password.value, recoveryAttempt.signal);
+        await vault.resetPasswordWithRecovery(credential.value, password.value, operationAttempt.signal);
+      } catch (error) {
+        if (error instanceof Error && error.message === '恢复密钥必须是完整的 64 位字符')
+          throw new Error('恢复密钥不完整，请完整粘贴创建账本时保存的内容。');
+        throw error;
       } finally {
-        recoveryAttempt = undefined;
+        operationAttempt = undefined;
       }
     } else if (restoring.value) {
       if (!file.value) throw new Error('请先选择加密备份文件');
-      await vault.restore(file.value, credential.value, password.value, recoveryMode.value);
+      if (!backupPreview.value) {
+        try {
+          const verified = await vault.previewRestore(file.value, credential.value, recoveryMode.value);
+          backupPreview.value = {
+            summary: `${list(verified.state, 'ledger').length} 本账本、${list(verified.state, 'account').length} 个账户、${list(verified.state, 'entry').length} 笔账目`,
+            revision: verified.revision,
+          };
+          return;
+        } catch (error) {
+          if (error instanceof SyntaxError || (error instanceof Error && error.name === 'ZodError'))
+            throw new Error('无法读取这份备份，请确认文件完整，或使用更新版本的 Bes记账。原有账目未改动。');
+          if (error instanceof Error && error.message === '恢复密钥必须是完整的 64 位字符')
+            throw new Error('恢复密钥不完整，请完整粘贴保存的内容。');
+          if (error instanceof Error && error.message === '密钥不匹配或数据已损坏，原数据未改动')
+            throw new Error(
+              `未能解密备份，请核对${recoveryMode.value ? '恢复密钥' : '备份原密码'}，并确认文件完整。原有账目未改动。`,
+            );
+          throw error;
+        }
+      }
+      if (exists.value && !replaceConfirmed.value) throw new Error('请先确认是否用备份替换当前账本');
+      if (password.value !== confirmation.value) throw new Error('两次新密码不一致，请重新确认');
+      operationAttempt = new AbortController();
+      try {
+        await vault.restore(file.value, credential.value, password.value, recoveryMode.value, {
+          expectedRevision: backupPreview.value.revision,
+          signal: operationAttempt.signal,
+        });
+      } catch (error) {
+        resetBackupPreview();
+        throw error;
+      } finally {
+        operationAttempt = undefined;
+      }
     } else if (repairing.value) await vault.recoverPrevious(password.value);
     else if (exists.value) {
       try {
@@ -86,6 +163,19 @@ async function enter() {
     if (reset) ui.notice = '密码已重设，原有账本和账目已保留';
     void navigator.storage?.persist?.();
   });
+  if (!succeeded) {
+    await nextTick();
+    const input = ui.error.includes('两次新密码')
+      ? confirmationInput.value
+      : resetting.value || (restoring.value && !backupPreview.value)
+        ? credentialInput.value
+        : passwordInput.value;
+    input?.focus();
+    input?.select();
+  } else if (restoring.value && backupPreview.value) {
+    await nextTick();
+    passwordInput.value?.focus();
+  }
 }
 async function finish() {
   if (confirmed.value) {
@@ -97,7 +187,14 @@ async function finish() {
 }
 async function choose(event: Event) {
   const selected = (event.target as HTMLInputElement).files?.[0];
-  file.value = selected ? await selected.text() : '';
+  file.value = '';
+  resetBackupPreview();
+  if (!selected) return;
+  await run(async () => {
+    if (selected.size > 50_000_000) throw new Error('备份文件超过 50 MB，请选择较小的备份');
+    file.value = await selected.text();
+    if (!file.value) throw new Error('备份文件为空，请重新选择');
+  });
 }
 </script>
 <template>
@@ -124,7 +221,7 @@ async function choose(event: Event) {
         >
           <Icon name="left" :size="16" />{{ exists ? '返回解锁' : '返回开始' }}
         </button>
-        <h1 id="welcome-title">
+        <h1 id="welcome-title" ref="title" tabindex="-1">
           {{
             resetting
               ? '重设解锁密码'
@@ -137,15 +234,28 @@ async function choose(event: Event) {
                     : '开始记账'
           }}
         </h1>
-        <p v-if="resetting">输入本机恢复密钥，设置新的解锁密码。原有账本和账目都会保留。</p>
-        <p v-else-if="restoring">选择之前导出的加密备份，再为恢复后的账本设置解锁密码。</p>
+        <p v-if="resetting">输入创建账本时保存的恢复密钥，设置新密码。当前全部本地账本和账目都会保留。</p>
+        <p v-else-if="restoring">
+          {{
+            backupPreview
+              ? '核对备份内容，再设置恢复后的解锁密码。'
+              : '选择之前导出的加密备份，先校验内容。校验不会改动已有账本。'
+          }}
+        </p>
         <p v-else-if="repairing">
           仅在账本无法正常打开时使用。将恢复上一次保存的内容，最近一次改动可能丢失；忘记密码请返回选择“忘记密码？”。
         </p>
-        <p v-else-if="exists">此设备已保存账本，输入密码继续记账。</p>
+        <p v-else-if="exists">{{ localSpace.existing }}。<br />输入创建账本时设置的密码，继续记账。</p>
         <p v-else>给账本起个名字，再设置解锁密码。以后用这个密码打开账本。</p>
-        <p v-if="restoring && exists" class="welcome-warning">
-          恢复会替换此设备现有的账本，请确认备份无误后继续。
+        <div v-if="restoring && backupPreview" class="welcome-backup-preview" role="status">
+          <strong>备份已校验</strong>
+          <p>{{ backupPreview.summary }}</p>
+          <button type="button" class="text-button" :disabled="ui.busy" @click="changeMode('backup')">
+            重新选择备份
+          </button>
+        </div>
+        <p v-if="restoring && backupPreview && exists" class="welcome-warning">
+          恢复会替换{{ localSpace.place }}的全部本地账本。未备份的新账目不会出现在恢复后的账本中。
         </p>
         <label v-if="!exists && mode === 'default'" for="welcome-book">
           账本名称<input
@@ -157,7 +267,7 @@ async function choose(event: Event) {
             :disabled="ui.busy"
           />
         </label>
-        <template v-if="restoring">
+        <template v-if="restoring && !backupPreview">
           <label
             >加密备份文件<input
               type="file"
@@ -167,26 +277,52 @@ async function choose(event: Event) {
               @change="choose"
           /></label>
           <label class="checkbox"
-            ><input v-model="recoveryMode" type="checkbox" :disabled="ui.busy" />使用恢复密钥</label
+            ><input
+              v-model="recoveryMode"
+              type="checkbox"
+              :disabled="ui.busy"
+              @change="
+                credential = '';
+                editCredential();
+              "
+            />使用恢复密钥</label
           >
-          <label
-            >{{ recoveryMode ? '恢复密钥' : '备份原密码'
-            }}<input v-model="credential" type="password" autocomplete="off" :disabled="ui.busy" required
-          /></label>
         </template>
-        <label v-if="resetting">
-          恢复密钥<input
-            v-model="credential"
-            type="password"
-            autocomplete="off"
-            autocapitalize="off"
-            :spellcheck="false"
-            :disabled="ui.busy"
-            maxlength="200"
-            required
-          />
-        </label>
-        <div class="welcome-field">
+        <div v-if="resetting || (restoring && !backupPreview)" class="welcome-field">
+          <label for="welcome-credential">{{ resetting || recoveryMode ? '恢复密钥' : '备份原密码' }}</label>
+          <div class="welcome-password">
+            <input
+              id="welcome-credential"
+              ref="credentialInput"
+              v-model="credential"
+              :type="showCredential ? 'text' : 'password'"
+              autocomplete="off"
+              autocapitalize="off"
+              :spellcheck="false"
+              :disabled="ui.busy"
+              :maxlength="resetting || recoveryMode ? 200 : undefined"
+              required
+              @input="editCredential"
+            />
+            <button
+              type="button"
+              :aria-label="`${showCredential ? '隐藏' : '显示'}${resetting || recoveryMode ? '恢复密钥' : '备份原密码'}`"
+              :aria-pressed="showCredential"
+              aria-controls="welcome-credential"
+              :disabled="ui.busy"
+              @click="showCredential = !showCredential"
+            >
+              <Icon :name="showCredential ? 'eye-off' : 'eye'" />
+            </button>
+          </div>
+          <p v-if="restoring && !recoveryMode" class="welcome-hint">填写导出这份备份时使用的解锁密码。</p>
+        </div>
+        <details v-if="resetting" class="welcome-help">
+          <summary>恢复密钥在哪里？</summary>
+          <p>创建账本时，应用曾显示一串恢复密钥。请查找当时保存在密码管理器、纸张或其他安全位置的记录。</p>
+          <p>这份密钥需要对应当前本地账本空间，其他设备新建的恢复密钥不能通用。</p>
+        </details>
+        <div v-if="!restoring || backupPreview" class="welcome-field">
           <div class="welcome-field-heading">
             <label for="welcome-password">{{ passwordLabel }}</label>
             <button
@@ -202,16 +338,22 @@ async function choose(event: Event) {
           <div class="welcome-password">
             <input
               id="welcome-password"
+              ref="passwordInput"
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               :minlength="newPassword ? 10 : undefined"
               :autocomplete="newPassword ? 'new-password' : 'current-password'"
               :disabled="ui.busy"
               :placeholder="newPassword ? '设置一个你记得住的密码' : '请输入解锁密码'"
-              :aria-describedby="newPassword ? 'welcome-password-hint' : undefined"
+              :aria-describedby="
+                [newPassword ? 'welcome-password-hint' : '', ui.error ? 'welcome-error' : '']
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              "
               autocapitalize="off"
               :spellcheck="false"
               required
+              @input="ui.error = ''"
             />
             <button
               type="button"
@@ -228,17 +370,19 @@ async function choose(event: Event) {
             至少 10 个字符，可以用一句容易记住的话。
           </p>
         </div>
-        <div v-if="resetting" class="welcome-field">
+        <div v-if="resetting || (restoring && backupPreview)" class="welcome-field">
           <label for="welcome-confirmation">再次输入新密码</label>
           <div class="welcome-password">
             <input
               id="welcome-confirmation"
+              ref="confirmationInput"
               v-model="confirmation"
               :type="showConfirmation ? 'text' : 'password'"
               autocomplete="new-password"
               minlength="10"
               :disabled="ui.busy"
               required
+              @input="ui.error = ''"
             />
             <button
               type="button"
@@ -252,7 +396,15 @@ async function choose(event: Event) {
             </button>
           </div>
         </div>
-        <p v-if="ui.error" class="field-error" role="alert">{{ ui.error }}</p>
+        <label v-if="restoring && backupPreview && exists" class="checkbox"
+          ><input
+            v-model="replaceConfirmed"
+            type="checkbox"
+            required
+            :disabled="ui.busy"
+          />我确认用这份备份替换当前全部本地账本</label
+        >
+        <p v-if="ui.error" id="welcome-error" class="field-error" role="alert">{{ ui.error }}</p>
         <button class="primary full welcome-submit" :disabled="ui.busy">
           {{
             ui.busy
@@ -260,7 +412,9 @@ async function choose(event: Event) {
               : resetting
                 ? '重设密码并打开'
                 : restoring
-                  ? '确认恢复备份'
+                  ? backupPreview
+                    ? '确认恢复备份'
+                    : '校验备份'
                   : repairing
                     ? '确认恢复上一版本'
                     : exists
@@ -269,9 +423,9 @@ async function choose(event: Event) {
           }}
         </button>
         <details v-if="mode === 'default'" class="welcome-options">
-          <summary>{{ exists ? '其他恢复方式' : '已有备份？' }}<Icon name="down" :size="16" /></summary>
+          <summary>{{ exists ? '备份与账本修复' : '已有备份？' }}<Icon name="down" :size="16" /></summary>
           <button type="button" class="welcome-option" :disabled="ui.busy" @click="changeMode('backup')">
-            <Icon name="upload" /><span>从备份恢复<small>使用之前导出的加密备份</small></span
+            <Icon name="upload" /><span>从备份找回账本<small>使用之前导出的加密备份</small></span
             ><Icon name="right" :size="16" />
           </button>
           <button
@@ -285,10 +439,23 @@ async function choose(event: Event) {
             ><Icon name="right" :size="16" />
           </button>
         </details>
+        <details v-if="resetting" class="welcome-help welcome-help-after">
+          <summary>没保存恢复密钥怎么办？</summary>
+          <p>如果还有加密备份，并记得导出时的密码，可以找回备份中的账目。</p>
+          <button type="button" class="text-button" :disabled="ui.busy" @click="changeMode('backup')">
+            用备份找回账本<Icon name="right" :size="16" />
+          </button>
+          <p>
+            密码和恢复密钥都找不到时，无法直接解开当前账目。请先保留现有数据，再查找可用备份或仍能打开账本的副本。
+          </p>
+        </details>
       </form>
     </section>
     <details class="welcome-privacy">
-      <summary><Icon name="lock" :size="14" />账目在本机加密保存<Icon name="down" :size="14" /></summary>
+      <summary>
+        <Icon name="lock" :size="14" />账目在{{ localSpace.place }}加密保存<Icon name="down" :size="14" />
+      </summary>
+      <p>{{ localSpace.detail }}</p>
       <p>解锁密码不会发送到服务器。无需 GitHub 账号也能记账，跨设备同步可以稍后设置。</p>
     </details>
   </main>

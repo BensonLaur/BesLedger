@@ -34,7 +34,26 @@ const recovery = ref(''),
   password = ref(''),
   useRecovery = ref(false),
   preview = ref(''),
+  previewRevision = ref<number>(),
   consent = ref(false);
+function invalidatePreview() {
+  preview.value = '';
+  previewRevision.value = undefined;
+  consent.value = false;
+  password.value = '';
+}
+function openRestore() {
+  invalidatePreview();
+  file.value = credential.value = '';
+  useRecovery.value = false;
+  restoreOpen.value = true;
+}
+function closeRestore() {
+  if (ui.busy) return;
+  invalidatePreview();
+  file.value = credential.value = '';
+  restoreOpen.value = false;
+}
 async function exportBackup() {
   await run(async () => {
     await saveFile(`BesLedger-${today()}.besledger`, await vault.exportBackup());
@@ -42,22 +61,31 @@ async function exportBackup() {
   });
 }
 async function readFile(event: Event) {
+  invalidatePreview();
+  file.value = '';
   const f = (event.target as HTMLInputElement).files?.[0];
   if (f) {
-    file.value = await f.text();
-    preview.value = '';
+    await run(async () => {
+      if (f.size > 50_000_000) throw new Error('备份文件超过 50 MB，请选择较小的备份');
+      file.value = await f.text();
+      if (!file.value) throw new Error('备份文件为空，请重新选择');
+    });
   }
 }
 async function inspect() {
+  invalidatePreview();
   await run(async () => {
-    const verified = await vault.inspectBackup(file.value, credential.value, useRecovery.value);
-    preview.value = `${list(verified.state, 'ledger').length} 本账本、${list(verified.state, 'account').length} 个账户、${list(verified.state, 'entry').length} 笔记录；含完整删除标记和周期来源。`;
+    const verified = await vault.previewRestore(file.value, credential.value, useRecovery.value);
+    previewRevision.value = verified.revision;
+    preview.value = `${list(verified.state, 'ledger').length} 本账本、${list(verified.state, 'account').length} 个账户、${list(verified.state, 'entry').length} 笔账目`;
   });
 }
 async function restore() {
-  if (!consent.value || !preview.value) return;
-  await run(async () => {
-    await vault.restore(file.value, credential.value, password.value, useRecovery.value);
+  if (!consent.value || !preview.value || previewRevision.value === undefined) return;
+  const succeeded = await run(async () => {
+    await vault.restore(file.value, credential.value, password.value, useRecovery.value, {
+      expectedRevision: previewRevision.value,
+    });
     await restoreLogin();
     refresh();
     restoreOpen.value = false;
@@ -65,6 +93,7 @@ async function restore() {
     password.value = '';
     ui.notice = '备份恢复成功；原版本仍保留为上一版本';
   });
+  if (!succeeded) invalidatePreview();
 }
 </script>
 <template>
@@ -112,7 +141,7 @@ async function restore() {
         <button @click="exportBackup">
           <Icon name="download" /><span>导出完整加密备份<small>账户、账目、退款和周期账一起备份</small></span
           ><Icon name="right" /></button
-        ><button @click="restoreOpen = true">
+        ><button @click="openRestore">
           <Icon name="upload" /><span>校验并恢复备份<small>先检查备份内容，再确认恢复</small></span
           ><Icon name="right" /></button
         ><button @click="recovery = vault.recovery">
@@ -192,19 +221,39 @@ async function restore() {
     <code class="recovery-key">{{ recovery }}</code
     ><button class="primary full" @click="recovery = ''">我已妥善保存</button></Modal
   >
-  <Modal v-if="restoreOpen" title="恢复完整备份" @close="restoreOpen = false"
-    ><label>加密备份文件<input type="file" accept=".besledger,.json" @change="readFile" /></label
+  <Modal v-if="restoreOpen" title="恢复完整备份" @close="closeRestore"
+    ><label
+      >加密备份文件<input
+        type="file"
+        accept=".besledger,.json"
+        :disabled="ui.busy"
+        @change="readFile" /></label
     ><label class="checkbox"
-      ><input v-model="useRecovery" type="checkbox" @change="preview = ''" />使用恢复密钥</label
+      ><input
+        v-model="useRecovery"
+        type="checkbox"
+        :disabled="ui.busy"
+        @change="
+          credential = '';
+          invalidatePreview();
+        "
+      />使用恢复密钥</label
     ><label
       >{{ useRecovery ? '恢复密钥' : '备份原密码'
-      }}<input v-model="credential" type="password" autocomplete="off" @input="preview = ''" /></label
+      }}<input
+        v-model="credential"
+        type="password"
+        autocomplete="off"
+        :disabled="ui.busy"
+        @input="invalidatePreview" /></label
     ><button class="secondary" :disabled="ui.busy || !file" @click="inspect">先校验备份</button
     ><template v-if="preview"
       ><p class="success-panel">{{ preview }}</p>
+      <p>恢复会替换当前全部本地账本，未备份的新账目不会出现在恢复后的账本中。</p>
       <label
         >恢复后的解锁密码<input
           v-model="password"
+          :disabled="ui.busy"
           type="password"
           minlength="10"
           autocomplete="new-password" /></label
@@ -212,7 +261,8 @@ async function restore() {
         ><input
           v-model="consent"
           type="checkbox"
-        />确认用该备份替换本机空间，未备份的新修改会离开当前版本</label
+          :disabled="ui.busy"
+        />我确认用这份备份替换当前全部本地账本</label
       ><button class="primary full" :disabled="ui.busy || !consent || password.length < 10" @click="restore">
         恢复已验证备份
       </button></template

@@ -293,23 +293,68 @@ export class Vault {
     const state = migrate(await decrypt(archive.data, keys.key, 'local-state'));
     return { ...keys, state, header: archive.header };
   }
-  async restore(text: string, credential: string, newPassword: string, recovery = false): Promise<void> {
+  async previewRestore(
+    text: string,
+    credential: string,
+    recovery = false,
+  ): Promise<{ state: State; revision: number }> {
     await this.queue;
+    const generation = this.generation;
+    const revision = (await this.backend.read())?.revision ?? 0;
     const verified = await this.inspectBackup(text, credential, recovery);
-    const header = await wrapKey(verified.raw, newPassword);
-    // 恢复为独立设备身份，保留实体向量和墓碑，防止两端共用同一递增计数器。
-    verified.state.deviceId = crypto.randomUUID();
-    const existing = await this.backend.read();
-    const revision = await this.backend.compareSwap(
-      existing?.revision ?? 0,
-      JSON.stringify(await this.archive(verified.state, verified.key, header)),
-    );
-    this.lock();
-    this.key = verified.key;
-    this.raw = verified.raw;
-    this.header = header;
-    this.state = verified.state;
-    this.revision = revision;
+    try {
+      if (generation !== this.generation) throw new Error('本地空间已改变，请重新校验备份');
+      return { state: verified.state, revision };
+    } finally {
+      // 预览不采用解密密钥；确认恢复时重新校验文件，并核对目标空间的版本。
+      verified.raw.fill(0);
+    }
+  }
+  async restore(
+    text: string,
+    credential: string,
+    newPassword: string,
+    recovery = false,
+    options: { expectedRevision?: number; signal?: AbortSignal } = {},
+  ): Promise<void> {
+    const generation = this.generation;
+    const task = this.queue.then(async () => {
+      const assertCurrent = () => {
+        if (options.signal?.aborted || generation !== this.generation)
+          throw new Error('恢复操作已取消或本地空间已改变，请重新解锁核对');
+      };
+      assertCurrent();
+      const existing = await this.backend.read();
+      assertCurrent();
+      const expected = existing?.revision ?? 0;
+      if (options.expectedRevision !== undefined && expected !== options.expectedRevision)
+        throw new Error('本地账目已在其他窗口改变，请重新校验备份后再恢复');
+      const verified = await this.inspectBackup(text, credential, recovery);
+      let adopted = false;
+      try {
+        assertCurrent();
+        const header = await wrapKey(verified.raw, newPassword);
+        assertCurrent();
+        // 恢复为独立设备身份，保留实体向量和墓碑，防止两端共用同一递增计数器。
+        verified.state.deviceId = crypto.randomUUID();
+        const payload = JSON.stringify(await this.archive(verified.state, verified.key, header));
+        assertCurrent();
+        // 使用解密前读到的版本，避免校验或确认期间覆盖其他窗口的新账目。
+        const revision = await this.backend.compareSwap(expected, payload);
+        assertCurrent();
+        this.lock();
+        this.key = verified.key;
+        this.raw = verified.raw;
+        this.header = header;
+        this.state = verified.state;
+        this.revision = revision;
+        adopted = true;
+      } finally {
+        if (!adopted) verified.raw.fill(0);
+      }
+    });
+    this.queue = task.catch(() => undefined);
+    return task;
   }
   async recoverPrevious(password: string): Promise<void> {
     const stored = await this.backend.read();

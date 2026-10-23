@@ -1412,8 +1412,8 @@ svg {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 28px 20px;
+  justify-content: flex-start;
+  padding: clamp(28px, 13dvh, 112px) 20px 28px;
   background: radial-gradient(ellipse at 10% 5%, #e0e7f0 0, transparent 55%), var(--bg);
 }
 .welcome-brand {
@@ -1422,7 +1422,7 @@ svg {
   gap: 12px;
   font-size: 23px;
   font-weight: 600;
-  margin: 0 0 22px;
+  margin: 0 0 18px;
 }
 .welcome-brand img {
   width: 44px;
@@ -1448,6 +1448,37 @@ svg {
 }
 .welcome-card h1 {
   font-size: 24px;
+}
+.welcome-card h1:focus {
+  outline: none;
+}
+.welcome-help {
+  font-size: 13px;
+  color: var(--muted);
+}
+.welcome-help summary {
+  min-height: 44px;
+  cursor: pointer;
+  line-height: 44px;
+  color: var(--accent);
+}
+.welcome-help p {
+  font-size: 13px;
+}
+.welcome-help-after {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 8px;
+}
+.welcome-backup-preview {
+  background: var(--soft);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+.welcome-backup-preview p {
+  margin: 6px 0 0;
 }
 .welcome-card p {
   color: var(--muted);
@@ -1972,7 +2003,7 @@ svg {
     padding: 25px 0 30px;
   }
   .welcome {
-    padding: 24px 16px;
+    padding: clamp(24px, 8dvh, 64px) 16px 24px;
   }
   .welcome-card {
     padding: 24px 20px;

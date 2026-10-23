@@ -27,7 +27,7 @@ test('首次与已有账本入口清晰，密码可查看，恢复入口只展�
   await expect(page.getByText('无需 GitHub 账号也能记账', { exact: false })).toBeHidden();
   await expect(page.getByLabel('解锁密码', { exact: true })).toHaveAttribute('autocomplete', 'new-password');
   await expect(page.getByText('至少 10 个字符，可以用一句容易记住的话。', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '从备份恢复', exact: false })).toBeHidden();
+  await expect(page.getByRole('button', { name: '从备份找回账本', exact: false })).toBeHidden();
   for (const colorScheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme });
     await page.setViewportSize({ width: 320, height: 640 });
@@ -45,7 +45,7 @@ test('首次与已有账本入口清晰，密码可查看，恢复入口只展�
   await page.getByRole('button', { name: '显示解锁密码', exact: true }).click();
   await expect(page.getByLabel('解锁密码', { exact: true })).toHaveAttribute('type', 'text');
   await page.getByText('已有备份？', { exact: true }).click();
-  await page.getByRole('button', { name: '从备份恢复', exact: false }).click();
+  await page.getByRole('button', { name: '从备份找回账本', exact: false }).click();
   await expect(page.getByRole('button', { name: '返回开始', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '返回开始', exact: true }).click();
   await expect(page.getByLabel('解锁密码', { exact: true })).toHaveValue('');
@@ -60,6 +60,8 @@ test('首次与已有账本入口清晰，密码可查看，恢复入口只展�
   await page.goto('./#/settings');
   await page.getByRole('button', { name: '锁定', exact: true }).click();
   await expect(page.getByRole('heading', { name: '欢迎回来', exact: true })).toBeVisible();
+  await expect(page.getByText('此浏览器中已保存账本。', { exact: false })).toBeVisible();
+  await expect(page.getByText('输入创建账本时设置的密码，继续记账。', { exact: false })).toBeVisible();
   await expect(page.getByLabel('账本名称')).toHaveCount(0);
   await expect(page.getByText('至少 10 个字符，可以用一句容易记住的话。', { exact: true })).toHaveCount(0);
   await expect(page.getByLabel('解锁密码', { exact: true })).toHaveAttribute('placeholder', '请输入解锁密码');
@@ -78,15 +80,15 @@ test('首次与已有账本入口清晰，密码可查看，恢复入口只展�
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.screenshot({ path: `artifacts/welcome-unlock-${info.project.name}.png`, fullPage: true });
   const before = await stored(page);
-  await page.getByText('其他恢复方式', { exact: true }).click();
+  await page.getByText('备份与账本修复', { exact: true }).click();
   await page.getByRole('button', { name: '账本打不开？', exact: false }).click();
   await expect(page.getByText('最近一次改动可能丢失', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: '确认恢复上一版本', exact: true })).toBeVisible();
   expect((await stored(page)) === before, '进入故障恢复不应立即回退数据').toBe(true);
   await page.getByRole('button', { name: '返回解锁', exact: true }).click();
-  await page.getByText('其他恢复方式', { exact: true }).click();
-  await page.getByRole('button', { name: '从备份恢复', exact: false }).click();
-  await expect(page.getByText('恢复会替换此设备现有的账本', { exact: false })).toBeVisible();
+  await page.getByText('备份与账本修复', { exact: true }).click();
+  await page.getByRole('button', { name: '从备份找回账本', exact: false }).click();
+  await expect(page.getByText('校验不会改动已有账本', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: '返回解锁', exact: true }).click();
   expect((await stored(page)) === before, '取消备份恢复不应改动账本').toBe(true);
   await page.getByLabel('解锁密码', { exact: true }).fill('fictional-wrong-password');
