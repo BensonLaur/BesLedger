@@ -158,7 +158,7 @@ async function restore() {
       </button>
     </section>
     <section class="settings-version">
-      <p class="hint">BesLedger 0.1.3 · 人民币 · 本地加密</p>
+      <p class="hint">BesLedger 0.1.4 · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
         target="_blank"

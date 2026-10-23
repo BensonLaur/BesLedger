@@ -104,6 +104,7 @@ public class EncryptedVaultPlugin extends Plugin {
     public void compareSwap(PluginCall call) {
         final Integer expected = call.getInt("expected");
         final String payload = call.getString("payload");
+        final boolean resetPrevious = call.getBoolean("resetPrevious", false);
         if (expected == null || expected < 0 || payload == null || payload.length() > 50_000_000) {
             call.reject("存储参数无效"); return;
         }
@@ -117,7 +118,8 @@ public class EncryptedVaultPlugin extends Plugin {
                 if (row.moveToFirst()) { revision = row.getLong(0); previous = row.getString(1); }
                 if (revision != expected.longValue()) { call.reject("本机账本版本已改变，请重新解锁；草稿未清空"); return; }
                 ContentValues values = new ContentValues();
-                values.put("id", 1); values.put("revision", revision + 1); values.put("payload", payload); values.put("previous", previous);
+                // 重设口令时，当前和回退检查点原子使用新封装；业务密文不变。
+                values.put("id", 1); values.put("revision", revision + 1); values.put("payload", payload); values.put("previous", resetPrevious ? payload : previous);
                 db.replaceOrThrow("vault", null, values);
                 db.setTransactionSuccessful();
                 JSObject result = new JSObject(); result.put("revision", revision + 1);

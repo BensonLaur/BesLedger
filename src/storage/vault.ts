@@ -95,6 +95,54 @@ export class Vault {
     this.revision = stored.revision;
     this.deviceSyncKeys = archive.deviceSyncKeys ?? {};
   }
+  async resetPasswordWithRecovery(recovery: string, password: string, signal?: AbortSignal): Promise<void> {
+    const generation = this.generation;
+    const task = this.queue.then(async () => {
+      const assertCurrent = () => {
+        if (signal?.aborted || generation !== this.generation)
+          throw new Error('重设操作已取消或本地空间已改变，请重新解锁');
+        if (this.key || this.state) throw new Error('请先锁定，再使用恢复密钥重设口令');
+      };
+      assertCurrent();
+      const stored = await this.backend.read();
+      assertCurrent();
+      if (!stored) throw new Error('这台设备尚未创建本地账本，请先创建或从备份恢复');
+      const original = JSON.parse(stored.payload);
+      const archive = archiveSchema.parse(original);
+      const raw = parseRecovery(recovery);
+      let adopted = false;
+      try {
+        const key = await importKey(raw);
+        let state: State;
+        try {
+          state = migrate(await decrypt(archive.data, key, 'local-state'));
+        } catch {
+          throw new Error('恢复密钥不正确或本机数据已损坏，请核对；原账目保持不变');
+        }
+        assertCurrent();
+        const header = await wrapKey(raw, password);
+        assertCurrent();
+        // 只更换口令封装，保留原密文、设备身份和设备同步密钥；凭证派生密钥不变。
+        const payload = JSON.stringify({ ...original, header });
+        // 同次事务建立新口令检查点，避免旧口令经“恢复上一版本”再次打开当前账目。
+        const revision = await this.backend.compareSwap(stored.revision, payload, { resetPrevious: true });
+        // 提交期间锁定或关闭页面时不得重新解锁；已提交的口令以新口令为准。
+        assertCurrent();
+        this.lock();
+        this.raw = raw;
+        this.key = key;
+        this.header = header;
+        this.state = state;
+        this.revision = revision;
+        this.deviceSyncKeys = archive.deviceSyncKeys ?? {};
+        adopted = true;
+      } finally {
+        if (!adopted) raw.fill(0);
+      }
+    });
+    this.queue = task.catch(() => undefined);
+    return task;
+  }
   lock(): void {
     this.generation++;
     this.raw?.fill(0);

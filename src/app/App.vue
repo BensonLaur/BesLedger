@@ -16,6 +16,7 @@ import RuleForm from './components/RuleForm.vue';
 import Modal from './components/Modal.vue';
 import SmsPicker from './components/SmsPicker.vue';
 const offline = ref(!navigator.onLine);
+const unlockPage = ref<InstanceType<typeof Unlock>>();
 const route = useRoute();
 const navigation = [
   { path: '/', name: '明细', icon: 'book' },
@@ -44,7 +45,7 @@ onMounted(() => {
   });
   if (Capacitor.isNativePlatform()) {
     void NativeApp.addListener('backButton', () => {
-      if (closeTopModal()) return;
+      if (closeTopModal() || unlockPage.value?.back()) return;
       if (location.hash && location.hash !== '#/') history.back();
       else void NativeApp.minimizeApp();
     });
@@ -52,7 +53,7 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Unlock v-if="!state" />
+  <Unlock v-if="!state" ref="unlockPage" />
   <div v-else class="app-shell" :class="{ 'is-home': route.path === '/' }">
     <aside class="sidebar">
       <RouterLink class="brand" to="/"

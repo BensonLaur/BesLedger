@@ -1,9 +1,10 @@
 import Dexie, { type Table } from 'dexie';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 export type StoredVault = { id: 'vault'; revision: number; payload: string; previous?: string };
+export type VaultWriteOptions = { resetPrevious?: boolean };
 export interface Backend {
   read(): Promise<StoredVault | undefined>;
-  compareSwap(expected: number, payload: string): Promise<number>;
+  compareSwap(expected: number, payload: string, options?: VaultWriteOptions): Promise<number>;
 }
 export class WebBackend implements Backend {
   private db: Dexie;
@@ -16,13 +17,18 @@ export class WebBackend implements Backend {
   async read(): Promise<StoredVault | undefined> {
     return this.table.get('vault');
   }
-  async compareSwap(expected: number, payload: string): Promise<number> {
+  async compareSwap(expected: number, payload: string, options: VaultWriteOptions = {}): Promise<number> {
     return this.db.transaction('rw', this.table, async () => {
       const previous = await this.table.get('vault');
       if ((previous?.revision ?? 0) !== expected)
         throw new Error('另一个窗口已更新账本，请重新解锁后再保存；当前草稿仍保留');
       const revision = expected + 1;
-      await this.table.put({ id: 'vault', revision, payload, previous: previous?.payload });
+      await this.table.put({
+        id: 'vault',
+        revision,
+        payload,
+        previous: options.resetPrevious ? payload : previous?.payload,
+      });
       return revision;
     });
   }
@@ -32,15 +38,19 @@ export class WebBackend implements Backend {
 }
 interface NativeVault {
   read(): Promise<{ value?: StoredVault }>;
-  compareSwap(options: { expected: number; payload: string }): Promise<{ revision: number }>;
+  compareSwap(options: {
+    expected: number;
+    payload: string;
+    resetPrevious?: boolean;
+  }): Promise<{ revision: number }>;
 }
 const native = registerPlugin<NativeVault>('EncryptedVault');
 export class AndroidBackend implements Backend {
   async read(): Promise<StoredVault | undefined> {
     return (await native.read()).value;
   }
-  async compareSwap(expected: number, payload: string): Promise<number> {
-    return (await native.compareSwap({ expected, payload })).revision;
+  async compareSwap(expected: number, payload: string, options: VaultWriteOptions = {}): Promise<number> {
+    return (await native.compareSwap({ expected, payload, ...options })).revision;
   }
 }
 export function backend(): Backend {
