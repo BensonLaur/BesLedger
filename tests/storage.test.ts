@@ -109,7 +109,7 @@ describe('加密存储和失败恢复', () => {
     b.lock();
     await b.unlock('another-test-password');
   });
-  it('两个窗口并发保存明确拒绝旧版本，上一版本可以恢复', async () => {
+  it('两个窗口并发保存拒绝旧版本，正常账本不会回退', async () => {
     const backend = new WebBackend(crypto.randomUUID()),
       a = new Vault(backend),
       b = new Vault(backend);
@@ -117,8 +117,11 @@ describe('加密存储和失败恢复', () => {
     await b.unlock('fictional-test-password');
     await a.mutate((s) => put(s, { kind: 'ledger', name: '甲窗口' }));
     await expect(b.mutate((s) => put(s, { kind: 'ledger', name: '乙窗口' }))).rejects.toThrow('另一个窗口');
-    await a.recoverPrevious('fictional-test-password');
-    expect(a.state!.entities).toEqual({});
+    a.lock();
+    await expect(a.previewPrevious('fictional-test-password')).rejects.toThrow('正常读取');
+    await expect(a.recoverPrevious('fictional-test-password')).rejects.toThrow('正常读取');
+    await a.unlock('fictional-test-password');
+    expect(Object.keys(a.state!.entities)).toHaveLength(1);
   });
   it('升级保留身份和数据，未来未知版本不能清空重建', () => {
     const s = emptyState();

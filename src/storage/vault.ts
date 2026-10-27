@@ -28,6 +28,61 @@ const archiveSchema = z.object({
   deviceSyncKeys: z.record(z.string().regex(/^[0-9a-f]{64}$/), envelopeSchema).optional(),
 });
 type Archive = z.infer<typeof archiveSchema>;
+export class LocalDataUnreadable extends Error {
+  constructor() {
+    super('当前本地账目无法完整读取，原数据未改动');
+  }
+}
+class UnsupportedLocalVersion extends Error {
+  constructor() {
+    super('当前账本格式需要更新版本的 Bes记账，请先更新应用');
+  }
+}
+async function inspectLocal(text: string, password: string) {
+  let input: unknown;
+  try {
+    input = JSON.parse(text);
+  } catch {
+    throw new LocalDataUnreadable();
+  }
+  if (!input || typeof input !== 'object') throw new LocalDataUnreadable();
+  const value = input as Record<string, unknown>;
+  if (value.format !== 'BesLedger.vault' || value.version !== 1) throw new UnsupportedLocalVersion();
+  for (const part of [value.header, value.data]) {
+    if (
+      part &&
+      typeof part === 'object' &&
+      'version' in part &&
+      typeof part.version === 'number' &&
+      part.version > 1
+    )
+      throw new UnsupportedLocalVersion();
+  }
+  // 先验证密码封装。密码错误与封装损坏无法可靠区分，不能据此引导用户回退账目。
+  const keys = await unlockKey(value.header, password);
+  try {
+    const archive = archiveSchema.parse(value);
+    const decoded = await decrypt(archive.data, keys.key, 'local-state');
+    if (
+      decoded &&
+      typeof decoded === 'object' &&
+      'schemaVersion' in decoded &&
+      typeof decoded.schemaVersion === 'number' &&
+      decoded.schemaVersion > 2
+    )
+      throw new UnsupportedLocalVersion();
+    return {
+      ...keys,
+      state: migrate(decoded),
+      header: archive.header,
+      deviceSyncKeys: archive.deviceSyncKeys ?? {},
+    };
+  } catch (error) {
+    keys.raw.fill(0);
+    if (error instanceof UnsupportedLocalVersion) throw error;
+    throw new LocalDataUnreadable();
+  }
+}
 export type SyncKeyLease = {
   key: CryptoKey;
   source: 'provided' | 'saved' | 'local';
@@ -84,16 +139,14 @@ export class Vault {
   async unlock(password: string): Promise<void> {
     const stored = await this.backend.read();
     if (!stored) throw new Error('尚未创建本地空间');
-    const archive = archiveSchema.parse(JSON.parse(stored.payload));
-    const { key, raw } = await unlockKey(archive.header, password);
-    const state = migrate(await decrypt(archive.data, key, 'local-state'));
+    const verified = await inspectLocal(stored.payload, password);
     this.lock();
-    this.key = key;
-    this.raw = raw;
-    this.header = archive.header;
-    this.state = state;
+    this.key = verified.key;
+    this.raw = verified.raw;
+    this.header = verified.header;
+    this.state = verified.state;
     this.revision = stored.revision;
-    this.deviceSyncKeys = archive.deviceSyncKeys ?? {};
+    this.deviceSyncKeys = verified.deviceSyncKeys;
   }
   async resetPasswordWithRecovery(recovery: string, password: string, signal?: AbortSignal): Promise<void> {
     const generation = this.generation;
@@ -356,20 +409,66 @@ export class Vault {
     this.queue = task.catch(() => undefined);
     return task;
   }
-  async recoverPrevious(password: string): Promise<void> {
+  private async inspectPrevious(password: string) {
+    if (this.key || this.state) throw new Error('请先锁定本地账本');
     const stored = await this.backend.read();
-    if (!stored?.previous) throw new Error('没有可恢复的上一版本');
-    const verified = await this.inspectBackup(stored.previous, password);
-    // 上一版本只恢复业务数据，不让已忘记的设备密钥随历史归档重新出现。
-    const revision = await this.backend.compareSwap(
-      stored.revision,
-      JSON.stringify(await this.archive(verified.state, verified.key, verified.header)),
-    );
-    this.lock();
-    this.key = verified.key;
-    this.raw = verified.raw;
-    this.header = verified.header;
-    this.state = verified.state;
-    this.revision = revision;
+    if (!stored) throw new Error('没有可读取的本地账本');
+    try {
+      const current = await inspectLocal(stored.payload, password);
+      current.raw.fill(0);
+      throw new Error('当前账本可以正常读取，请直接打开账本');
+    } catch (error) {
+      if (!(error instanceof LocalDataUnreadable)) throw error;
+    }
+    if (!stored.previous) throw new Error('没有可用的本地备用副本，请从加密备份恢复');
+    const verified = await inspectLocal(stored.previous, password);
+    return { ...verified, revision: stored.revision };
+  }
+  async previewPrevious(password: string): Promise<{ state: State; revision: number }> {
+    await this.queue;
+    const generation = this.generation;
+    const verified = await this.inspectPrevious(password);
+    try {
+      if (generation !== this.generation) throw new Error('本地空间已改变，请重新解锁核对');
+      return { state: verified.state, revision: verified.revision };
+    } finally {
+      verified.raw.fill(0);
+    }
+  }
+  async recoverPrevious(
+    password: string,
+    options: { expectedRevision?: number; signal?: AbortSignal } = {},
+  ): Promise<void> {
+    const generation = this.generation;
+    const task = this.queue.then(async () => {
+      const assertCurrent = () => {
+        if (options.signal?.aborted || generation !== this.generation)
+          throw new Error('恢复操作已取消或本地空间已改变，请重新解锁核对');
+      };
+      assertCurrent();
+      const verified = await this.inspectPrevious(password);
+      let adopted = false;
+      try {
+        assertCurrent();
+        if (options.expectedRevision !== undefined && options.expectedRevision !== verified.revision)
+          throw new Error('本地账目已改变，请重新解锁核对');
+        // 备用副本只恢复业务数据，不让已忘记的设备密钥随历史归档重新出现。
+        const payload = JSON.stringify(await this.archive(verified.state, verified.key, verified.header));
+        assertCurrent();
+        const revision = await this.backend.compareSwap(verified.revision, payload);
+        assertCurrent();
+        this.lock();
+        this.key = verified.key;
+        this.raw = verified.raw;
+        this.header = verified.header;
+        this.state = verified.state;
+        this.revision = revision;
+        adopted = true;
+      } finally {
+        if (!adopted) verified.raw.fill(0);
+      }
+    });
+    this.queue = task.catch(() => undefined);
+    return task;
   }
 }

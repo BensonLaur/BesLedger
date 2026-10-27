@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import brandIcon from '../../assets/brand.svg?no-inline';
 import { catchUp, refresh, restoreLogin, run, ui, vault } from '../store';
 import { list, put } from '../../domain/model';
+import { LocalDataUnreadable } from '../../storage/vault';
 import Icon from './Icon.vue';
 const exists = ref(false),
   loaded = ref(false),
@@ -20,6 +21,10 @@ const exists = ref(false),
   showCredential = ref(false),
   backupPreview = ref<{ summary: string; revision: number }>(),
   replaceConfirmed = ref(false),
+  repairPreview = ref<{ summary: string; revision: number }>(),
+  repairConfirmed = ref(false),
+  copying = ref(false),
+  copyMessage = ref(''),
   mode = ref<'default' | 'backup' | 'reset' | 'previous'>('default');
 const passwordInput = ref<HTMLInputElement>();
 const credentialInput = ref<HTMLInputElement>();
@@ -57,12 +62,45 @@ onBeforeUnmount(() => {
 });
 function changeMode(next: typeof mode.value) {
   if (ui.busy) return;
+  if (next === 'previous' && !repairPreview.value) return;
+  const repairPassword = next === 'previous' ? password.value : '';
   mode.value = next;
   credential.value = password.value = confirmation.value = file.value = '';
   resetBackupPreview();
+  password.value = repairPassword;
+  repairConfirmed.value = false;
+  if (next !== 'previous') repairPreview.value = undefined;
   showCredential.value = recoveryMode.value = false;
   ui.error = '';
   void nextTick(() => title.value?.focus({ preventScroll: true }));
+}
+function editPassword() {
+  ui.error = '';
+  if (mode.value === 'default') repairPreview.value = undefined;
+}
+function hasPendingInput() {
+  return Boolean(
+    password.value ||
+    confirmation.value ||
+    credential.value ||
+    recovery.value ||
+    file.value ||
+    mode.value !== 'default' ||
+    (!exists.value && bookName.value !== '日常生活'),
+  );
+}
+async function copyRecovery() {
+  if (copying.value || !recovery.value) return;
+  copying.value = true;
+  copyMessage.value = '';
+  try {
+    await navigator.clipboard.writeText(recovery.value);
+    copyMessage.value = '已复制。请粘贴到密码管理器或其他安全位置，并确认保存。';
+  } catch {
+    copyMessage.value = '未能自动复制。请长按或选中上方密钥后复制，再妥善保存。';
+  } finally {
+    copying.value = false;
+  }
 }
 function resetBackupPreview() {
   backupPreview.value = undefined;
@@ -79,7 +117,7 @@ function back(): boolean {
   changeMode('default');
   return true;
 }
-defineExpose({ back });
+defineExpose({ back, hasPendingInput });
 onMounted(async () => {
   exists.value = await vault.exists();
   loaded.value = true;
@@ -137,22 +175,55 @@ async function enter() {
       } finally {
         operationAttempt = undefined;
       }
-    } else if (repairing.value) await vault.recoverPrevious(password.value);
-    else if (exists.value) {
+    } else if (repairing.value) {
+      if (!repairPreview.value || !repairConfirmed.value) throw new Error('请先核对备用副本并确认恢复');
+      operationAttempt = new AbortController();
+      try {
+        await vault.recoverPrevious(password.value, {
+          expectedRevision: repairPreview.value.revision,
+          signal: operationAttempt.signal,
+        });
+      } catch (error) {
+        repairPreview.value = undefined;
+        repairConfirmed.value = false;
+        mode.value = 'default';
+        throw error;
+      } finally {
+        operationAttempt = undefined;
+      }
+    } else if (exists.value) {
+      repairPreview.value = undefined;
       try {
         await vault.unlock(password.value);
       } catch (error) {
+        if (error instanceof LocalDataUnreadable) {
+          try {
+            const verified = await vault.previewPrevious(password.value);
+            repairPreview.value = {
+              summary: `${list(verified.state, 'ledger').length} 本账本、${list(verified.state, 'account').length} 个账户、${list(verified.state, 'entry').length} 笔账目`,
+              revision: verified.revision,
+            };
+          } catch {
+            /* 备用副本未验证通过时，不展示修复入口，也不写入数据。 */
+          }
+          throw new Error(
+            repairPreview.value
+              ? '当前账目读取异常，已找到一份可读取的本地备用副本。原数据未改动。'
+              : '当前账目无法完整读取。请保留现有数据，并尝试从加密备份找回账本。',
+          );
+        }
         if (error instanceof Error && error.message === '密钥不匹配或数据已损坏，原数据未改动')
           throw new Error('未能打开账本，请检查解锁密码后重试。原有账目未改动。');
         throw error;
       }
     } else {
+      if (password.value !== confirmation.value) throw new Error('两次密码不一致，请重新确认');
       recovery.value = await vault.create(password.value);
       await vault.mutate((s) => {
         const book = put(s, { kind: 'ledger', name: bookName.value });
         s.preferences.currentLedger = book.id;
       });
-      password.value = '';
+      password.value = confirmation.value = '';
       exists.value = true;
       return;
     }
@@ -165,7 +236,7 @@ async function enter() {
   });
   if (!succeeded) {
     await nextTick();
-    const input = ui.error.includes('两次新密码')
+    const input = ui.error.includes('两次')
       ? confirmationInput.value
       : resetting.value || (restoring.value && !backupPreview.value)
         ? credentialInput.value
@@ -202,12 +273,17 @@ async function choose(event: Event) {
     <div class="welcome-brand">
       <img :src="brandIcon" alt="Bes记账钱包图标" /><span>Bes记账<small>让每一笔，都心中有数。</small></span>
     </div>
+    <slot name="update" />
     <section v-if="loaded" class="welcome-card" aria-labelledby="welcome-title">
       <template v-if="recovery">
         <Icon name="shield" :size="30" />
         <h1 id="welcome-title">保存恢复密钥</h1>
         <p>忘记解锁密码时，用它找回账本。请存入密码管理器，或抄写后妥善保管，不要只留在应用里。</p>
         <code class="recovery-key">{{ recovery }}</code>
+        <button type="button" class="secondary full" :disabled="copying" @click="copyRecovery">
+          <Icon name="copy" />{{ copying ? '正在复制…' : '复制恢复密钥' }}
+        </button>
+        <p v-if="copyMessage" class="welcome-hint" role="status">{{ copyMessage }}</p>
         <label class="checkbox"><input v-model="confirmed" type="checkbox" />我已独立保存恢复密钥</label>
         <button class="primary full" :disabled="!confirmed" @click="finish">进入账本</button>
       </template>
@@ -228,7 +304,7 @@ async function choose(event: Event) {
               : restoring
                 ? '从备份恢复'
                 : repairing
-                  ? '恢复上一版本'
+                  ? '从本地备用副本恢复'
                   : exists
                     ? '欢迎回来'
                     : '开始记账'
@@ -243,10 +319,14 @@ async function choose(event: Event) {
           }}
         </p>
         <p v-else-if="repairing">
-          仅在账本无法正常打开时使用。将恢复上一次保存的内容，最近一次改动可能丢失；忘记密码请返回选择“忘记密码？”。
+          这份副本保存的是最近一次本地保存之前的内容。恢复会替换当前全部本地账本，近期修改可能不在其中。
         </p>
-        <p v-else-if="exists">{{ localSpace.existing }}。<br />输入创建账本时设置的密码，继续记账。</p>
+        <p v-else-if="exists">{{ localSpace.existing }}。<br />输入你设置的解锁密码，继续记账。</p>
         <p v-else>给账本起个名字，再设置解锁密码。以后用这个密码打开账本。</p>
+        <div v-if="repairing && repairPreview" class="welcome-backup-preview">
+          <strong>可读取的备用副本</strong>
+          <p>{{ repairPreview.summary }}</p>
+        </div>
         <div v-if="restoring && backupPreview" class="welcome-backup-preview" role="status">
           <strong>备份已校验</strong>
           <p>{{ backupPreview.summary }}</p>
@@ -353,7 +433,7 @@ async function choose(event: Event) {
               autocapitalize="off"
               :spellcheck="false"
               required
-              @input="ui.error = ''"
+              @input="editPassword"
             />
             <button
               type="button"
@@ -370,8 +450,13 @@ async function choose(event: Event) {
             至少 10 个字符，可以用一句容易记住的话。
           </p>
         </div>
-        <div v-if="resetting || (restoring && backupPreview)" class="welcome-field">
-          <label for="welcome-confirmation">再次输入新密码</label>
+        <div
+          v-if="(!exists && mode === 'default') || resetting || (restoring && backupPreview)"
+          class="welcome-field"
+        >
+          <label for="welcome-confirmation">{{
+            !exists && mode === 'default' ? '再次输入密码' : '再次输入新密码'
+          }}</label>
           <div class="welcome-password">
             <input
               id="welcome-confirmation"
@@ -405,6 +490,14 @@ async function choose(event: Event) {
           />我确认用这份备份替换当前全部本地账本</label
         >
         <p v-if="ui.error" id="welcome-error" class="field-error" role="alert">{{ ui.error }}</p>
+        <label v-if="repairing && repairPreview" class="checkbox"
+          ><input
+            v-model="repairConfirmed"
+            type="checkbox"
+            required
+            :disabled="ui.busy"
+          />我确认使用这份本地备用副本恢复</label
+        >
         <button class="primary full welcome-submit" :disabled="ui.busy">
           {{
             ui.busy
@@ -416,29 +509,27 @@ async function choose(event: Event) {
                     ? '确认恢复备份'
                     : '校验备份'
                   : repairing
-                    ? '确认恢复上一版本'
+                    ? '确认使用备用副本'
                     : exists
                       ? '打开账本'
                       : '创建账本'
           }}
         </button>
-        <details v-if="mode === 'default'" class="welcome-options">
-          <summary>{{ exists ? '备份与账本修复' : '已有备份？' }}<Icon name="down" :size="16" /></summary>
-          <button type="button" class="welcome-option" :disabled="ui.busy" @click="changeMode('backup')">
-            <Icon name="upload" /><span>从备份找回账本<small>使用之前导出的加密备份</small></span
-            ><Icon name="right" :size="16" />
+        <button
+          v-if="mode === 'default'"
+          type="button"
+          class="text-button full welcome-backup-link"
+          :disabled="ui.busy"
+          @click="changeMode('backup')"
+        >
+          <Icon name="upload" :size="16" />从备份找回账本
+        </button>
+        <div v-if="mode === 'default' && repairPreview" class="welcome-backup-preview">
+          <p>已找到可读取的备用副本，可先查看内容，再决定是否恢复。</p>
+          <button type="button" class="text-button" :disabled="ui.busy" @click="changeMode('previous')">
+            查看本地备用副本<Icon name="right" :size="16" />
           </button>
-          <button
-            v-if="exists"
-            type="button"
-            class="welcome-option"
-            :disabled="ui.busy"
-            @click="changeMode('previous')"
-          >
-            <Icon name="repeat" /><span>账本打不开？<small>尝试恢复上一次保存的内容</small></span
-            ><Icon name="right" :size="16" />
-          </button>
-        </details>
+        </div>
         <details v-if="resetting" class="welcome-help welcome-help-after">
           <summary>没保存恢复密钥怎么办？</summary>
           <p>如果还有加密备份，并记得导出时的密码，可以找回备份中的账目。</p>

@@ -7,6 +7,7 @@ async function initialize(page: Page) {
   await page.goto('./#/settings');
   await page.getByLabel('账本名称').fill('虚构备份体验账本');
   await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByLabel('再次输入密码', { exact: true }).fill(password);
   await page.getByRole('button', { name: '创建账本', exact: true }).click();
   const recovery = (await page.locator('.recovery-key').textContent())!.trim();
   await page.getByLabel('我已独立保存恢复密钥').check();
@@ -31,7 +32,6 @@ async function stored(page: Page) {
   );
 }
 async function openBackup(page: Page) {
-  await page.getByText('备份与账本修复', { exact: true }).click();
   await page.getByRole('button', { name: '从备份找回账本', exact: false }).click();
 }
 

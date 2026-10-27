@@ -1,8 +1,11 @@
+import { ref } from 'vue';
 type Layer = { element: HTMLElement; close: () => void };
+export const modalCount = ref(0);
 const layers: Layer[] = [];
 let previousOverflow = '';
 let inertElements: [HTMLElement, boolean][] = [];
 function refresh() {
+  modalCount.value = layers.length;
   for (const [element, inert] of inertElements) element.inert = inert;
   inertElements = [];
   let active = layers.at(-1)?.element.parentElement;

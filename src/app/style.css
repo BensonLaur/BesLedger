@@ -1543,6 +1543,10 @@ svg {
   min-height: 48px;
   margin-top: 2px;
 }
+.welcome-backup-link {
+  justify-content: center;
+  margin-top: 10px;
+}
 .welcome-back {
   margin: -8px 0 12px;
   min-height: 44px;

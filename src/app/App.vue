@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import brandIcon from '../assets/brand.svg?no-inline';
 import { useRoute } from 'vue-router';
-import { closeTopModal } from './modal-stack';
+import { closeTopModal, modalCount } from './modal-stack';
 import { useRegisterSW } from 'virtual:pwa-register/vue';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
 import { auth, catchUp, currentLedger, lock, newEntry, state, ui, run } from './store';
 import Icon from './components/Icon.vue';
 import Unlock from './components/Unlock.vue';
+import UpdateNotice from './components/UpdateNotice.vue';
 import EntryEditor from './components/EntryEditor.vue';
 import EntryDetail from './components/EntryDetail.vue';
 import AccountForm from './components/AccountForm.vue';
@@ -25,14 +26,53 @@ const navigation = [
   { path: '/statistics', name: '统计', icon: 'statistics' },
   { path: '/settings', name: '我的', icon: 'user' },
 ];
-const { needRefresh, updateServiceWorker } = useRegisterSW({ immediate: true });
-async function applyUpdate() {
-  if (ui.editor) return;
-  const registration = await navigator.serviceWorker?.getRegistration();
-  await updateServiceWorker(true);
-  // 首次打开的页面可能尚未受控，新 Worker 已激活时不会再触发 controlling 刷新。
-  if (!navigator.serviceWorker?.controller && !registration?.waiting) window.location.reload();
+let swRegistration: ServiceWorkerRegistration | undefined;
+const updateBusy = ref(false),
+  updateError = ref('');
+const updateBlocked = computed(() =>
+  Boolean(
+    ui.busy ||
+    ui.editor ||
+    ui.accountForm ||
+    ui.ruleForm ||
+    modalCount.value ||
+    unlockPage.value?.hasPendingInput(),
+  ),
+);
+function checkUpdate() {
+  if (!document.hidden && navigator.onLine) void swRegistration?.update().catch(() => undefined);
 }
+const { needRefresh, updateServiceWorker } = useRegisterSW({
+  immediate: true,
+  onRegisteredSW(_url, registration) {
+    swRegistration = registration;
+    checkUpdate();
+  },
+});
+async function applyUpdate() {
+  if (updateBlocked.value || updateBusy.value) return;
+  updateBusy.value = true;
+  ui.busy = true;
+  updateError.value = '';
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    await updateServiceWorker(true);
+    // 首次打开的页面可能尚未受控，新 Worker 已激活时不会再触发 controlling 刷新。
+    if (!navigator.serviceWorker?.controller && !registration?.waiting) window.location.reload();
+  } catch {
+    updateError.value = '暂时没有更新成功，请稍后重试。已保存的账目未改动。';
+    updateBusy.value = false;
+    ui.busy = false;
+  }
+}
+function onVisibility() {
+  checkUpdate();
+  if (!document.hidden && state.value) void run(catchUp);
+}
+onUnmounted(() => {
+  window.removeEventListener('focus', checkUpdate);
+  document.removeEventListener('visibilitychange', onVisibility);
+});
 onMounted(() => {
   window.addEventListener('online', () => {
     offline.value = false;
@@ -40,9 +80,8 @@ onMounted(() => {
   window.addEventListener('offline', () => {
     offline.value = true;
   });
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && state.value) void run(catchUp);
-  });
+  window.addEventListener('focus', checkUpdate);
+  document.addEventListener('visibilitychange', onVisibility);
   if (Capacitor.isNativePlatform()) {
     void NativeApp.addListener('backButton', () => {
       if (closeTopModal() || unlockPage.value?.back()) return;
@@ -53,7 +92,17 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Unlock v-if="!state" ref="unlockPage" />
+  <Unlock v-if="!state" ref="unlockPage">
+    <template #update
+      ><UpdateNotice
+        v-if="needRefresh"
+        class="welcome-update"
+        :blocked="updateBlocked"
+        :busy="updateBusy"
+        :error="updateError"
+        @apply="applyUpdate"
+    /></template>
+  </Unlock>
   <div v-else class="app-shell" :class="{ 'is-home': route.path === '/' }">
     <aside class="sidebar">
       <RouterLink class="brand" to="/"
@@ -84,11 +133,14 @@ onMounted(() => {
           ><button class="primary desktop-add" @click="newEntry()"><Icon name="plus" />记一笔</button>
         </div>
       </header>
-      <div v-if="needRefresh" class="banner">
-        新版本已准备好，请先保存当前草稿。<button :disabled="ui.editor" @click="applyUpdate">
-          重新加载更新
-        </button>
-      </div>
+      <UpdateNotice
+        v-if="needRefresh"
+        class="app-update"
+        :blocked="updateBlocked"
+        :busy="updateBusy"
+        :error="updateError"
+        @apply="applyUpdate"
+      />
       <div v-if="ui.error" class="banner error" role="alert">
         <span>{{ ui.error }}</span
         ><button aria-label="关闭错误提示" @click="ui.error = ''"><Icon name="close" /></button>

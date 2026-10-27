@@ -6,6 +6,7 @@ async function initialize(page: Page) {
   await page.goto('./');
   await page.getByLabel('账本名称').fill('虚构密码恢复账本');
   await page.getByLabel('解锁密码', { exact: true }).fill(oldPassword);
+  await page.getByLabel('再次输入密码', { exact: true }).fill(oldPassword);
   await page.getByRole('button', { name: '创建账本' }).click();
   const recovery = (await page.locator('.recovery-key').textContent())!.trim();
   await page.getByLabel('我已独立保存恢复密钥').check();

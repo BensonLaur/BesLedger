@@ -8,6 +8,7 @@ async function initialize(page: Page) {
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', url!);
   await page.getByLabel('账本名称').fill('虚构支持入口测试');
   await page.getByLabel('解锁密码', { exact: true }).fill('fictional-support-preview');
+  await page.getByLabel('再次输入密码', { exact: true }).fill('fictional-support-preview');
   await page.getByRole('button', { name: '创建账本' }).click();
   await page.getByLabel('我已独立保存恢复密钥').check();
   await page.getByRole('button', { name: '进入账本' }).click();

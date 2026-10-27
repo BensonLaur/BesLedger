@@ -116,12 +116,16 @@ describe('设备保存的同步密钥', () => {
     expect(reopened.state!.entities['new-book']).toBeDefined();
   });
   it('备份与上一版本只恢复账目，不恢复已经忘记的设备密钥', async () => {
-    const { vault } = await setup();
+    const { disk, vault } = await setup();
     await remember(vault);
     const backup = await vault.exportBackup();
     await vault.forgetSyncKey('book', binding);
-    await vault.recoverPrevious(password);
-    expect(await vault.hasSyncKey('book', binding)).toBe(false);
+    const damaged = new Vault({
+      read: async () => ({ ...(await disk.read())!, payload: 'damaged-fictional-vault' }),
+      compareSwap: (revision, payload, options) => disk.compareSwap(revision, payload, options),
+    });
+    await damaged.recoverPrevious(password);
+    expect(await damaged.hasSyncKey('book', binding)).toBe(false);
     const restored = new Vault(new WebBackend(crypto.randomUUID()));
     await restored.restore(backup, password, password);
     expect(restored.state!.entities.book).toBeDefined();
