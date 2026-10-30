@@ -200,7 +200,7 @@ describe('用途同义词只推荐候选，支付渠道、收入与退款保持�
     ['高速费30元', 'expense.transport.012'],
     ['洗车30元', 'expense.transport.011'],
     ['早饭8元', 'expense.food.001'],
-    ['豆浆3块', 'expense.food.001'],
+    ['早餐豆浆3块', 'expense.food.001'],
     ['午饭25元', 'expense.food.002'],
     ['晚餐餐厅50元', 'expense.food.003'],
     ['宵夜30块', 'expense.food.004'],
@@ -235,7 +235,12 @@ describe('用途同义词只推荐候选，支付渠道、收入与退款保持�
   });
   it('弱用途和两种用途并存不静默选一类，商户显式规则优先', () => {
     expect(parse('超市20元').categoryIds).toHaveLength(2);
-    expect(parse('餐厅50元').categoryIds).toEqual(['expense.food.002', 'expense.food.003']);
+    expect(parse('餐厅50元').categoryIds).toEqual([
+      'expense.food.001',
+      'expense.food.002',
+      'expense.food.003',
+      'expense.food.004',
+    ]);
     expect(parse('早餐10元，地铁6元').categoryIds).toHaveLength(2);
     expect(parse('消费财付通20元').categoryIds).toEqual([]);
     expect(parse('支付宝20元').categoryIds).toEqual([]);

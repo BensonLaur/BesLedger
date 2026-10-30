@@ -993,12 +993,12 @@
     }
   });
   function previewNoteRecognition(){
-    // 原型仅演示两个虚构样例；正式应用使用 src/recognition 的完整规则和金额测试集。
+    // 原型仅演示固定虚构样例；正式应用使用 src/recognition 的完整规则和金额测试集。
     const text=state.note.normalize('NFKC').trim();
-    const parking=/^(停车费|泊车)\s*10\s*(元|块钱?)$/.test(text),bank=text.includes('【示例银行】')&&text.includes('4321');
-    state.previewNoteResult=parking?{note:state.note,amount:'10.00',entryType:'支出',category:'停车费'}:bank?{note:state.note,amount:'32.00',entryType:'支出',category:'午餐',account:'常用储蓄卡',date:'2026-10-21T12:08'}:null;
+    const parking=/^(停车费|泊车)\s*10\s*(元|块钱?)$/.test(text),meal=/^0?8:20\s*(包點|包点)12元$/.test(text),bank=text.includes('【示例银行】')&&text.includes('4321');
+    state.previewNoteResult=parking?{note:state.note,amount:'10.00',entryType:'支出',category:'停车费'}:meal?{note:state.note,amount:'12.00',entryType:'支出',category:'早餐'}:bank?{note:state.note,amount:'32.00',entryType:'支出',category:'午餐',account:'常用储蓄卡',date:'2026-10-21T12:08'}:null;
     const p=state.previewNoteResult;
-    showSheet('请核对识别结果（模拟）',`<p>${p?'金额 ¥ '+p.amount+' · '+p.entryType:'金额未识别，保留手动填写'}</p><p class="bl-note">${parking?'保留当前时间和已选账户':bank?'示例银行通知：日期 2026-10-21 12:08 · 常用储蓄卡':'原型可输入“停车费10块”或使用银行示例，正式应用支持更多写法。'}</p>${p?'<p>分类候选：'+p.category+'</p>':''}<p class="bl-note">原型模拟，不处理真实数据。实际金额以本地应用的核对结果为准。</p><div class="bl-actions">${button('保留手动填写','close-sheet')}${p?primary('采用并继续核对','preview-note-apply'):''}</div>`);
+    showSheet('请核对识别结果（模拟）',`<p>${p?'金额 ¥ '+p.amount+' · '+p.entryType:'金额未识别，保留手动填写'}</p><p class="bl-note">${parking?'保留当前时间和已选账户':meal?'已识别餐饮用途，按备注时间 08:20 推荐早餐，请核对。草稿日期和已选账户保留。':bank?'示例银行通知：日期 2026-10-21 12:08 · 常用储蓄卡':'原型可输入“停车费10块”“08:20 包點12元”或使用银行示例，正式应用支持更多写法。'}</p>${p?'<p>分类候选：'+p.category+'</p>':''}<p class="bl-note">原型模拟，不处理真实数据。实际金额以本地应用的核对结果为准。</p><div class="bl-actions">${button('保留手动填写','close-sheet')}${p?primary('采用并继续核对','preview-note-apply'):''}</div>`);
   }
   root.addEventListener('change',e=>{if(e.target.matches('#bl-demo-key-saved')){root.querySelector('#bl-demo-enter').disabled=!e.target.checked;return;}if(e.target.matches('[data-preview-damage]')){state.previewDamage=e.target.value;welcomePreview(state.previewWelcomeExisting);return;}if(e.target.matches('[data-preview-platform]')){state.previewLocalPlatform=e.target.value;welcomePreview(state.previewWelcomeExisting);return;}if(e.target.matches('[data-preview-state]')){state.previewConnection=e.target.value;render();syncPanel();}});
   root.addEventListener('input',e=>{

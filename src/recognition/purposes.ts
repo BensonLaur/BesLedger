@@ -1,6 +1,6 @@
 type PurposeRule = [RegExp, string[]];
 const expenseRules: PurposeRule[] = [
-  [/早餐|早饭|包点|包子|豆浆|肠粉/, ['expense.food.001']],
+  [/早餐|早饭|早飯|早膳|早点|早點/, ['expense.food.001']],
   [/午餐|午饭|午膳/, ['expense.food.002']],
   [/晚餐|晚饭|晚膳/, ['expense.food.003']],
   [/夜宵|宵夜/, ['expense.food.004']],
@@ -72,12 +72,43 @@ const incomeRules: PurposeRule[] = [
   [/公积金/, ['income.014']],
   [/赔付/, ['income.016']],
 ];
-export function purposeCandidates(text: string, type?: 'expense' | 'income' | 'refund'): string[] {
+const mealNames: Record<string, string> = {
+  'expense.food.001': '早餐',
+  'expense.food.002': '午餐',
+  'expense.food.003': '晚餐',
+  'expense.food.004': '夜宵',
+};
+const mealPattern =
+  /包点|包點|包子|豆浆|豆漿|肠粉|腸粉|餐厅|餐廳|餐饮|餐飲|餐费|餐費|吃饭|吃飯|饭店|飯店|食堂|快餐|外卖|外賣|面馆|麵館|面店|麵店|拉面|拉麵|粥店|小吃/;
+export function recognizePurpose(text: string, type?: 'expense' | 'income' | 'refund', writtenTime?: string) {
   const rules = type === 'income' ? incomeRules : type === 'refund' ? [] : expenseRules;
   const matches = rules.flatMap(([pattern, ids]) => (pattern.test(text) ? ids : []));
-  if (!matches.length && type !== 'income' && type !== 'refund') {
-    if (/餐厅|餐饮|餐费|吃饭|外卖/.test(text)) matches.push('expense.food.002', 'expense.food.003');
-    if (/超市/.test(text)) matches.push('expense.food.007', 'expense.shopping.002');
+  let basis = '';
+  if (type !== 'income' && type !== 'refund') {
+    // 明写的餐次和具体食物分类优先；只有笼统餐饮用途才参考原文时间，不读当前时钟。
+    if (!matches.some((id) => id.startsWith('expense.food.')) && mealPattern.test(text)) {
+      const hour = writtenTime ? Number(writtenTime.slice(0, 2)) : undefined;
+      const meal =
+        hour === undefined
+          ? undefined
+          : hour >= 5 && hour < 11
+            ? 'expense.food.001'
+            : hour >= 11 && hour < 15
+              ? 'expense.food.002'
+              : hour >= 17 && hour < 21
+                ? 'expense.food.003'
+                : hour >= 21 || hour < 5
+                  ? 'expense.food.004'
+                  : undefined;
+      if (meal) {
+        matches.push(meal);
+        basis = `已识别餐饮用途，按备注时间 ${writtenTime!.slice(0, 5)} 推荐${mealNames[meal]}，请核对`;
+      } else {
+        matches.push(...Object.keys(mealNames));
+        basis = '已识别餐饮用途，用餐时段不明确，请选择早餐、午餐、晚餐或夜宵';
+      }
+    }
+    if (!matches.length && /超市/.test(text)) matches.push('expense.food.007', 'expense.shopping.002');
   }
-  return [...new Set(matches)];
+  return { categoryIds: [...new Set(matches)], basis };
 }

@@ -64,6 +64,26 @@ test('手写备注金额与用途识别，确认前不覆盖，确认后保留�
   await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await expect(page.getByRole('button', { name: '虚构备注现金，余额 ¥ 992.00', exact: true })).toBeVisible();
 });
+test('餐饮用途结合备注时间推荐早餐，原文金额和日期确认后采用，保留已选资金账户', async ({ page }) => {
+  const form = await setup(page);
+  await form.getByLabel('金额', { exact: true }).fill('77.00');
+  await form
+    .getByLabel('备注', { exact: true })
+    .fill('尾号1234卡2026年10月14日08:20支出(消费财付通-示例包點店)6.80元，余额2,345.67元。【工商银行】');
+  await form.getByRole('button', { name: '识别备注', exact: true }).click();
+  const panel = form.locator('.recognition-panel');
+  await expect(panel).toContainText('金额 ¥ 6.80 · 支出');
+  await expect(panel).toContainText('按备注时间 08:20 推荐早餐');
+  await expect(panel.getByRole('button', { name: '早餐', exact: true })).toBeVisible();
+  await expect(form.getByLabel('金额', { exact: true })).toHaveValue('77.00');
+  await form.getByRole('button', { name: '采用并继续核对', exact: true }).click();
+  await expect(form.getByLabel('金额', { exact: true })).toHaveValue('6.80');
+  await expect(form.getByRole('button', { name: '当前分类：早餐', exact: true })).toBeVisible();
+  await expect(form.getByRole('button', { name: '修改发生时间', exact: true })).toContainText(
+    '2026-10-14 08:20',
+  );
+  await expect(form.getByRole('button', { name: '付款账户', exact: true })).toContainText('虚构备注现金');
+});
 test('多个金额只选实际交易，编辑备注使旧预览失效，无效金额及保留手动填写不覆盖草稿', async ({ page }) => {
   const form = await setup(page);
   await form.getByLabel('金额', { exact: true }).fill('42.00');

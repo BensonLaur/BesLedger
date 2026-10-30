@@ -1,7 +1,7 @@
 import type { Account, Entity } from '../domain/model';
 import { today, validTime } from '../domain/time';
 import { recognizeAmounts, type AmountCandidate } from './amounts';
-import { purposeCandidates } from './purposes';
+import { recognizePurpose } from './purposes';
 export type Recognition = {
   type?: 'expense' | 'income' | 'refund';
   amount?: number;
@@ -54,7 +54,7 @@ export function recognize(
           : /工资|薪水|代发薪|奖金|年终奖|报销到账|收到补贴/.test(raw)
             ? 'income'
             : undefined;
-  const purposes = purposeCandidates(raw, result.type);
+  const purposes = recognizePurpose(raw, result.type).categoryIds;
   if (!result.type && purposes.length && !transferOrLoan && !unfinished) result.type = 'expense';
   const amounts = recognizeAmounts(
     raw,
@@ -97,12 +97,24 @@ export function recognize(
     if (!date[1]) result.warnings.push('年份为推断候选，请确认补账年份');
     if (result.at && result.at.slice(0, 10) > today(now)) result.warnings.push('备注时间晚于今天，请确认');
   } else result.warnings.push('缺少明确交易时间，保留草稿时间');
+  // 只用原文唯一且有效的时间；多时刻、无效日期和当前补账时刻都不能用于推断餐次。
+  const times = [...raw.matchAll(/(?<![\d:])(\d{1,2}):(\d{2})(?::(\d{2}))?(?![\d:])/g)];
+  const time = times.length === 1 ? times[0] : undefined;
+  const writtenTime =
+    time &&
+    Number(time[1]) < 24 &&
+    Number(time[2]) < 60 &&
+    Number(time[3] || '0') < 60 &&
+    (!date || result.at)
+      ? `${time[1].padStart(2, '0')}:${time[2]}`
+      : undefined;
   for (const [merchant, category] of Object.entries(merchantRules))
     if (raw.includes(merchant)) result.categoryIds.push(category);
   if (!result.categoryIds.length) {
     // 同义词给候选，弱用途保留多个选项；支付渠道不能代表消费用途。
-    result.categoryIds = purposes;
-    if (result.categoryIds.length) result.warnings.push('分类按用途关键词推荐，请核对');
+    const purpose = recognizePurpose(raw, result.type, writtenTime);
+    result.categoryIds = purpose.categoryIds;
+    if (result.categoryIds.length) result.warnings.push(purpose.basis || '分类按用途关键词推荐，请核对');
   }
   result.categoryIds = [...new Set(result.categoryIds)];
   if (foreignCurrency) result.warnings.push('当前仅支持人民币，备注包含其他币种，不会自动填入金额');
