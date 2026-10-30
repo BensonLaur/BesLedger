@@ -5,7 +5,7 @@ export default defineConfig({
   ...base,
   outputDir: './test-results/auth',
   testIgnore: [],
-  testMatch: ['**/auth.spec.ts', '**/sync-keys.spec.ts'],
+  testMatch: ['**/auth.spec.ts', '**/sync-keys.spec.ts', '**/sync-experience.spec.ts'],
   use: { ...base.use, baseURL: 'http://127.0.0.1:4174/BesLedger/' },
   webServer: {
     command: 'npm run dev -- --port 4174 --strictPort',

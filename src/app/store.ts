@@ -7,7 +7,6 @@ import { generateDue } from '../domain/recurring';
 import { GitHubSession, type Login } from '../providers/github/session';
 import { refreshAuthorization } from '../providers/github/auth';
 import { credentialBackend } from '../storage/credentials';
-import type { Conflict } from '../sync/merge';
 
 export const vault = new Vault(backend());
 export const state = shallowRef<State>();
@@ -68,7 +67,6 @@ export async function restoreLogin(): Promise<void> {
     ui.error = error instanceof Error ? error.message : '无法恢复登录状态，请重试';
   }
 }
-export const conflicts = shallowRef<Conflict[]>([]);
 export const currentLedgerId = computed(() => state.value?.preferences.currentLedger ?? '');
 export const ledgers = computed(() => (state.value ? list(state.value, 'ledger') : []));
 export const currentLedger = computed(() => ledgers.value.find((l) => l.id === currentLedgerId.value));
@@ -106,7 +104,7 @@ export async function run(operation: () => Promise<void>): Promise<boolean> {
 }
 export function newEntry(type: Entry['type'] = 'expense', overrides: Partial<Entry> = {}): void {
   if (!currentLedgerId.value) {
-    ui.error = '请先创建账本';
+    ui.error = '请先选择、取回或新建一本账';
     return;
   }
   ui.editingId = '';
@@ -152,7 +150,6 @@ export function lock(): void {
   ui.detailId = '';
   ui.smsQueue = [];
   ui.smsPicker = false;
-  conflicts.value = [];
 }
 export function requestPasswordRecovery(): void {
   ui.error = '';

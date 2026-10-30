@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './test-results/app',
-  testIgnore: ['**/auth.spec.ts', '**/sync-keys.spec.ts'],
+  testIgnore: ['**/auth.spec.ts', '**/sync-keys.spec.ts', '**/sync-experience.spec.ts'],
   timeout: 45000,
   fullyParallel: false,
   use: {

@@ -69,15 +69,13 @@ async function unlock() {
 }
 async function books() {
   if (new URL(page.url()).hash !== '#/books') await page.goto('https://localhost/#/books');
-  await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
-  await expect(page.getByText('已准备：fictional-user/BesLedger-Data', { exact: true })).toBeVisible({
+  await expect(page.locator('.connection-summary')).toContainText('已登录');
+  await expect(page.getByText('连接已就绪，选择要同步的账本。', { exact: true })).toBeVisible({
     timeout: 30000,
   });
 }
 async function sync() {
   await books();
-  const input = page.getByLabel('原设备的同步恢复密钥（跨端下载时填写）');
-  await expect(input).toHaveValue('');
   const button = page.getByRole('button', { name: '同步', exact: true });
   await expect(button).toBeEnabled();
   if (await page.getByRole('button', { name: '关闭提示', exact: true }).isVisible())
@@ -119,9 +117,10 @@ try {
   await page.reload();
   await unlock();
   await books();
-  await page.getByLabel('原设备的同步恢复密钥（跨端下载时填写）').fill(recovery);
-  await page.getByRole('button', { name: '解密并下载', exact: true }).click();
-  await expect(page.getByText('同步密钥已在此设备加密保存', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '预览并下载', exact: true }).click();
+  await page.getByLabel('原设备的恢复密钥', { exact: true }).fill(recovery);
+  await page.getByRole('button', { name: '验证并预览', exact: true }).click();
+  await page.getByRole('button', { name: '确认添加账本', exact: true }).click();
   await page.goto('https://localhost/#/settings');
   await sync();
   const stored = (await native('read')).value;
@@ -145,10 +144,11 @@ try {
   await connect();
   await unlock();
   await sync();
+  await page.getByRole('button', { name: '虚构 Android 云端密钥验收的更多操作', exact: true }).click();
   await page.getByRole('button', { name: '同步密钥', exact: true }).click();
-  await page.getByRole('button', { name: '忘记此设备密钥', exact: true }).click();
-  await expect(page.getByText('同步密钥已在此设备加密保存', { exact: true })).toHaveCount(0);
-  await expect(page.locator('.book-name').filter({ hasText: '虚构 Android 云端密钥验收' })).toBeVisible();
+  await page.getByRole('button', { name: '忘记这里保存的密钥', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '虚构 Android 云端密钥验收', exact: true })).toBeVisible();
+  await page.locator('.connection-summary').click();
   await page.getByRole('button', { name: '退出 GitHub', exact: true }).click();
   console.log(
     'PASS: native API 36 WebView/SQLite: verified cloud key encrypted, route return, lock/unlock and process restart sync without re-entry; forget preserves ledger. GitHub API/session simulated.',

@@ -16,6 +16,25 @@ import { getLocalSpace } from '../local-space';
 const localSpace = getLocalSpace();
 const props = defineProps<{ compact?: boolean }>();
 const expanded = ref(!props.compact);
+const setupStep = ref<'intro' | 'authorize' | 'login'>('intro');
+const codeCopied = ref(false);
+async function authorizeInstallation() {
+  try {
+    await openAuthorization(installationUrl);
+    setupStep.value = 'login';
+  } catch {
+    ui.error = '暂时无法打开 GitHub，请稍后重试。账目未改动。';
+  }
+}
+async function copyCode() {
+  if (!code.value) return;
+  try {
+    await navigator.clipboard.writeText(code.value.user_code);
+    codeCopied.value = true;
+  } catch {
+    ui.error = '未能自动复制，请选中上方一次性码手动复制。';
+  }
+}
 const summary = computed(() => {
   if (!auth.value)
     return (
@@ -38,6 +57,7 @@ function cancel() {
   generation++;
   clearTimeout(timer);
   waiting.value = false;
+  codeCopied.value = false;
   code.value = undefined;
 }
 onUnmounted(cancel);
@@ -123,42 +143,72 @@ async function logout() {
           暂时无法连接同步存储。账目和原绑定已保留，请进入账本管理重试或检查安装范围。
         </p>
         <p class="hint">登录不会上传账本。修改后请点击账本的“同步”，另一设备也需同步获取更新。</p>
-        <div class="actions">
-          <RouterLink class="primary" to="/books">管理云端账本</RouterLink
-          ><button class="secondary" :disabled="ui.busy" @click="logout">退出 GitHub</button>
-        </div>
-        <a class="text-button" :href="installationUrl" target="_blank" rel="noopener noreferrer"
-          >管理 GitHub App 安装</a
-        >
-        <p class="hint">
-          退出仅清除{{ localSpace.place }}的 GitHub 登录，不删除账目，也不忘记已保存的同步密钥。
-        </p></template
+        <RouterLink class="primary" to="/books" @click="expanded = false">选择要同步的账本</RouterLink>
+        <button class="text-button" :disabled="ui.busy" @click="logout">退出 GitHub</button>
+        <details class="section">
+          <summary>登录与授权管理</summary>
+          <a class="text-button" :href="installationUrl" target="_blank" rel="noopener noreferrer"
+            >管理 GitHub 授权</a
+          >
+          <p class="hint">
+            退出仅清除{{ localSpace.place }}的 GitHub 登录，不删除账目，也不忘记已保存的同步密钥。
+          </p>
+        </details></template
       ><template v-else
-        ><p>使用 GitHub 作为可选的私有存储。账目先在客户端加密，登录不会上传任何账本。</p>
+        ><p>在其他设备继续记账时，登录同一个 GitHub 账号，再选择要同步的账本。登录不会上传或替换账目。</p>
         <p v-if="ui.loginProblem" class="warning-panel">{{ ui.loginProblem }}</p>
         <p class="hint">登录会在{{ localSpace.place }}加密保存，日常打开账本后即可继续使用。</p>
-        <p v-if="authConfigured" class="hint">
-          首次在 GitHub 启用 BesLedger Sync，默认选择 All repositories，再返回登录。无需另装手机软件、注册
-          App、建库或部署服务。
+        <p v-if="authConfigured && !waiting" class="hint">
+          授权范围包含你账号内其他仓库（包括私有及以后新建的仓库）的内容读写权限。应用只使用确认过的账本存储，这个限制由应用代码执行。
         </p>
-        <button v-if="authConfigured" class="secondary" @click="openAuthorization(installationUrl)">
-          ① 在 GitHub 安装同步应用
-        </button>
-        <p v-if="authConfigured" class="hint">
-          授权范围包含你账号内其他仓库（包括私有仓库）的内容读写权限。应用仅用确认过的账本存储，但这个限制由应用代码执行。
-        </p>
+        <template v-if="authConfigured && !waiting">
+          <template v-if="setupStep === 'intro'">
+            <button class="primary full" :disabled="ui.busy || !online" @click="setupStep = 'authorize'">
+              首次开启同步
+            </button>
+            <p class="hint">已在 GitHub 启用过 BesLedger Sync？可以直接登录。</p>
+          </template>
+          <template v-else>
+            <p>
+              <strong>{{
+                setupStep === 'authorize' ? '第 1 步：在 GitHub 开启同步权限' : '第 2 步：返回这里完成登录'
+              }}</strong>
+            </p>
+            <p class="hint">这是在 GitHub 账号中启用 BesLedger Sync，无需另装手机软件，也无需自己建仓库。</p>
+            <p class="warning-panel">
+              默认选择 All
+              repositories，授权包含你账号内其他仓库（包括私有及以后新建的仓库）的内容读写权限。应用只用确认过的账本存储，这个限制由应用代码执行。
+            </p>
+            <button class="secondary full" :disabled="ui.busy || !online" @click="authorizeInstallation">
+              {{ setupStep === 'authorize' ? '前往 GitHub 开启权限' : '重新打开 GitHub 授权页面' }}
+            </button>
+            <p v-if="setupStep === 'login'" class="hint">
+              在 GitHub 完成授权后，点击下方“使用 GitHub 登录”。仅打开授权页面不代表已完成。
+            </p>
+          </template>
+        </template>
         <p v-if="!authConfigured" class="warning-panel">
           授权服务尚未完成生产配置，真实登录当前未就绪。本地记账不受影响。
         </p>
-        <button v-if="!waiting" class="primary" :disabled="ui.busy || !authConfigured" @click="connect">
+        <button
+          v-if="!waiting"
+          :class="setupStep === 'intro' ? 'secondary full' : 'primary full'"
+          :disabled="ui.busy || !authConfigured || !online"
+          @click="connect"
+        >
           <Icon name="cloud" />使用 GitHub 登录
         </button>
         <div v-else class="device-code">
           <small>等待你在 GitHub 完成授权 · 输入以下一次性码</small><strong>{{ code?.user_code }}</strong
+          ><button class="secondary" @click="copyCode">
+            {{ codeCopied ? '已复制一次性码' : '复制一次性码' }}</button
           ><button class="primary" @click="openAuthorization(code!.verification_uri)">
             打开 GitHub 授权
           </button>
-          <p class="hint">核对应用名称为 BesLedger Sync。完成后自动连接并准备私有存储。</p>
+          <p class="hint">
+            切到 GitHub 页面，输入上面的一次性码，核对应用名称为 BesLedger
+            Sync。完成后返回这里，应用会检查云端账本。
+          </p>
           <button class="text-button" @click="cancel">取消授权</button>
         </div>
         <button v-if="ui.loginRecovery" class="secondary" :disabled="ui.busy" @click="logout">

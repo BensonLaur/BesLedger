@@ -15,6 +15,7 @@ export type SyncResult = {
   conflicts: Conflict[];
   binding: Binding;
   localDigest: string;
+  remoteEntities?: Record<string, Entity>;
 };
 export async function syncLedger(
   state: State,
@@ -41,7 +42,12 @@ export async function syncLedger(
     const merged = mergeEntities(local, remote);
     const localDigest = await digest(local);
     if (merged.conflicts.length)
-      return { ...merged, binding: { ...binding, remoteExists: !!file, remoteHash: file?.sha }, localDigest };
+      return {
+        ...merged,
+        binding: { ...binding, remoteExists: !!file, remoteHash: file?.sha },
+        localDigest,
+        remoteEntities: remote,
+      };
     // 独立退款合并可能超出原单，先校验业务约束，再允许发布完整密文。
     validateProjection(merged.entities, ledgerId);
     const mergedDigest = await digest(merged.entities);
@@ -74,6 +80,7 @@ export async function syncLedger(
         remoteHash: sha,
         syncedDigest: mergedDigest,
         lastChecked: new Date().toISOString(),
+        lastSynced: new Date().toISOString(),
       },
       localDigest,
     };
@@ -86,11 +93,19 @@ export async function downloadLedger(
   key: CryptoKey,
   github: GitHub,
 ): Promise<Record<string, Entity>> {
+  return (await previewDownloadLedger(ledgerId, binding, key, github)).entities;
+}
+export async function previewDownloadLedger(
+  ledgerId: string,
+  binding: Binding,
+  key: CryptoKey,
+  github: GitHub,
+): Promise<{ entities: Record<string, Entity>; remoteHash: string }> {
   if ((await github.user()).id !== binding.userId) throw new Error('GitHub 账号不匹配');
   const file = await github.readLedger(binding.owner, binding.repo, ledgerId, binding.userId);
   if (!file) throw new Error('远端账本不可访问');
   const payload = payloadSchema.parse(await decrypt(JSON.parse(file.text), key, `ledger:${ledgerId}`));
   if (payload.ledgerId !== ledgerId) throw new Error('账本身份不匹配');
   validateProjection(payload.entities, ledgerId);
-  return payload.entities;
+  return { entities: payload.entities, remoteHash: file.sha };
 }

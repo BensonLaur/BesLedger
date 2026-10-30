@@ -112,10 +112,9 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   await connection(page);
   await page.getByRole('button', { name: '使用 GitHub 登录' }).click();
   await expect(page.getByText('DEMO-CODE', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible({
-    timeout: 15000,
-  });
-  await expect(page.getByText('云端私有存储已准备好，选择要同步的账本即可')).toBeVisible();
+  await expect(page.locator('.connection-summary')).toContainText('已登录', { timeout: 15000 });
+  await connection(page);
+  await expect(page.getByText('连接成功，选择要同步的账本。登录没有上传任何账目。')).toBeVisible();
   await context.setOffline(true);
   if (new URL(page.url()).hash !== '#/settings') await page.goto('./#/settings');
   await expect(page.locator('.connection-summary')).toContainText('已保存登录 · 暂时离线');
@@ -155,9 +154,9 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   if (new URL(reopened.url()).hash !== '#/settings') await reopened.goto('./#/settings');
   await unlock(reopened, password);
   expect(grants).toBe(1);
-  await reopened.getByRole('link', { name: '管理云端账本' }).click();
+  await reopened.getByRole('link', { name: '选择要同步的账本' }).click();
   rejectApi = true;
-  await reopened.getByRole('button', { name: '重新检查云端存储' }).click();
+  await reopened.getByRole('button', { name: '检查云端账本' }).click();
   await expect.poll(() => renewals).toBe(1);
   if (new URL(reopened.url()).hash !== '#/settings') await reopened.goto('./#/settings');
   await connection(reopened);
@@ -174,16 +173,15 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   expect(grants).toBe(1);
   rejectApi = false;
   await other.getByRole('button', { name: '使用 GitHub 登录' }).click();
-  await expect(other.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible({
-    timeout: 15000,
-  });
-  await expect(other.getByText('云端私有存储已准备好，选择要同步的账本即可')).toBeVisible();
+  await expect(other.locator('.connection-summary')).toContainText('已登录', { timeout: 15000 });
+  await connection(other);
+  await expect(other.getByText('连接成功，选择要同步的账本。登录没有上传任何账目。')).toBeVisible();
   if (new URL(other.url()).hash !== '#/settings') await other.goto('./#/settings');
   await connection(other);
   rejectApi = true;
   revoke = true;
   // 进入账本页会自动检查存储，失效授权无需额外点击就应被识别。
-  await other.getByRole('link', { name: '管理云端账本' }).click();
+  await other.getByRole('link', { name: '选择要同步的账本' }).click();
   await expect(other.getByRole('button', { name: '使用 GitHub 登录' })).toBeVisible();
   await expect(other.getByRole('status')).toContainText('GitHub 授权已失效，请重新登录；本地账目不受影响');
   expect(grants).toBe(2);

@@ -8,6 +8,8 @@ import { catchUp, refresh, restoreLogin, run, ui, vault } from '../store';
 import { list, put } from '../../domain/model';
 import { LocalDataUnreadable } from '../../storage/vault';
 import Icon from './Icon.vue';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const exists = ref(false),
   loaded = ref(false),
   password = ref(''),
@@ -25,7 +27,7 @@ const exists = ref(false),
   replaceConfirmed = ref(false),
   repairPreview = ref<{ summary: string; revision: number }>(),
   repairConfirmed = ref(false),
-  mode = ref<'default' | 'backup' | 'reset' | 'previous'>('default');
+  mode = ref<'default' | 'backup' | 'reset' | 'previous' | 'cloud'>('default');
 const passwordInput = ref<HTMLInputElement>();
 const credentialInput = ref<HTMLInputElement>();
 const confirmationInput = ref<HTMLInputElement>();
@@ -181,10 +183,11 @@ async function enter() {
     } else {
       if (password.value !== confirmation.value) throw new Error('两次密码不一致，请重新确认');
       recovery.value = await vault.create(password.value);
-      await vault.mutate((s) => {
-        const book = put(s, { kind: 'ledger', name: bookName.value });
-        s.preferences.currentLedger = book.id;
-      });
+      if (mode.value !== 'cloud')
+        await vault.mutate((s) => {
+          const book = put(s, { kind: 'ledger', name: bookName.value });
+          s.preferences.currentLedger = book.id;
+        });
       password.value = confirmation.value = '';
       exists.value = true;
       return;
@@ -216,6 +219,7 @@ async function finish() {
     password.value = '';
     await restoreLogin();
     refresh();
+    if (mode.value === 'cloud') await router.replace('/books');
   }
 }
 async function choose(event: Event) {
@@ -240,10 +244,15 @@ async function choose(event: Event) {
       <template v-if="recovery">
         <Icon name="shield" :size="30" />
         <h1 id="welcome-title">保存恢复密钥</h1>
+        <p v-if="mode === 'cloud'" class="welcome-hint">
+          这是{{ localSpace.place }}的新恢复密钥，用于重设这里的密码。取回原账本时，仍需原设备保存的恢复密钥。
+        </p>
         <p>忘记解锁密码时，用它找回账本。请存入密码管理器，或抄写后妥善保管，不要只留在应用里。</p>
         <RecoveryKey :value="recovery" />
         <label class="checkbox"><input v-model="confirmed" type="checkbox" />我已独立保存恢复密钥</label>
-        <button class="primary full" :disabled="!confirmed" @click="finish">进入账本</button>
+        <button class="primary full" :disabled="!confirmed" @click="finish">
+          {{ mode === 'cloud' ? '继续取回账本' : '进入账本' }}
+        </button>
       </template>
       <form v-else :aria-busy="ui.busy" @submit.prevent="enter" @keydown.esc="back">
         <button
@@ -263,9 +272,11 @@ async function choose(event: Event) {
                 ? '从备份恢复账本'
                 : repairing
                   ? '从本地备用副本恢复'
-                  : exists
-                    ? '欢迎回来'
-                    : '开始记账'
+                  : mode === 'cloud'
+                    ? '从其他设备取回账本'
+                    : exists
+                      ? '欢迎回来'
+                      : '开始记账'
           }}
         </h1>
         <p v-if="resetting">输入创建账本时保存的恢复密钥，设置新密码。当前全部本地账本和账目都会保留。</p>
@@ -278,6 +289,9 @@ async function choose(event: Event) {
         </p>
         <p v-else-if="repairing">
           这份副本保存的是最近一次本地保存之前的内容。恢复会替换当前全部本地账本，近期修改可能不在其中。
+        </p>
+        <p v-else-if="mode === 'cloud'">
+          先设置{{ localSpace.place }}的解锁密码，再登录同一个 GitHub 账号取回账本。不会额外新建一本空账。
         </p>
         <p v-else-if="exists">{{ localSpace.existing }}。<br />输入你设置的解锁密码，继续记账。</p>
         <p v-else>给账本起个名字，再设置解锁密码。以后用这个密码打开账本。</p>
@@ -411,11 +425,13 @@ async function choose(event: Event) {
           </p>
         </div>
         <div
-          v-if="(!exists && mode === 'default') || resetting || (restoring && backupPreview)"
+          v-if="
+            (!exists && (mode === 'default' || mode === 'cloud')) || resetting || (restoring && backupPreview)
+          "
           class="welcome-field"
         >
           <label for="welcome-confirmation">{{
-            !exists && mode === 'default' ? '再次输入密码' : '再次输入新密码'
+            !exists && (mode === 'default' || mode === 'cloud') ? '再次输入密码' : '再次输入新密码'
           }}</label>
           <div class="welcome-password">
             <input
@@ -470,10 +486,21 @@ async function choose(event: Event) {
                     : '校验备份'
                   : repairing
                     ? '确认使用备用副本'
-                    : exists
-                      ? '打开账本'
-                      : '创建账本'
+                    : mode === 'cloud'
+                      ? '设置密码并继续'
+                      : exists
+                        ? '打开账本'
+                        : '创建账本'
           }}
+        </button>
+        <button
+          v-if="!exists && mode === 'default'"
+          type="button"
+          class="text-button full welcome-backup-link"
+          :disabled="ui.busy"
+          @click="changeMode('cloud')"
+        >
+          <Icon name="cloud" :size="16" />从其他设备取回账本
         </button>
         <button
           v-if="mode === 'default'"

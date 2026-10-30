@@ -104,15 +104,34 @@ export const bindingSchema = z.object({
   userId: z.number().int(),
   remoteHash: z.string().optional(),
   lastChecked: z.string().optional(),
+  lastSynced: z.string().optional(),
   syncedDigest: z.string().optional(),
   remoteExists: z.boolean().default(false),
 });
 export type Binding = z.infer<typeof bindingSchema>;
+export const syncReviewSchema = z.object({
+  remote: z.record(id, entitySchema),
+  conflicts: z.array(
+    z.object({
+      id,
+      local: entitySchema,
+      remote: entitySchema,
+      reason: z.string(),
+      related: z.array(entitySchema).optional(),
+    }),
+  ),
+  choices: z.record(id, z.enum(['local', 'remote'])),
+  baseDigest: z.string(),
+  remoteHash: z.string().optional(),
+});
+export type SyncReview = z.infer<typeof syncReviewSchema>;
 export const stateSchema = z.object({
   schemaVersion: z.literal(2),
   deviceId: id,
   entities: z.record(id, entitySchema),
   bindings: z.record(id, bindingSchema),
+  // 待核对的双方记录只保存在本地加密空间，不计入账目、余额或云端投影。
+  syncReviews: z.record(id, syncReviewSchema).optional(),
   preferences: z.object({ currentLedger: z.string(), quick: z.record(z.string(), z.array(z.string())) }),
 });
 export type State = z.infer<typeof stateSchema>;

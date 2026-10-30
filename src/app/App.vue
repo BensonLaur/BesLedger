@@ -129,7 +129,7 @@ onMounted(() => {
       <header class="topbar">
         <RouterLink to="/books" class="book-title"
           ><small>我的账本</small
-          ><span>{{ currentLedger?.data.name || '创建第一本账' }}<Icon name="down" :size="16" /></span
+          ><span>{{ currentLedger?.data.name || '选择或取回账本' }}<Icon name="down" :size="16" /></span
         ></RouterLink>
         <div class="top-actions">
           <span v-if="offline" class="tag">离线可用</span
