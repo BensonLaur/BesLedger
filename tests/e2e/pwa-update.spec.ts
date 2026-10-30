@@ -83,14 +83,14 @@ test('真实离线资源更新在锁定页可见，未完成填写与密钥保�
     await page.getByLabel('我已独立保存恢复密钥').check();
     await page.getByRole('button', { name: '进入账本', exact: true }).click();
     await page.goto(url + '#/settings');
-    await page.getByRole('button', { name: '校验并恢复备份', exact: false }).click();
+    await page.getByRole('button', { name: '从备份恢复账本', exact: false }).click();
     await expect(page.locator('.app-update button')).toBeDisabled();
     await page
-      .getByRole('dialog', { name: '恢复完整备份', exact: true })
+      .getByRole('dialog', { name: '从备份恢复账本', exact: true })
       .getByRole('button', { name: '关闭', exact: true })
       .click();
     await expect(update).toBeEnabled();
-    await page.getByRole('button', { name: '锁定', exact: true }).click();
+    await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
     await expect(update).toBeEnabled();
     const before = await stored(page);
     await page.getByLabel('解锁密码', { exact: true }).fill('fictional-unfinished-input');

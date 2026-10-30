@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import { Capacitor } from '@capacitor/core';
+import { getLocalSpace } from '../local-space';
+import { backupError } from '../backup-error';
+import RecoveryKey from './RecoveryKey.vue';
 import brandIcon from '../../assets/brand.svg?no-inline';
 import { catchUp, refresh, restoreLogin, run, ui, vault } from '../store';
 import { list, put } from '../../domain/model';
@@ -23,33 +25,12 @@ const exists = ref(false),
   replaceConfirmed = ref(false),
   repairPreview = ref<{ summary: string; revision: number }>(),
   repairConfirmed = ref(false),
-  copying = ref(false),
-  copyMessage = ref(''),
   mode = ref<'default' | 'backup' | 'reset' | 'previous'>('default');
 const passwordInput = ref<HTMLInputElement>();
 const credentialInput = ref<HTMLInputElement>();
 const confirmationInput = ref<HTMLInputElement>();
 const title = ref<HTMLElement>();
-const standalone =
-  matchMedia('(display-mode: standalone)').matches ||
-  (navigator as Navigator & { standalone?: boolean }).standalone;
-const localSpace = Capacitor.isNativePlatform()
-  ? {
-      place: '此设备上',
-      existing: '此设备已保存账本',
-      detail: '账目保存在这台设备的应用中。更换设备时，请使用加密备份或同步取回账本。',
-    }
-  : standalone
-    ? {
-        place: '此应用中',
-        existing: '此应用中已保存账本',
-        detail: '账目保存在此应用的本地空间中。更换设备或网址时，请使用加密备份或同步取回账本。',
-      }
-    : {
-        place: '此浏览器中',
-        existing: '此浏览器中已保存账本',
-        detail: '网页账目保存在当前浏览器和网址中。换浏览器或网址后，请使用加密备份或同步取回账本。',
-      };
+const localSpace = getLocalSpace();
 const restoring = computed(() => mode.value === 'backup');
 const resetting = computed(() => mode.value === 'reset');
 const repairing = computed(() => mode.value === 'previous');
@@ -89,19 +70,6 @@ function hasPendingInput() {
     (!exists.value && bookName.value !== '日常生活'),
   );
 }
-async function copyRecovery() {
-  if (copying.value || !recovery.value) return;
-  copying.value = true;
-  copyMessage.value = '';
-  try {
-    await navigator.clipboard.writeText(recovery.value);
-    copyMessage.value = '已复制。请粘贴到密码管理器或其他安全位置，并确认保存。';
-  } catch {
-    copyMessage.value = '未能自动复制。请长按或选中上方密钥后复制，再妥善保存。';
-  } finally {
-    copying.value = false;
-  }
-}
 function resetBackupPreview() {
   backupPreview.value = undefined;
   replaceConfirmed.value = false;
@@ -120,6 +88,8 @@ function back(): boolean {
 defineExpose({ back, hasPendingInput });
 onMounted(async () => {
   exists.value = await vault.exists();
+  if (exists.value && ui.passwordRecoveryRequested) mode.value = 'reset';
+  ui.passwordRecoveryRequested = false;
   loaded.value = true;
 });
 async function enter() {
@@ -150,15 +120,7 @@ async function enter() {
           };
           return;
         } catch (error) {
-          if (error instanceof SyntaxError || (error instanceof Error && error.name === 'ZodError'))
-            throw new Error('无法读取这份备份，请确认文件完整，或使用更新版本的 Bes记账。原有账目未改动。');
-          if (error instanceof Error && error.message === '恢复密钥必须是完整的 64 位字符')
-            throw new Error('恢复密钥不完整，请完整粘贴保存的内容。');
-          if (error instanceof Error && error.message === '密钥不匹配或数据已损坏，原数据未改动')
-            throw new Error(
-              `未能解密备份，请核对${recoveryMode.value ? '恢复密钥' : '备份原密码'}，并确认文件完整。原有账目未改动。`,
-            );
-          throw error;
+          throw backupError(error, recoveryMode.value);
         }
       }
       if (exists.value && !replaceConfirmed.value) throw new Error('请先确认是否用备份替换当前账本');
@@ -279,11 +241,7 @@ async function choose(event: Event) {
         <Icon name="shield" :size="30" />
         <h1 id="welcome-title">保存恢复密钥</h1>
         <p>忘记解锁密码时，用它找回账本。请存入密码管理器，或抄写后妥善保管，不要只留在应用里。</p>
-        <code class="recovery-key">{{ recovery }}</code>
-        <button type="button" class="secondary full" :disabled="copying" @click="copyRecovery">
-          <Icon name="copy" />{{ copying ? '正在复制…' : '复制恢复密钥' }}
-        </button>
-        <p v-if="copyMessage" class="welcome-hint" role="status">{{ copyMessage }}</p>
+        <RecoveryKey :value="recovery" />
         <label class="checkbox"><input v-model="confirmed" type="checkbox" />我已独立保存恢复密钥</label>
         <button class="primary full" :disabled="!confirmed" @click="finish">进入账本</button>
       </template>
@@ -302,7 +260,7 @@ async function choose(event: Event) {
             resetting
               ? '重设解锁密码'
               : restoring
-                ? '从备份恢复'
+                ? '从备份恢复账本'
                 : repairing
                   ? '从本地备用副本恢复'
                   : exists
@@ -395,7 +353,9 @@ async function choose(event: Event) {
               <Icon :name="showCredential ? 'eye-off' : 'eye'" />
             </button>
           </div>
-          <p v-if="restoring && !recoveryMode" class="welcome-hint">填写导出这份备份时使用的解锁密码。</p>
+          <p v-if="restoring && !recoveryMode" class="welcome-hint">
+            填写导出这份备份时使用的解锁密码，之后修改的密码不适用。
+          </p>
         </div>
         <details v-if="resetting" class="welcome-help">
           <summary>恢复密钥在哪里？</summary>
@@ -522,7 +482,7 @@ async function choose(event: Event) {
           :disabled="ui.busy"
           @click="changeMode('backup')"
         >
-          <Icon name="upload" :size="16" />从备份找回账本
+          <Icon name="upload" :size="16" />从备份恢复账本
         </button>
         <div v-if="mode === 'default' && repairPreview" class="welcome-backup-preview">
           <p>已找到可读取的备用副本，可先查看内容，再决定是否恢复。</p>
@@ -534,7 +494,7 @@ async function choose(event: Event) {
           <summary>没保存恢复密钥怎么办？</summary>
           <p>如果还有加密备份，并记得导出时的密码，可以找回备份中的账目。</p>
           <button type="button" class="text-button" :disabled="ui.busy" @click="changeMode('backup')">
-            用备份找回账本<Icon name="right" :size="16" />
+            从备份恢复账本<Icon name="right" :size="16" />
           </button>
           <p>
             密码和恢复密钥都找不到时，无法直接解开当前账目。请先保留现有数据，再查找可用备份或仍能打开账本的副本。

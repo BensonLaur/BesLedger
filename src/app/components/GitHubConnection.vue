@@ -12,18 +12,20 @@ import {
 } from '../../providers/github/auth';
 import Icon from './Icon.vue';
 import Modal from './Modal.vue';
+import { getLocalSpace } from '../local-space';
+const localSpace = getLocalSpace();
 const props = defineProps<{ compact?: boolean }>();
 const expanded = ref(!props.compact);
 const summary = computed(() => {
   if (!auth.value)
     return (
       ui.loginProblem ||
-      (ui.loginRecovery ? '无法读取已保存登录，请打开查看' : '未连接 GitHub · 本地记账可正常使用')
+      (ui.loginRecovery ? '无法读取已保存登录，请打开查看' : '通过 GitHub · 未登录，本地记账可正常使用')
     );
   if (!online.value) return '已保存登录 · 暂时离线，可继续本地记账';
   if (cloudState.phase === 'preparing') return `已登录 ${auth.value.user.login} · 正在准备私有存储`;
   if (cloudState.phase === 'error') return '已保存登录 · 暂时无法连接同步存储';
-  return `已登录 ${auth.value.user.login} · 此设备保持登录`;
+  return `GitHub · 已登录 ${auth.value.user.login} · 登录已保存`;
 });
 const router = useRouter();
 const code = ref<DeviceCode>(),
@@ -49,7 +51,7 @@ async function poll(runId: number) {
       await githubSession.accept(result.tokens, () => generation === runId);
       if (generation !== runId) return;
       cancel();
-      if (auth.value) ui.notice = `已连接 ${auth.value.user.login}，此设备将保持登录`;
+      if (auth.value) ui.notice = `已登录 ${auth.value.user.login}，登录已在${localSpace.place}加密保存`;
       await router.push('/books');
       return;
     }
@@ -76,7 +78,7 @@ async function logout() {
   cancel();
   const success = await run(async () => {
     await githubSession.logout();
-    ui.notice = '已退出 GitHub 并清除本机登录凭证，账目仍可离线使用';
+    ui.notice = `已退出 GitHub 并清除${localSpace.place}的登录凭证，账目仍可离线使用`;
   });
   ui.loginRecovery = !success;
   if (success) ui.loginProblem = '';
@@ -86,18 +88,18 @@ async function logout() {
   <section class="connection-card" :class="{ 'connection-compact': compact }">
     <button v-if="compact" class="connection-summary" :aria-expanded="expanded" @click="expanded = !expanded">
       <Icon name="cloud" /><span
-        ><strong>GitHub 连接</strong><small>{{ summary }}</small></span
+        ><strong>GitHub 登录与连接</strong><small>{{ summary }}</small></span
       ><Icon :name="expanded ? 'chevron-up' : 'right'" :size="18" />
     </button>
     <component
       :is="compact ? Modal : 'div'"
       v-if="expanded"
       class="connection-details"
-      title="GitHub 连接"
+      title="跨设备同步"
       @close="expanded = false"
     >
       <div class="section-heading">
-        <h2 v-if="!compact"><Icon name="cloud" /> GitHub 连接</h2>
+        <h2 v-if="!compact"><Icon name="cloud" /> 跨设备同步</h2>
         <span class="tag">{{
           waiting
             ? '等待授权'
@@ -107,15 +109,15 @@ async function logout() {
                 : '已保存登录 · 离线'
               : ui.loginProblem
                 ? '需要检查登录'
-                : '未连接'
+                : '未登录'
         }}</span>
       </div>
       <template v-if="auth"
         ><p>
           已登录 <strong>{{ auth.user.login }}</strong
-          >。锁定本地空间不会退出 GitHub。
+          >。锁定账本不会退出 GitHub。
         </p>
-        <p v-if="!online" class="hint">暂时离线，登录已在设备上保存。联网后再同步即可。</p>
+        <p v-if="!online" class="hint">暂时离线，登录已在{{ localSpace.place }}保存。联网后再同步即可。</p>
         <p v-else-if="cloudState.phase === 'preparing'" class="hint">正在准备私有存储，尚未上传任何账本。</p>
         <p v-else-if="cloudState.phase === 'error'" class="warning-panel">
           暂时无法连接同步存储。账目和原绑定已保留，请进入账本管理重试或检查安装范围。
@@ -128,11 +130,13 @@ async function logout() {
         <a class="text-button" :href="installationUrl" target="_blank" rel="noopener noreferrer"
           >管理 GitHub App 安装</a
         >
-        <p class="hint">退出仅清除此设备的 GitHub 登录，不删除账目，也不忘记已保存的同步密钥。</p></template
+        <p class="hint">
+          退出仅清除{{ localSpace.place }}的 GitHub 登录，不删除账目，也不忘记已保存的同步密钥。
+        </p></template
       ><template v-else
         ><p>使用 GitHub 作为可选的私有存储。账目先在客户端加密，登录不会上传任何账本。</p>
         <p v-if="ui.loginProblem" class="warning-panel">{{ ui.loginProblem }}</p>
-        <p class="hint">此设备会加密保存登录，日常解锁后即可继续使用。</p>
+        <p class="hint">登录会在{{ localSpace.place }}加密保存，日常打开账本后即可继续使用。</p>
         <p v-if="authConfigured" class="hint">
           首次在 GitHub 启用 BesLedger Sync，默认选择 All repositories，再返回登录。无需另装手机软件、注册
           App、建库或部署服务。

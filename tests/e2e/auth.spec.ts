@@ -7,8 +7,8 @@ async function connection(page: Page) {
   if ((await summary.count()) && (await summary.getAttribute('aria-expanded')) === 'false')
     await summary.click();
 }
-const password = 'fictional-browser-auth-password';
-async function unlock(page: Page) {
+const initialPassword = 'fictional-browser-auth-password';
+async function unlock(page: Page, password = initialPassword) {
   await page.getByLabel('解锁密码', { exact: true }).fill(password);
   await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await connection(page);
@@ -20,6 +20,7 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   context,
 }) => {
   test.setTimeout(60000);
+  let password = initialPassword;
   let grants = 0,
     renewals = 0,
     rejectApi = false,
@@ -123,20 +124,36 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
   await context.setOffline(false);
   await page.reload();
-  await unlock(page);
+  await unlock(page, password);
   if (new URL(page.url()).hash !== '#/settings') await page.goto('./#/settings');
-  if (await page.getByRole('dialog', { name: 'GitHub 连接' }).count())
+  if (await page.getByRole('dialog', { name: '跨设备同步' }).count())
     await page
-      .getByRole('dialog', { name: 'GitHub 连接' })
+      .getByRole('dialog', { name: '跨设备同步' })
       .getByRole('button', { name: '关闭', exact: true })
       .click();
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
-  await unlock(page);
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
+  await unlock(page, password);
+  // 同一主密钥重新封装后，真实凭证密文仍应在刷新及锁定后可用，不重新授权。
+  await page
+    .getByRole('dialog', { name: '跨设备同步' })
+    .getByRole('button', { name: '关闭', exact: true })
+    .click();
+  await page.getByRole('button', { name: '修改解锁密码', exact: false }).click();
+  const passwordDialog = page.getByRole('dialog', { name: '修改解锁密码', exact: true });
+  await passwordDialog.getByLabel('原解锁密码', { exact: true }).fill(password);
+  const updatedPassword = 'fictional-browser-auth-updated-password';
+  await passwordDialog.getByLabel('新的解锁密码', { exact: true }).fill(updatedPassword);
+  await passwordDialog.getByLabel('再次输入新密码', { exact: true }).fill(updatedPassword);
+  await passwordDialog.getByRole('button', { name: '保存新密码', exact: true }).click();
+  await expect(passwordDialog).toBeHidden();
+  password = updatedPassword;
+  await page.reload();
+  await unlock(page, password);
   // 页面关闭后新建页面，保留真实 IndexedDB；不使用测试变量模拟登录恢复。
   const reopened = await context.newPage();
   await page.close();
   if (new URL(reopened.url()).hash !== '#/settings') await reopened.goto('./#/settings');
-  await unlock(reopened);
+  await unlock(reopened, password);
   expect(grants).toBe(1);
   await reopened.getByRole('link', { name: '管理云端账本' }).click();
   rejectApi = true;
@@ -146,7 +163,7 @@ test('模拟 GitHub App 响应：加密登录跨刷新/关闭重开/锁定保留
   await connection(reopened);
   const other = await context.newPage();
   if (new URL(other.url()).hash !== '#/settings') await other.goto('./#/settings');
-  await unlock(other);
+  await unlock(other, password);
   await reopened.getByRole('button', { name: '退出 GitHub', exact: true }).click();
   await expect(other.getByRole('button', { name: '使用 GitHub 登录' })).toBeVisible();
   await other.reload();

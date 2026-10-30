@@ -15,10 +15,12 @@ import EntryDetail from './components/EntryDetail.vue';
 import AccountForm from './components/AccountForm.vue';
 import RuleForm from './components/RuleForm.vue';
 import Modal from './components/Modal.vue';
+import { getLocalSpace } from './local-space';
 import SmsPicker from './components/SmsPicker.vue';
 const offline = ref(!navigator.onLine);
 const unlockPage = ref<InstanceType<typeof Unlock>>();
 const route = useRoute();
+const localSpace = getLocalSpace();
 const navigation = [
   { path: '/', name: '明细', icon: 'book' },
   { path: '/accounts', name: '账户', icon: 'wallet' },
@@ -117,7 +119,9 @@ onMounted(() => {
       </nav>
       <div class="sidebar-bottom">
         <Icon name="shield" /><span
-          >账目在本机加密保存<br /><small>{{ auth ? '已连接 GitHub' : '本地优先 · 自在记账' }}</small></span
+          >账目在{{ localSpace.place }}加密保存<br /><small>{{
+            auth ? 'GitHub 登录已保存' : '本地优先 · 自在记账'
+          }}</small></span
         ><button class="icon-button" aria-label="锁定账本" @click="lock"><Icon name="lock" /></button>
       </div>
     </aside>

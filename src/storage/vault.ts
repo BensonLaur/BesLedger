@@ -148,6 +148,46 @@ export class Vault {
     this.revision = stored.revision;
     this.deviceSyncKeys = verified.deviceSyncKeys;
   }
+  async changePassword(currentPassword: string, newPassword: string, signal?: AbortSignal): Promise<void> {
+    const generation = this.generation;
+    const task = this.queue.then(async () => {
+      const assertCurrent = () => {
+        if (signal?.aborted || generation !== this.generation || !this.raw || !this.key || !this.header)
+          throw new Error('账本已锁定或修改已取消，请重新打开账本后再试');
+      };
+      assertCurrent();
+      const stored = await this.backend.read();
+      assertCurrent();
+      if (!stored || stored.revision !== this.revision)
+        throw new Error('账目已在其他窗口改变，请重新打开账本后再修改密码');
+      const original = JSON.parse(stored.payload);
+      const archive = archiveSchema.parse(original);
+      let verified: Awaited<ReturnType<typeof unlockKey>>;
+      try {
+        verified = await unlockKey(archive.header, currentPassword);
+      } catch {
+        throw new Error('原解锁密码不正确，请重新输入。原有账目未改动。');
+      }
+      try {
+        assertCurrent();
+        if (verified.raw.some((byte, index) => byte !== this.raw![index]))
+          throw new Error('本地账本已改变，请重新打开账本后再试');
+        const header = await wrapKey(verified.raw, newPassword);
+        assertCurrent();
+        // 仅重封装同一密钥，账目、身份、登录与同步密钥保持不变；检查点也不再接受旧密码。
+        const payload = JSON.stringify({ ...original, header });
+        const revision = await this.backend.compareSwap(stored.revision, payload, { resetPrevious: true });
+        // 提交期间锁定不允许迟到回调重新开放访问；再次打开时以已提交的新密码为准。
+        assertCurrent();
+        this.header = header;
+        this.revision = revision;
+      } finally {
+        verified.raw.fill(0);
+      }
+    });
+    this.queue = task.catch(() => undefined);
+    return task;
+  }
   async resetPasswordWithRecovery(recovery: string, password: string, signal?: AbortSignal): Promise<void> {
     const generation = this.generation;
     const task = this.queue.then(async () => {

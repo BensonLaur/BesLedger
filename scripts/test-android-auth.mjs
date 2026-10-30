@@ -75,12 +75,12 @@ try {
   await page.reload();
   await unlock();
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
-  if (await page.getByRole('dialog', { name: 'GitHub 连接' }).count())
+  if (await page.getByRole('dialog', { name: '跨设备同步' }).count())
     await page
-      .getByRole('dialog', { name: 'GitHub 连接' })
+      .getByRole('dialog', { name: '跨设备同步' })
       .getByRole('button', { name: '关闭', exact: true })
       .click();
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   await unlock();
   await expect(page.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
   await device.close();

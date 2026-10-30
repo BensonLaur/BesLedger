@@ -133,7 +133,7 @@ try {
   if (!adb('shell', 'run-as', pkg, 'ls', 'databases').includes('besledger-vault.db'))
     throw new Error('Native SQLite file missing');
   await page.goto('https://localhost/#/settings');
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   await unlock();
   await sync();
   await Promise.race([

@@ -32,7 +32,7 @@ async function stored(page: Page) {
   );
 }
 async function openBackup(page: Page) {
-  await page.getByRole('button', { name: '从备份找回账本', exact: false }).click();
+  await page.getByRole('button', { name: '从备份恢复账本', exact: false }).click();
 }
 
 test('锁定页备份恢复先校验、预览和确认，错误及取消不改数据，恢复后可离线重开', async ({
@@ -41,7 +41,7 @@ test('锁定页备份恢复先校验、预览和确认，错误及取消不改�
 }, info) => {
   const recovery = await initialize(page);
   const downloading = page.waitForEvent('download');
-  await page.getByRole('button', { name: '导出完整加密备份', exact: false }).click();
+  await page.getByRole('button', { name: '导出账本备份', exact: false }).click();
   const backupPath = (await (await downloading).path())!;
   await page.goto('./#/accounts');
   await page.getByRole('button', { name: '添加账户', exact: true }).click();
@@ -55,7 +55,7 @@ test('锁定页备份恢复先校验、预览和确认，错误及取消不改�
     .fill('虚构备份后新增账户');
   await page.getByRole('button', { name: '保存账户', exact: true }).click();
   await page.goto('./#/settings');
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   const before = await stored(page);
   await openBackup(page);
   await page.getByLabel('加密备份文件').setInputFiles({
@@ -119,35 +119,37 @@ test('锁定页备份恢复先校验、预览和确认，错误及取消不改�
 test('我的页面更换备份凭证与重新打开会清除旧预览及替换同意', async ({ page }) => {
   await initialize(page);
   const downloading = page.waitForEvent('download');
-  await page.getByRole('button', { name: '导出完整加密备份', exact: false }).click();
+  await page.getByRole('button', { name: '导出账本备份', exact: false }).click();
   const backupPath = (await (await downloading).path())!;
   const before = await stored(page);
-  await page.getByRole('button', { name: '校验并恢复备份', exact: false }).click();
-  const dialog = page.getByRole('dialog', { name: '恢复完整备份', exact: true });
+  await page.getByRole('button', { name: '从备份恢复账本', exact: false }).click();
+  const dialog = page.getByRole('dialog', { name: '从备份恢复账本', exact: true });
   await dialog.getByLabel('加密备份文件').setInputFiles(backupPath);
   await dialog.getByLabel('备份原密码', { exact: true }).fill(password);
-  await dialog.getByRole('button', { name: '先校验备份', exact: true }).click();
-  await dialog.getByLabel('恢复后的解锁密码', { exact: true }).fill(restoredPassword);
+  await dialog.getByRole('button', { name: '校验备份', exact: true }).click();
+  await dialog.getByLabel('新的解锁密码', { exact: true }).fill(restoredPassword);
+  await dialog.getByLabel('再次输入新密码', { exact: true }).fill(restoredPassword);
   await dialog.getByLabel('我确认用这份备份替换当前全部本地账本', { exact: false }).check();
   await dialog.getByLabel('备份原密码', { exact: true }).fill('fictional-changed-password');
-  await expect(dialog.getByLabel('恢复后的解锁密码', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByLabel('新的解锁密码', { exact: true })).toHaveCount(0);
   await dialog.getByLabel('备份原密码', { exact: true }).fill(password);
-  await dialog.getByRole('button', { name: '先校验备份', exact: true }).click();
-  await expect(dialog.getByLabel('恢复后的解锁密码', { exact: true })).toHaveValue('');
+  await dialog.getByRole('button', { name: '校验备份', exact: true }).click();
+  await expect(dialog.getByLabel('新的解锁密码', { exact: true })).toHaveValue('');
   await expect(dialog.getByLabel('我确认用这份备份替换当前全部本地账本', { exact: false })).not.toBeChecked();
   await dialog.getByRole('button', { name: '关闭', exact: true }).click();
   expect(await stored(page)).toBe(before);
-  await page.getByRole('button', { name: '校验并恢复备份', exact: false }).click();
+  await page.getByRole('button', { name: '从备份恢复账本', exact: false }).click();
   await expect(dialog.getByLabel('备份原密码', { exact: true })).toHaveValue('');
-  await expect(dialog.getByLabel('恢复后的解锁密码', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByLabel('新的解锁密码', { exact: true })).toHaveCount(0);
   await dialog.getByLabel('加密备份文件').setInputFiles(backupPath);
   await dialog.getByLabel('备份原密码', { exact: true }).fill(password);
-  await dialog.getByRole('button', { name: '先校验备份', exact: true }).click();
-  await dialog.getByLabel('恢复后的解锁密码', { exact: true }).fill(restoredPassword);
+  await dialog.getByRole('button', { name: '校验备份', exact: true }).click();
+  await dialog.getByLabel('新的解锁密码', { exact: true }).fill(restoredPassword);
+  await dialog.getByLabel('再次输入新密码', { exact: true }).fill(restoredPassword);
   await dialog.getByLabel('我确认用这份备份替换当前全部本地账本', { exact: false }).check();
-  await dialog.getByRole('button', { name: '恢复已验证备份', exact: true }).click();
+  await dialog.getByRole('button', { name: '确认恢复备份', exact: true }).click();
   await expect(dialog).toBeHidden();
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   await page.getByLabel('解锁密码', { exact: true }).fill(restoredPassword);
   await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await expect(page.getByRole('heading', { name: '我的', exact: true })).toBeVisible();
@@ -158,7 +160,7 @@ test('模拟主屏幕应用称呼，忘记密码说明密钥来源，无密钥�
     Object.defineProperty(navigator, 'standalone', { value: true, configurable: true }),
   );
   await initialize(page);
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   await expect(page.getByText('此应用中已保存账本。', { exact: false })).toBeVisible();
   await expect(page.getByText('账目在此应用中加密保存', { exact: true })).toBeVisible();
   const before = await stored(page);
@@ -175,8 +177,8 @@ test('模拟主屏幕应用称呼，忘记密码说明密钥来源，无密钥�
   await expect(page.getByLabel('恢复密钥', { exact: true })).toBeFocused();
   expect(await stored(page)).toBe(before);
   await page.getByText('没保存恢复密钥怎么办？', { exact: true }).click();
-  await page.getByRole('button', { name: '用备份找回账本', exact: false }).click();
-  await expect(page.getByRole('heading', { name: '从备份恢复', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '从备份恢复账本', exact: false }).click();
+  await expect(page.getByRole('heading', { name: '从备份恢复账本', exact: true })).toBeVisible();
   await expect(page.getByLabel('备份原密码', { exact: true })).toHaveValue('');
   await page.getByRole('button', { name: '返回解锁', exact: true }).click();
   await expect(page.getByLabel('解锁密码', { exact: true })).toHaveValue('');

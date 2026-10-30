@@ -109,7 +109,7 @@ test('模拟 GitHub：首次验证后自动记住同步密钥，页面切换/重
     await expect(b.getByRole('button', { name: '退出 GitHub', exact: true })).toBeVisible();
     await sync(b);
     await b.goto('./#/settings');
-    await b.getByRole('button', { name: '锁定', exact: true }).click();
+    await b.getByRole('button', { name: '锁定账本', exact: true }).last().click();
     await b.getByLabel('解锁密码', { exact: true }).fill(password);
     await b.getByRole('button', { name: '打开账本', exact: true }).click();
     if (new URL(b.url()).hash === '#/settings') await b.locator('.connection-summary').click();

@@ -32,6 +32,7 @@ export const ui = reactive({
   smsQueue: [] as string[],
   loginRecovery: false,
   loginProblem: '',
+  passwordRecoveryRequested: false,
 });
 export const online = ref(navigator.onLine);
 window.addEventListener('online', () => {
@@ -152,4 +153,9 @@ export function lock(): void {
   ui.smsQueue = [];
   ui.smsPicker = false;
   conflicts.value = [];
+}
+export function requestPasswordRecovery(): void {
+  ui.error = '';
+  ui.passwordRecoveryRequested = true;
+  lock();
 }

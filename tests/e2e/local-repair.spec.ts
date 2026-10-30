@@ -18,7 +18,7 @@ test('只有当前数据损坏且密码可验证备用副本时才显示修复�
   await page.getByLabel('账户名称').fill('虚构最近新增账户');
   await page.getByRole('button', { name: '保存账户', exact: true }).click();
   await page.goto('./#/settings');
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   const stored = (damage = false) =>
     page.evaluate(
       (damage) =>

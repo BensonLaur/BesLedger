@@ -31,7 +31,7 @@ async function stored(page: Page) {
 }
 async function lock(page: Page) {
   await page.goto('./#/settings');
-  await page.getByRole('button', { name: '锁定', exact: true }).click();
+  await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   await expect(page.getByRole('button', { name: '忘记密码？' })).toBeVisible();
 }
 async function fillRecovery(page: Page, recovery: string, confirmation = newPassword) {
