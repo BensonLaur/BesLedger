@@ -188,6 +188,7 @@ export function recognizeAmounts(text: string, allowBare: boolean) {
     }
   }
   let candidates = tokens.filter((t) => t.role === 'value' || t.role === 'total');
+  let inferredUnit = false;
   const hasExplicit = candidates.length > 0 || invalid;
   if (!hasExplicit && allowBare) {
     // 有单位的余额/优惠不能挡住旁边无单位的交易金额，也不能再次参与候选。
@@ -231,6 +232,7 @@ export function recognizeAmounts(text: string, allowBare: boolean) {
     }
     candidates = candidates.filter((t) => t.role === 'value' || t.role === 'total');
     if (candidates.length) warnings.push('金额未写单位，按元识别，请核对');
+    inferredUnit = candidates.length > 0;
   }
   const totals = candidates.filter((t) => t.role === 'total');
   const selected = totals.length === 1 ? totals[0] : candidates.length === 1 ? candidates[0] : undefined;
@@ -241,6 +243,7 @@ export function recognizeAmounts(text: string, allowBare: boolean) {
     );
   return {
     amount: invalid ? undefined : selected?.amount,
+    amountCertain: !invalid && !!selected && !inferredUnit,
     amountSource: invalid ? undefined : selected?.text,
     amountIndex: invalid || !selected ? undefined : candidates.indexOf(selected),
     amountCandidates: candidates.map(({ amount, text }) => ({ amount, text })),

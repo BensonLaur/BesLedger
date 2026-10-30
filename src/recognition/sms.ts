@@ -5,6 +5,7 @@ import { recognizePurpose } from './purposes';
 export type Recognition = {
   type?: 'expense' | 'income' | 'refund';
   amount?: number;
+  amountCertain: boolean;
   amountSource?: string;
   amountIndex?: number;
   amountCandidates: AmountCandidate[];
@@ -27,6 +28,7 @@ export function recognize(
     .replace(/[\u200b-\u200d\ufeff]/g, '')
     .replace(/−/g, '-');
   const result: Recognition = {
+    amountCertain: false,
     amountCandidates: [],
     accountIds: [],
     categoryIds: [],
@@ -62,6 +64,7 @@ export function recognize(
   );
   Object.assign(result, amounts);
   if (foreignCurrency || unfinished) {
+    result.amountCertain = false;
     result.amount = result.amountSource = undefined;
     result.amountIndex = undefined;
     result.amountCandidates = [];

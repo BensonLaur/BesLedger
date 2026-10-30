@@ -4,6 +4,8 @@
 
 当前统一下载入口为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)：长期签名 Android versionCode 11、对应 Web/PWA、SHA-256 与签名说明。包名与原签名不变，可直接覆盖升级；先独立保存加密备份及恢复密钥，不先卸载或清空数据。
 
+最新安卓测试包为 [0.1.4-test.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4-test.1)，versionCode 13，沿用同一包名和证书，包含本轮界面与备注自动填入。该预发布只提供 APK、SHA-256 与签名说明，未替换公开稳定 Web/PWA；安装与验证边界见 [安卓测试说明](ANDROID_TESTING.md)。
+
 旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1、v0.1.2 的版本与校验信息见 [历史版本记录](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/；两个站点各自保存本地数据，已有用户继续使用原网址。
 
 ## Web/PWA
@@ -68,6 +70,6 @@ package ID：com.bensoftware.besledger；Android 10/API 29 起，compile/target 
 
 清理旧 Release 须依据用户授权，保留源码标签与提交。需要归档时，先保存说明、附件和校验信息并核对；移除公开附件时同步清理下载链接与校验清单。
 
-当前公开附件仅包含 APK、Web/PWA ZIP、SHA256SUMS.txt 和 signature.txt，Releases 页面只保留 0.1.3。两份历史归档 ZIP 已按用户要求移除。GitHub Pages 与 Cloudflare 备用站点使用同一构建，历史文档不再引导下载旧附件。
+稳定版 0.1.3 附件包含 APK、Web/PWA ZIP、SHA256SUMS.txt 和 signature.txt；新增 0.1.4-test.1 安卓预发布提供 APK 与校验、签名文件，不替换稳定版入口。两份历史归档 ZIP 已按用户要求移除。GitHub Pages 与 Cloudflare 备用站点使用同一构建，历史文档不再引导下载旧附件。
 
 本轮额外验证入口：`scripts/test-android-interface.mjs` 限定 emulator-5558 / BesLedgerUiApi36；`scripts/test-android-sync-keys.mjs` 可用 BESLEDGER_TEST_SERIAL 指定同一隔离模拟器。`scripts/create-android-upgrade-fixture.mjs` 仅生成虚构的旧格式加密 SQLite 样本，输出到已忽略的 artifacts；仅在隔离模拟器建立基线后进行正式签名包的覆盖升级，禁止注入任何真实用户设备。

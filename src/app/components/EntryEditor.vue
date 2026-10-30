@@ -13,9 +13,32 @@ import { entryIcon, loanIcons, transferIcons } from '../entry-presentation';
 import { accountIcon } from '../account-presentation';
 import AccountOpeningDialog from './AccountOpeningDialog.vue';
 import { readAutoRecognition, rememberAutoRecognition } from '../recognition-mode';
+import { automaticFields } from '../automatic-recognition';
 const draft = reactive(structuredClone(toRaw(ui.draft!)));
 const amount = ref(draft.amount ? decimal(draft.amount) : ''),
   interest = ref(decimal(draft.interest));
+const protectedFields = reactive({
+  amount: !!draft.amount,
+  category: !!draft.categoryId,
+  at: !!ui.editingId,
+  from: !!draft.from,
+  to: !!draft.to,
+  type: !!ui.editingId || draft.type !== 'expense',
+});
+const automatic = reactive({ amount: false, category: false });
+function protectAmount() {
+  protectedFields.amount = true;
+  automatic.amount = false;
+}
+function selectCategory(id: string) {
+  protectedFields.category = true;
+  automatic.category = false;
+  draft.categoryId = id;
+}
+function selectAccount(side: 'from' | 'to', id: string) {
+  protectedFields[side] = true;
+  draft[side] = id;
+}
 const tab = ref(
   ['borrow', 'lend', 'repay', 'collect'].includes(draft.type)
     ? 'loan'
@@ -34,7 +57,10 @@ function keypress(key: string) {
   else if (key === '.') {
     if (!value.includes('.')) value = (value || '0') + '.';
   } else value = value === '0' ? key : value + key;
-  if (/^\d{0,12}(?:\.\d{0,2})?$/.test(value)) target.value = value;
+  if (/^\d{0,12}(?:\.\d{0,2})?$/.test(value)) {
+    if (keypadTarget.value === 'amount') protectAmount();
+    target.value = value;
+  }
 }
 const showInterest = ref(draft.interest > 0),
   categoryPicker = ref(false),
@@ -44,7 +70,6 @@ const accountPicker = ref<'from' | 'to' | ''>(''),
   parsed = ref<Recognition>(),
   confirmDuplicate = ref(false),
   confirmOpening = ref(false),
-  recognitionPending = ref(false),
   error = ref('');
 const autoRecognition = ref(readAutoRecognition()),
   recognitionQueued = ref(false),
@@ -59,7 +84,6 @@ function cancelScheduledRecognition() {
 function clearRecognition() {
   cancelScheduledRecognition();
   parsed.value = undefined;
-  recognitionPending.value = false;
   if (error.value === '请先确认采用或保留备注识别结果' || error.value === '请先完成备注输入')
     error.value = '';
 }
@@ -68,7 +92,7 @@ function scheduleRecognition() {
   if (!autoRecognition.value || composingNote.value || !draft.note.trim()) return;
   recognitionQueued.value = true;
   const note = draft.note;
-  // 中文组词期间不运行，停顿后只处理最后一版文本；只生成预览，不写账本或覆盖表单。
+  // 中文组词期间不运行，只处理最后一版文本；明确字段可填草稿，手动值由保护标记保留。
   recognitionTimer = setTimeout(() => {
     recognitionTimer = undefined;
     recognitionQueued.value = false;
@@ -89,10 +113,13 @@ function compositionEnd() {
   composingNote.value = false;
   scheduleRecognition();
 }
-// 旧预览随编辑立即失效；自动模式只更新预览，手动模式等待点击。
+// 改备注时一并撤回上一版自动值，避免等待期间看到/保存过期金额；手动值不撤回。
 watch(
   () => draft.note,
   () => {
+    if (autoRecognition.value && automatic.amount && !protectedFields.amount) amount.value = '';
+    if (autoRecognition.value && automatic.category && !protectedFields.category) draft.categoryId = '';
+    automatic.amount = automatic.category = false;
     clearRecognition();
     scheduleRecognition();
   },
@@ -153,6 +180,7 @@ const typeLabels: Record<Entry['type'], string> = {
 };
 const loanDrafts = new Map<string, { data: Entry; amount: string; interest: string }>();
 function switchType(type: Entry['type']) {
+  protectedFields.type = true;
   if (type === draft.type) return;
   const switchingLoan = isLoan.value && ['borrow', 'lend', 'repay', 'collect'].includes(type);
   if (isLoan.value)
@@ -195,7 +223,67 @@ function parse() {
   cancelScheduledRecognition();
   if (composingNote.value || !draft.note.trim()) return;
   parsed.value = recognize(draft.note, accounts.value);
-  recognitionPending.value = true;
+  if (autoRecognition.value) {
+    const plan = automaticFields(parsed.value, {
+      type: draft.type,
+      protectedAmount: protectedFields.amount,
+      protectedCategory: protectedFields.category,
+      automaticAmount: automatic.amount,
+      automaticCategory: automatic.category,
+    });
+    if (plan.amount !== undefined) {
+      amount.value = plan.amount === null ? '' : decimal(plan.amount);
+      automatic.amount = plan.amount !== null;
+    }
+    if (plan.categoryId !== undefined) {
+      draft.categoryId = plan.categoryId ?? '';
+      automatic.category = plan.categoryId !== null;
+    }
+  }
+}
+const normalizeTime = (value: string) => (value.length === 16 ? value + ':00' : value);
+const recognitionReview = computed(() => {
+  const p = parsed.value;
+  if (!p) return [];
+  const reasons: string[] = [];
+  if (!protectedFields.amount && (!p.amountCertain || p.amount === undefined))
+    reasons.push('请选择或填写本次金额');
+  if (
+    ['expense', 'income'].includes(draft.type) &&
+    !protectedFields.category &&
+    (p.categoryIds.length !== 1 || (!!p.type && p.type !== draft.type))
+  )
+    reasons.push('请选择分类');
+  if (p.type && p.type !== draft.type && !protectedFields.type) reasons.push('请核对记账类型');
+  if (p.at && !protectedFields.at && (p.yearBasis !== 'explicitText' || p.at !== normalizeTime(draft.at)))
+    reasons.push('请核对发生时间和年份');
+  const side = ['income', 'refund', 'collect', 'borrow'].includes(p.type || draft.type) ? 'to' : 'from';
+  if (
+    !protectedFields[side] &&
+    (p.accountIds.length > 1 || (p.accountIds.length === 1 && p.accountIds[0] !== draft[side]))
+  )
+    reasons.push('请核对资金账户');
+  return reasons;
+});
+const recognitionPending = computed(
+  () => !!parsed.value && (!autoRecognition.value || recognitionReview.value.length > 0),
+);
+const automaticSummary = computed(() => {
+  const fields = [automatic.amount ? '金额' : '', automatic.category ? '分类' : ''].filter(Boolean);
+  return fields.length ? `已自动填入${fields.join('、')}` : '已保留当前填写';
+});
+function selectRecognizedAmount(index: number) {
+  const p = parsed.value,
+    candidate = p?.amountCandidates[index];
+  if (!p || !candidate) return;
+  p.amount = candidate.amount;
+  p.amountSource = candidate.text;
+  p.amountIndex = index;
+  p.amountCertain = true;
+  if (autoRecognition.value) {
+    protectAmount();
+    amount.value = decimal(candidate.amount);
+  }
 }
 onMounted(() => {
   if (!ui.editingId) scheduleRecognition();
@@ -204,19 +292,29 @@ function applyRecognition() {
   cancelScheduledRecognition();
   const p = parsed.value;
   if (!p) return;
-  if (p.type && !twoAccounts.value) {
+  if (p.type && !twoAccounts.value && (!autoRecognition.value || !protectedFields.type)) {
     draft.type = p.type;
     tab.value = p.type;
   }
-  if (p.amount !== undefined) amount.value = decimal(p.amount);
-  if (p.at) draft.at = p.at;
-  if (p.accountIds.length === 1) {
-    if (['income', 'refund', 'collect', 'borrow'].includes(draft.type)) draft.to = p.accountIds[0];
-    else draft.from = p.accountIds[0];
+  if (p.amount !== undefined && (!autoRecognition.value || !protectedFields.amount)) {
+    amount.value = decimal(p.amount);
+    if (!autoRecognition.value || !p.amountCertain) protectAmount();
+    else automatic.amount = true;
   }
-  if (p.categoryIds.length === 1) draft.categoryId = p.categoryIds[0];
+  if (p.at && (!autoRecognition.value || !protectedFields.at)) {
+    draft.at = p.at;
+    protectedFields.at = true;
+  }
+  if (p.accountIds.length === 1) {
+    const side = ['income', 'refund', 'collect', 'borrow'].includes(draft.type) ? 'to' : 'from';
+    if (!autoRecognition.value || !protectedFields[side]) selectAccount(side, p.accountIds[0]);
+  }
+  if (p.categoryIds.length === 1 && (!autoRecognition.value || !protectedFields.category)) {
+    draft.categoryId = p.categoryIds[0];
+    if (!autoRecognition.value) protectedFields.category = true;
+    else automatic.category = true;
+  }
   draft.recognition = { rawDate: p.rawDate, yearBasis: p.yearBasis, confirmed: true, balance: p.balance };
-  recognitionPending.value = false;
   parsed.value = undefined;
 }
 const normalizedEntryTime = computed(() => (draft.at.length === 16 ? `${draft.at}:00` : draft.at));
@@ -284,7 +382,7 @@ async function createCategory() {
         icon: 'receipt',
       }),
     );
-    draft.categoryId = e.id;
+    selectCategory(e.id);
     newCategory.value = '';
     categoryPicker.value = false;
   });
@@ -310,6 +408,10 @@ async function save(again = false) {
     return;
   }
   const ok = await run(async () => {
+    if (autoRecognition.value && parsed.value) {
+      const p = parsed.value;
+      draft.recognition = { rawDate: p.rawDate, yearBasis: p.yearBasis, confirmed: true, balance: p.balance };
+    }
     const data = {
       ...draft,
       amount: minor(amount.value),
@@ -380,6 +482,7 @@ async function save(again = false) {
             autocomplete="off"
             required
             @focus="keypadTarget = 'amount'"
+            @input="protectAmount"
           />
         </div>
       </div>
@@ -389,7 +492,7 @@ async function save(again = false) {
           type="button"
           :class="{ active: draft.categoryId === c.id }"
           :aria-pressed="draft.categoryId === c.id"
-          @click="draft.categoryId = c.id"
+          @click="selectCategory(c.id)"
         >
           <span><Icon :name="c.icon" /></span>{{ c.name }}</button
         ><button type="button" @click="categoryPicker = true">
@@ -473,13 +576,24 @@ async function save(again = false) {
           recognitionQueued
             ? '输入停顿后识别…'
             : autoRecognition
-              ? '停顿后显示结果，确认后才填入。'
+              ? '明确的金额和分类直接填入，手动改过的会保留。'
               : '点击“识别备注”，再核对结果。'
         }}
       </p>
       <p v-if="modeNotRemembered" class="hint">当前环境无法记住选择，重新打开后可能需要再选一次。</p>
-      <div v-if="parsed" class="recognition-panel">
-        <strong>请核对识别结果</strong>
+      <component
+        :is="autoRecognition ? 'details' : 'div'"
+        v-if="parsed"
+        class="recognition-panel"
+        :open="autoRecognition ? recognitionPending : undefined"
+      >
+        <summary v-if="autoRecognition">
+          {{ recognitionPending ? '还有信息需要核对' : automaticSummary }}<small> · 查看依据</small>
+        </summary>
+        <strong v-else>请核对识别结果</strong>
+        <p v-if="autoRecognition && protectedFields.amount" class="hint">已保留手动填写的金额。</p>
+        <p v-if="autoRecognition && protectedFields.category" class="hint">已保留手动选择的分类。</p>
+        <p v-for="reason in autoRecognition ? recognitionReview : []" class="hint">{{ reason }}</p>
         <p>
           金额 {{ parsed.amount === undefined ? '未识别' : '¥ ' + money(parsed.amount) }} ·
           {{ parsed.type ? typeLabels[parsed.type] : '类型待确认' }}
@@ -493,11 +607,7 @@ async function save(again = false) {
             type="button"
             class="secondary"
             :aria-pressed="parsed.amountIndex === index"
-            @click="
-              parsed.amount = candidate.amount;
-              parsed.amountSource = candidate.text;
-              parsed.amountIndex = index;
-            "
+            @click="selectRecognizedAmount(index)"
           >
             {{ candidate.text }} · ¥ {{ money(candidate.amount) }}
           </button>
@@ -510,7 +620,7 @@ async function save(again = false) {
             :key="id"
             type="button"
             class="secondary"
-            @click="draft.categoryId = id"
+            @click="selectCategory(id)"
           >
             {{ categories(state!, draft.ledgerId).find((c) => c.id === id)?.name || id
             }}{{ draft.categoryId === id ? ' ✓' : '' }}
@@ -524,9 +634,10 @@ async function save(again = false) {
             type="button"
             class="secondary"
             @click="
-              ['income', 'refund', 'collect', 'borrow'].includes(parsed.type || draft.type)
-                ? (draft.to = id)
-                : (draft.from = id)
+              selectAccount(
+                ['income', 'refund', 'collect', 'borrow'].includes(parsed.type || draft.type) ? 'to' : 'from',
+                id,
+              )
             "
           >
             {{ accountName(id) }}{{ [draft.from, draft.to].includes(id) ? ' ✓' : '' }}
@@ -537,10 +648,18 @@ async function save(again = false) {
           备注中的余额 ¥ {{ money(parsed.balance) }} 仅供核对，不会覆盖账户余额。
         </p>
         <div class="actions">
-          <button type="button" class="secondary" @click="clearRecognition">保留手动填写</button
-          ><button type="button" class="primary" @click="applyRecognition">采用并继续核对</button>
+          <button type="button" class="secondary" @click="clearRecognition">
+            {{ autoRecognition ? '保留当前填写' : '保留手动填写' }}</button
+          ><button
+            v-if="!autoRecognition || recognitionPending"
+            type="button"
+            class="primary"
+            @click="applyRecognition"
+          >
+            {{ autoRecognition ? '确认其余信息' : '采用并继续核对' }}
+          </button>
         </div>
-      </div>
+      </component>
       <div class="entry-chips">
         <button
           type="button"
@@ -652,7 +771,14 @@ async function save(again = false) {
           ]"
           :key="key"
         >
-          <button v-if="key === 'save'" class="key-save" :disabled="ui.busy" aria-label="保存账目">
+          <button
+            v-if="key === 'save'"
+            type="button"
+            class="key-save"
+            :disabled="ui.busy"
+            aria-label="保存账目"
+            @click="save()"
+          >
             {{ ui.busy ? '保存中…' : '保存' }}
           </button>
           <button
@@ -715,7 +841,7 @@ async function save(again = false) {
             :aria-pressed="draft.categoryId === c.id"
             :class="{ active: draft.categoryId === c.id }"
             @click="
-              draft.categoryId = c.id;
+              selectCategory(c.id);
               categoryPicker = false;
             "
           >
@@ -740,7 +866,7 @@ async function save(again = false) {
         v-for="a in availableAccounts"
         :key="a.id"
         @click="
-          draft[accountPicker as 'from' | 'to'] = a.id;
+          selectAccount(accountPicker as 'from' | 'to', a.id);
           accountPicker = '';
         "
       >
@@ -766,6 +892,7 @@ async function save(again = false) {
     ><form
       @submit.prevent="
         draft.at = dateInput;
+        protectedFields.at = true;
         datePicker = false;
       "
     >
@@ -776,6 +903,15 @@ async function save(again = false) {
   >
 </template>
 <style scoped>
+.recognition-panel > summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 32px;
+}
+.recognition-panel > summary small {
+  font-weight: 400;
+  color: var(--muted);
+}
 .recognition-controls {
   display: flex;
   justify-content: space-between;

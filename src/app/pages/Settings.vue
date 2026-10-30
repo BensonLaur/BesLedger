@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 import { Capacitor } from '@capacitor/core';
+import { version as appVersion } from '../../../package.json';
 import { restoreEntity } from '../../domain/ledger';
 import { list } from '../../domain/model';
 import {
@@ -297,7 +298,7 @@ async function restore() {
       </button>
     </section>
     <section class="settings-version">
-      <p class="hint">BesLedger 0.1.4 · 人民币 · 本地加密</p>
+      <p class="hint">BesLedger {{ appVersion }} · 人民币 · 本地加密</p>
       <a
         href="https://github.com/BensonLaur/BesLedger"
         target="_blank"
