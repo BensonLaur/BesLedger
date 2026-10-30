@@ -12,6 +12,7 @@ import Icon from './Icon.vue';
 import { entryIcon, loanIcons, transferIcons } from '../entry-presentation';
 import { accountIcon } from '../account-presentation';
 import AccountOpeningDialog from './AccountOpeningDialog.vue';
+import { readAutoRecognition, rememberAutoRecognition } from '../recognition-mode';
 const draft = reactive(structuredClone(toRaw(ui.draft!)));
 const amount = ref(draft.amount ? decimal(draft.amount) : ''),
   interest = ref(decimal(draft.interest));
@@ -45,14 +46,59 @@ const accountPicker = ref<'from' | 'to' | ''>(''),
   confirmOpening = ref(false),
   recognitionPending = ref(false),
   error = ref('');
-// 修改备注后旧识别预览立即失效，避免采用上一段文字的金额；不自动覆盖手动字段。
+const autoRecognition = ref(readAutoRecognition()),
+  recognitionQueued = ref(false),
+  composingNote = ref(false),
+  modeNotRemembered = ref(false);
+let recognitionTimer: ReturnType<typeof setTimeout> | undefined;
+function cancelScheduledRecognition() {
+  clearTimeout(recognitionTimer);
+  recognitionTimer = undefined;
+  recognitionQueued.value = false;
+}
+function clearRecognition() {
+  cancelScheduledRecognition();
+  parsed.value = undefined;
+  recognitionPending.value = false;
+  if (error.value === '请先确认采用或保留备注识别结果' || error.value === '请先完成备注输入')
+    error.value = '';
+}
+function scheduleRecognition() {
+  cancelScheduledRecognition();
+  if (!autoRecognition.value || composingNote.value || !draft.note.trim()) return;
+  recognitionQueued.value = true;
+  const note = draft.note;
+  // 中文组词期间不运行，停顿后只处理最后一版文本；只生成预览，不写账本或覆盖表单。
+  recognitionTimer = setTimeout(() => {
+    recognitionTimer = undefined;
+    recognitionQueued.value = false;
+    if (autoRecognition.value && !composingNote.value && draft.note === note) parse();
+  }, 350);
+}
+function toggleRecognitionMode() {
+  autoRecognition.value = !autoRecognition.value;
+  modeNotRemembered.value = !rememberAutoRecognition(autoRecognition.value);
+  clearRecognition();
+  scheduleRecognition();
+}
+function compositionStart() {
+  composingNote.value = true;
+  clearRecognition();
+}
+function compositionEnd() {
+  composingNote.value = false;
+  scheduleRecognition();
+}
+// 旧预览随编辑立即失效；自动模式只更新预览，手动模式等待点击。
 watch(
   () => draft.note,
   () => {
-    parsed.value = undefined;
-    recognitionPending.value = false;
+    clearRecognition();
+    scheduleRecognition();
   },
+  { flush: 'sync' },
 );
+onBeforeUnmount(cancelScheduledRecognition);
 const quick = {
   expense: quickCategories(state.value!, draft.ledgerId, 'expense').slice(0, 11),
   income: quickCategories(state.value!, draft.ledgerId, 'income').slice(0, 7),
@@ -140,23 +186,22 @@ function switchType(type: Entry['type']) {
   showInterest.value = interest.value !== '0' && interest.value !== '0.00';
   if (draft.type !== 'refund') delete draft.originalId;
   if (!['repay', 'collect'].includes(draft.type)) delete draft.settlesId;
-  parsed.value = undefined;
-  recognitionPending.value = false;
+  clearRecognition();
 }
 function accountName(id: string) {
   return accounts.value.find((a) => a.id === id)?.data.name || '选择账户';
 }
 function parse() {
+  cancelScheduledRecognition();
+  if (composingNote.value || !draft.note.trim()) return;
   parsed.value = recognize(draft.note, accounts.value);
   recognitionPending.value = true;
 }
 onMounted(() => {
-  if (!ui.editingId && draft.note) parse();
+  if (!ui.editingId) scheduleRecognition();
 });
-function onPaste() {
-  window.setTimeout(parse, 0);
-}
 function applyRecognition() {
+  cancelScheduledRecognition();
   const p = parsed.value;
   if (!p) return;
   if (p.type && !twoAccounts.value) {
@@ -246,6 +291,12 @@ async function createCategory() {
 }
 async function save(again = false) {
   error.value = '';
+  if (composingNote.value) {
+    error.value = '请先完成备注输入';
+    return;
+  }
+  // 保存不能抢在延迟识别前落盘；先展示最新结果，继续走同一套采用/保留确认。
+  if (recognitionQueued.value) parse();
   if (recognitionPending.value) {
     error.value = '请先确认采用或保留备注识别结果';
     return;
@@ -390,9 +441,43 @@ async function save(again = false) {
           v-model="draft.note"
           placeholder="例如：停车费10块，也可以粘贴交易短信"
           rows="3"
-          @paste="onPaste"
-        ></textarea></label
-      ><button v-if="draft.note.trim()" class="text-button" type="button" @click="parse">识别备注</button>
+          @compositionstart="compositionStart"
+          @compositionend="compositionEnd"
+        ></textarea>
+      </label>
+      <div class="recognition-controls">
+        <button
+          type="button"
+          class="recognition-mode-switch"
+          role="switch"
+          aria-label="自动识别备注"
+          aria-describedby="recognition-mode-hint"
+          :aria-checked="autoRecognition"
+          :disabled="ui.busy"
+          @click="toggleRecognitionMode"
+        >
+          <span class="recognition-switch-track" aria-hidden="true"><span /></span>自动识别
+        </button>
+        <button
+          v-if="draft.note.trim()"
+          class="text-button"
+          type="button"
+          :disabled="composingNote || ui.busy"
+          @click="parse"
+        >
+          {{ autoRecognition ? '立即识别' : '识别备注' }}
+        </button>
+      </div>
+      <p id="recognition-mode-hint" class="hint recognition-mode-hint">
+        {{
+          recognitionQueued
+            ? '输入停顿后识别…'
+            : autoRecognition
+              ? '停顿后显示结果，确认后才填入。'
+              : '点击“识别备注”，再核对结果。'
+        }}
+      </p>
+      <p v-if="modeNotRemembered" class="hint">当前环境无法记住选择，重新打开后可能需要再选一次。</p>
       <div v-if="parsed" class="recognition-panel">
         <strong>请核对识别结果</strong>
         <p>
@@ -452,15 +537,7 @@ async function save(again = false) {
           备注中的余额 ¥ {{ money(parsed.balance) }} 仅供核对，不会覆盖账户余额。
         </p>
         <div class="actions">
-          <button
-            type="button"
-            class="secondary"
-            @click="
-              parsed = undefined;
-              recognitionPending = false;
-            "
-          >
-            保留手动填写</button
+          <button type="button" class="secondary" @click="clearRecognition">保留手动填写</button
           ><button type="button" class="primary" @click="applyRecognition">采用并继续核对</button>
         </div>
       </div>
@@ -699,6 +776,47 @@ async function save(again = false) {
   >
 </template>
 <style scoped>
+.recognition-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.recognition-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 14px;
+}
+.recognition-switch-track {
+  display: inline-flex;
+  width: 40px;
+  height: 24px;
+  padding: 3px;
+  border-radius: 20px;
+  background: var(--line);
+}
+.recognition-switch-track > span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 1px 3px #0002;
+  transition: transform 140ms;
+}
+.recognition-mode-switch[aria-checked='true'] .recognition-switch-track {
+  background: var(--accent);
+}
+.recognition-mode-switch[aria-checked='true'] .recognition-switch-track > span {
+  transform: translateX(16px);
+  background: var(--on-accent);
+}
+.recognition-mode-hint {
+  margin-top: 2px;
+}
 .recognition-candidates button {
   min-width: 0;
   max-width: 100%;

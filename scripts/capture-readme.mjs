@@ -143,7 +143,7 @@ try {
   const editor = page.getByRole('dialog', { name: '记一笔', exact: true });
   await editor.getByRole('button', { name: '午餐', exact: true }).click();
   await editor.getByLabel('金额', { exact: true }).fill('28.00');
-  await editor.getByLabel('备注').fill('一碗面，一份小菜');
+  await editor.getByLabel('备注', { exact: true }).fill('一碗面，一份小菜');
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
     .getByRole('dialog', { name: '选择资金账户' })

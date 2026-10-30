@@ -25,7 +25,7 @@ try {
   await page.goto('https://localhost/#/');
   await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
   const form = page.getByRole('dialog', { name: '记一笔', exact: true });
-  await form.getByLabel('备注').click();
+  await form.getByLabel('备注', { exact: true }).click();
   await expect
     .poll(() => /mInputShown=true/.test(adb('shell', 'dumpsys', 'input_method')), { timeout: 10000 })
     .toBe(true);
@@ -37,12 +37,12 @@ try {
   adb('pull', '/data/local/tmp/besledger-keyboard.png', 'artifacts/android-keyboard.png');
   adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
   await expect.poll(() => /mInputShown=true/.test(adb('shell', 'dumpsys', 'input_method'))).toBe(false);
-  await form.getByLabel('备注').fill('虚构返回键草稿');
+  await form.getByLabel('备注', { exact: true }).fill('虚构返回键草稿');
   adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
   const confirm = page.getByRole('dialog', { name: '保留未保存草稿？' });
   await expect(confirm).toBeVisible();
   await confirm.getByRole('button', { name: '继续填写' }).click();
-  await expect(form.getByLabel('备注')).toHaveValue('虚构返回键草稿');
+  await expect(form.getByLabel('备注', { exact: true })).toHaveValue('虚构返回键草稿');
   if (/mInputShown=true/.test(adb('shell', 'dumpsys', 'input_method'))) {
     adb('shell', 'input', 'keyevent', 'KEYCODE_BACK');
     await expect.poll(() => /mInputShown=true/.test(adb('shell', 'dumpsys', 'input_method'))).toBe(false);

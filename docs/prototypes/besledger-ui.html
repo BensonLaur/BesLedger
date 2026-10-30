@@ -468,6 +468,14 @@
 #besledger-preview .bl-shell:not([data-device="mobile"]) .bl-modal-host[data-panel="support"] .bl-sheet{max-width:800px}
 #besledger-preview .bl-shell:not([data-device="mobile"]) .bl-support-layout{grid-template-columns:minmax(0,1fr) minmax(0,.85fr);align-items:center;gap:28px}
 @media(max-width:699px){#besledger-preview .bl-shell:not([data-device="mobile"]) .bl-support-layout{grid-template-columns:minmax(0,1fr)}}
+
+#besledger-preview .bl-note-controls { display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap }
+#besledger-preview .bl-note-mode { display:inline-flex;align-items:center;gap:10px;min-height:44px }
+#besledger-preview .bl-note-switch-track { display:inline-flex;width:40px;height:24px;padding:3px;background:var(--bl-line);border-radius:20px }
+#besledger-preview .bl-note-switch-track span { width:18px;height:18px;background:var(--bl-surface);border-radius:50% }
+#besledger-preview .bl-note-mode[aria-checked="true"] .bl-note-switch-track { background:var(--bl-accent) }
+#besledger-preview .bl-note-mode[aria-checked="true"] .bl-note-switch-track span { transform:translateX(16px) }
+#besledger-preview .bl-note-preview .bl-recognition { display:block }
 </style>
 <script>
 (() => {
@@ -802,7 +810,7 @@
     const cats=quickCategories();
     const selected=transfer?`<span class="bl-selected-category" aria-live="polite">${circle(transferKinds[state.transferKind])}<span>${state.transferKind}</span></span>`:button(`<span class="bl-selected-category">${circle(categoryIcon(state.category))}<span>${esc(state.category)}</span></span>`,'go','data-page="categories"','');
     const accountOptions=field=>transferAccounts.map(name=>`<option value="${name}" ${state[field]===name?'selected':''}>${name}</option>`).join('');
-    return `<div class="bl-type-tabs" role="tablist" aria-label="记账类型">${['收入','支出','转账','借贷'].map(t=>button(t,'entry-type',`data-type="${t}" role="tab" aria-selected="${state.entryType===t}"`,'')).join('')}</div><div class="bl-entry-layout"><div><div class="bl-amount-card"><div class="bl-amount-line">${selected}<div class="bl-amount"><span>¥</span><input aria-label="记账金额" inputmode="decimal" data-field="amount" value="${esc(state.amount)}" placeholder="0.00"></div></div></div>${transfer?`<div class="bl-category-grid bl-transfer-types" aria-label="转账类型">${Object.entries(transferKinds).map(([name,i])=>button(`${circle(i)}<span>${name}</span>`,'transfer-kind',`data-kind="${name}" aria-pressed="${state.transferKind===name}"`,'')).join('')}</div><div class="bl-transfer-pair"><label><span>转出账户</span><select aria-label="转出账户" data-field="transferFrom">${accountOptions('transferFrom')}</select></label>${navIcon('arrow-right-left','swap-accounts','交换转出转入账户')}<label><span>转入账户</span><select aria-label="转入账户" data-field="transferTo">${accountOptions('transferTo')}</select></label></div><p class="bl-note">账户之间转移资金，不计入收入和支出。</p>`:`<div class="bl-category-grid" aria-label="${income?'收入':'支出'}分类">${cats.map(c=>button(`${circle(catIcons[c]||(income?'badge-dollar-sign':'shapes'))}<span>${c}</span>`,'select-category',`data-category="${c}" aria-pressed="${state.category===c}"`,'')).join('')}</div>`}</div><div><div class="bl-field-head"><label for="bl-note-input">备注</label>${!transfer?button(icon('sparkles')+' 试一条示例','sample-sms'):''}</div><textarea id="bl-note-input" data-field="note" placeholder="${transfer?'输入备注…':'例如：停车费10块，也可以粘贴交易短信'}">${esc(state.note)}</textarea>${button('识别备注','preview-note-recognize')}${!transfer&&state.recognized?`<div class="bl-recognition">${icon('circle-check')}<span>已采用备注识别结果（模拟）<br>没有识别的日期和账户保留原填写<br>建议分类：${esc(state.category)} · 保存前可修改</span></div>`:''}<div class="bl-chips">${button(icon('calendar-days')+esc(state.date.slice(5).replace('T',' ')),'date-picker','','bl-chip')}${!transfer?button(icon('credit-card')+esc(state.account),'account-picker','','bl-chip'):''}${button(icon('tag')+' 标签','tag-picker','','bl-chip')}</div>${openingWarning()}${keypad()}<details><summary class="bl-note">模拟起算时间场景</summary>${button('模拟历史短信日期','preview-opening-sample')}</details></div></div>`;
+    return `<div class="bl-type-tabs" role="tablist" aria-label="记账类型">${['收入','支出','转账','借贷'].map(t=>button(t,'entry-type',`data-type="${t}" role="tab" aria-selected="${state.entryType===t}"`,'')).join('')}</div><div class="bl-entry-layout"><div><div class="bl-amount-card"><div class="bl-amount-line">${selected}<div class="bl-amount"><span>¥</span><input aria-label="记账金额" inputmode="decimal" data-field="amount" value="${esc(state.amount)}" placeholder="0.00"></div></div></div>${transfer?`<div class="bl-category-grid bl-transfer-types" aria-label="转账类型">${Object.entries(transferKinds).map(([name,i])=>button(`${circle(i)}<span>${name}</span>`,'transfer-kind',`data-kind="${name}" aria-pressed="${state.transferKind===name}"`,'')).join('')}</div><div class="bl-transfer-pair"><label><span>转出账户</span><select aria-label="转出账户" data-field="transferFrom">${accountOptions('transferFrom')}</select></label>${navIcon('arrow-right-left','swap-accounts','交换转出转入账户')}<label><span>转入账户</span><select aria-label="转入账户" data-field="transferTo">${accountOptions('transferTo')}</select></label></div><p class="bl-note">账户之间转移资金，不计入收入和支出。</p>`:`<div class="bl-category-grid" aria-label="${income?'收入':'支出'}分类">${cats.map(c=>button(`${circle(catIcons[c]||(income?'badge-dollar-sign':'shapes'))}<span>${c}</span>`,'select-category',`data-category="${c}" aria-pressed="${state.category===c}"`,'')).join('')}</div>`}</div><div><div class="bl-field-head"><label for="bl-note-input">备注</label>${!transfer?button(icon('sparkles')+' 试一条示例','sample-sms'):''}</div><textarea id="bl-note-input" data-field="note" placeholder="${transfer?'输入备注…':'例如：停车费10块，也可以粘贴交易短信'}">${esc(state.note)}</textarea><div class="bl-note-controls">${button('<span class="bl-note-switch-track"><span></span></span>自动识别','preview-note-auto',`role="switch" aria-label="自动识别备注（模拟）" aria-checked="${!!state.previewAutoRecognition}"`,'bl-note-mode')}${button(state.previewAutoRecognition?'立即识别':'识别备注','preview-note-recognize')}</div><p class="bl-note">${state.previewAutoRecognition?'停顿后显示结果，确认后才填入（模拟）。':'填写备注后，点击识别备注。'}</p><div class="bl-note-preview"></div>${!transfer&&state.recognized?`<div class="bl-recognition">${icon('circle-check')}<span>已采用备注识别结果（模拟）<br>没有识别的日期和账户保留原填写<br>建议分类：${esc(state.category)} · 保存前可修改</span></div>`:''}<div class="bl-chips">${button(icon('calendar-days')+esc(state.date.slice(5).replace('T',' ')),'date-picker','','bl-chip')}${!transfer?button(icon('credit-card')+esc(state.account),'account-picker','','bl-chip'):''}${button(icon('tag')+' 标签','tag-picker','','bl-chip')}</div>${openingWarning()}${keypad()}<details><summary class="bl-note">模拟起算时间场景</summary>${button('模拟历史短信日期','preview-opening-sample')}</details></div></div>`;
   }
   function openingWarning(){
     const opened=state.previewOpeningAt||'2026-10-15T10:30:00',at=state.date.length===16?state.date+':00':state.date;
@@ -908,6 +916,8 @@
   }
   const renderers={home,entry,categories:categoryPage,accounts,account:accountDetail,accountTypes,accountForm,loan,detail,refund,recurring,rule,reports,books,settings,features};
   function render(){
+    cancelPreviewRecognition();
+    state.previewNoteResult=null;
     closeQuickPanel(false);
     clearTimeout(toastTimer);
     root.querySelector('.bl-toast').hidden=true;
@@ -992,13 +1002,23 @@
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     }
   });
+  let previewRecognitionTimer,previewNoteComposing=false;
+  function cancelPreviewRecognition(){clearTimeout(previewRecognitionTimer);previewRecognitionTimer=undefined;}
+  function schedulePreviewRecognition(){
+    cancelPreviewRecognition();
+    if(!state.previewAutoRecognition||previewNoteComposing||state.page!=='entry'||!state.note.trim())return;
+    const note=state.note;
+    previewRecognitionTimer=setTimeout(()=>{previewRecognitionTimer=undefined;if(state.previewAutoRecognition&&!previewNoteComposing&&state.note===note)previewNoteRecognition();},350);
+  }
   function previewNoteRecognition(){
+    cancelPreviewRecognition();
+    const host=root.querySelector('.bl-note-preview');if(!host||previewNoteComposing||!state.note.trim())return;
     // 原型仅演示固定虚构样例；正式应用使用 src/recognition 的完整规则和金额测试集。
     const text=state.note.normalize('NFKC').trim();
     const parking=/^(停车费|泊车)\s*10\s*(元|块钱?)$/.test(text),meal=/^0?8:20\s*(包點|包点)12元$/.test(text),bank=text.includes('【示例银行】')&&text.includes('4321');
     state.previewNoteResult=parking?{note:state.note,amount:'10.00',entryType:'支出',category:'停车费'}:meal?{note:state.note,amount:'12.00',entryType:'支出',category:'早餐'}:bank?{note:state.note,amount:'32.00',entryType:'支出',category:'午餐',account:'常用储蓄卡',date:'2026-10-21T12:08'}:null;
     const p=state.previewNoteResult;
-    showSheet('请核对识别结果（模拟）',`<p>${p?'金额 ¥ '+p.amount+' · '+p.entryType:'金额未识别，保留手动填写'}</p><p class="bl-note">${parking?'保留当前时间和已选账户':meal?'已识别餐饮用途，按备注时间 08:20 推荐早餐，请核对。草稿日期和已选账户保留。':bank?'示例银行通知：日期 2026-10-21 12:08 · 常用储蓄卡':'原型可输入“停车费10块”“08:20 包點12元”或使用银行示例，正式应用支持更多写法。'}</p>${p?'<p>分类候选：'+p.category+'</p>':''}<p class="bl-note">原型模拟，不处理真实数据。实际金额以本地应用的核对结果为准。</p><div class="bl-actions">${button('保留手动填写','close-sheet')}${p?primary('采用并继续核对','preview-note-apply'):''}</div>`);
+    host.innerHTML=`<div class="bl-recognition"><strong>请核对识别结果（模拟）</strong><p>${p?'金额 ¥ '+p.amount+' · '+p.entryType:'金额未识别，保留手动填写'}</p><p class="bl-note">${parking?'保留当前时间和已选账户':meal?'已识别餐饮用途，按备注时间 08:20 推荐早餐，请核对。草稿日期和已选账户保留。':bank?'示例银行通知：日期 2026-10-21 12:08 · 常用储蓄卡':'原型可输入“停车费10块”“08:20 包點12元”或使用银行示例，正式应用支持更多写法。'}</p>${p?'<p>分类候选：'+p.category+'</p>':''}<p class="bl-note">原型模拟，不处理真实数据。</p><div class="bl-actions">${button('保留手动填写','preview-note-dismiss')}${p?primary('采用并继续核对','preview-note-apply'):''}</div></div>`;
   }
   root.addEventListener('change',e=>{if(e.target.matches('#bl-demo-key-saved')){root.querySelector('#bl-demo-enter').disabled=!e.target.checked;return;}if(e.target.matches('[data-preview-damage]')){state.previewDamage=e.target.value;welcomePreview(state.previewWelcomeExisting);return;}if(e.target.matches('[data-preview-platform]')){state.previewLocalPlatform=e.target.value;welcomePreview(state.previewWelcomeExisting);return;}if(e.target.matches('[data-preview-state]')){state.previewConnection=e.target.value;render();syncPanel();}});
   root.addEventListener('input',e=>{
@@ -1006,7 +1026,7 @@
     if(accountField){accountDraft()[accountField]=e.target.value;const error=root.querySelector('#bl-account-error');if(error)error.hidden=true;return;}
     const field=e.target.dataset.field;if(!field)return;
     state[field]=e.target.value;
-    if(field==='note'){state.recognized=false;state.previewNoteResult=null;root.querySelector('.bl-recognition')?.remove();}
+    if(field==='note'){state.recognized=false;state.previewNoteResult=null;root.querySelector('.bl-recognition')?.remove();const host=root.querySelector('.bl-note-preview');if(host)host.innerHTML='';schedulePreviewRecognition();}
     if(['loanTotal','interest'].includes(field))refreshLoanSummary();
     if(field==='categoryQuery'||field==='search'){
       const pos=e.target.selectionStart;render();const input=root.querySelector(`[data-field="${field}"]`);input.focus();input.setSelectionRange(pos,pos);
@@ -1018,8 +1038,8 @@
       root.querySelector('.bl-keypad')?.setAttribute('aria-label',state.loanInputTarget==='interest'?'包含利息金额键盘':'金额键盘');
     }
   });
-  // 粘贴只打开核对预览，确认前不覆盖手动金额或账户。
-  root.addEventListener('paste',e=>{if(e.target.dataset.field==='note'&&state.entryType!=='转账')setTimeout(()=>{state.note=e.target.value;previewNoteRecognition();},0);});
+  root.addEventListener('compositionstart',e=>{if(e.target.dataset.field==='note'){previewNoteComposing=true;cancelPreviewRecognition();}});
+  root.addEventListener('compositionend',e=>{if(e.target.dataset.field==='note'){previewNoteComposing=false;state.note=e.target.value;schedulePreviewRecognition();}});
   root.addEventListener('click',e=>{
     if(e.target===root.querySelector('.bl-modal-host')){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else if(host.dataset.panel==='support')closeSupportPanel();else host.innerHTML='';return;}
     const homeAction=e.target.closest('[data-home-action]');if(homeAction){ledgerHome.handle(homeAction);return;}
@@ -1048,6 +1068,8 @@
     if(action==='expand-category'){state.categoryGroup=state.categoryGroup===el.dataset.group?'':el.dataset.group;render();return;}
     if(action==='sample-sms'){state.note='【示例银行】您尾号4321账户10月21日12:08消费人民币32.00元，商户青禾食堂，余额12860.00元。';render();previewNoteRecognition();return;}
     if(action==='preview-note-recognize'){previewNoteRecognition();return;}
+    if(action==='preview-note-auto'){state.previewAutoRecognition=!state.previewAutoRecognition;render();schedulePreviewRecognition();return;}
+    if(action==='preview-note-dismiss'){cancelPreviewRecognition();state.previewNoteResult=null;root.querySelector('.bl-note-preview').innerHTML='';return;}
     if(action==='preview-note-apply'){const p=state.previewNoteResult;if(!p||p.note!==state.note){toast('备注已有变化，请重新识别');return;}const {note,...fields}=p;Object.assign(state,fields);state.recognized=true;state.previewNoteResult=null;render();return;}
     if(action==='key'){
       const field=state.page==='loan'?state.loanInputTarget:'amount',k=el.dataset.key;
@@ -1057,6 +1079,7 @@
       if(state.page==='loan')refreshLoanSummary();return;
     }
     if(action==='save-entry'||action==='save-again'){
+      if(previewRecognitionTimer||root.querySelector('.bl-note-preview')?.children.length){if(previewRecognitionTimer)previewNoteRecognition();toast('请先采用识别结果或保留手动填写（模拟）');return;}
       const value=cents(state.amount)/100;if(!Number.isFinite(value)||!(value>0)){toast('请填写有效金额，最多两位小数');return;}
       if(state.entryType==='转账'){
         if(!state.transferFrom||!state.transferTo||state.transferFrom===state.transferTo){toast('请选择两个不同的转出、转入账户');return;}

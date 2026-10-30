@@ -125,3 +125,151 @@ test('多个金额只选实际交易，编辑备注使旧预览失效，无效�
   await form.getByRole('button', { name: '采用并继续核对', exact: true }).click();
   await expect(form.getByLabel('金额', { exact: true })).toHaveValue('20.00');
 });
+
+async function controlTime(page: Page) {
+  const time = new Date('2026-10-30T12:00:00+08:00');
+  await page.clock.install({ time });
+  await page.clock.pauseAt(new Date(time.valueOf() + 1000));
+}
+async function encryptedSnapshot(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<string>((resolve, reject) => {
+        const request = indexedDB.open('BesLedger.encrypted.v1');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const db = request.result,
+            tx = db.transaction('vault'),
+            read = tx.objectStore('vault').get('vault');
+          read.onsuccess = () => resolve(JSON.stringify(read.result));
+          tx.oncomplete = () => db.close();
+        };
+      }),
+  );
+}
+test('自动识别停顿合并输入，只预览最后文本；手动模式输入和粘贴均不触发，不改写加密账本', async ({ page }) => {
+  const form = await setup(page),
+    panel = form.locator('.recognition-panel');
+  await controlTime(page);
+  const before = await encryptedSnapshot(page);
+  const toggle = form.getByRole('switch', { name: '自动识别备注', exact: true });
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  await form.getByLabel('金额', { exact: true }).fill('77.00');
+  await form.getByLabel('备注', { exact: true }).fill('停车费10元');
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await toggle.click();
+  await page.clock.runFor(200);
+  await form.getByLabel('备注', { exact: true }).fill('停车费20元');
+  await page.clock.runFor(349);
+  await expect(panel).toHaveCount(0);
+  await page.clock.runFor(1);
+  await expect(panel).toContainText('金额 ¥ 20.00');
+  await expect(form.getByLabel('金额', { exact: true })).toHaveValue('77.00');
+  await form.getByLabel('备注', { exact: true }).fill('停车费30元');
+  await toggle.click();
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await form.getByLabel('备注', { exact: true }).evaluate((element) => {
+    const input = element as HTMLTextAreaElement;
+    input.dispatchEvent(new Event('paste', { bubbles: true }));
+    input.value = '停车费40元';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await form.getByRole('button', { name: '识别备注', exact: true }).click();
+  await expect(panel).toContainText('金额 ¥ 40.00');
+  expect(await encryptedSnapshot(page)).toBe(before);
+});
+test('自动识别避开中文组词，采用或保留后不重弹，清空与离开取消未运行识别', async ({ page }) => {
+  const form = await setup(page),
+    note = form.getByLabel('备注', { exact: true }),
+    panel = form.locator('.recognition-panel');
+  await controlTime(page);
+  await form.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await note.dispatchEvent('compositionstart');
+  await note.fill('停车费25元');
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await note.dispatchEvent('compositionend');
+  await page.clock.runFor(350);
+  await expect(panel).toContainText('金额 ¥ 25.00');
+  await form.getByRole('button', { name: '采用并继续核对', exact: true }).click();
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await expect(form.getByLabel('金额', { exact: true })).toHaveValue('25.00');
+  await note.fill('停车费26元');
+  await page.clock.runFor(350);
+  await form.getByRole('button', { name: '保留手动填写', exact: true }).click();
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await expect(form.getByLabel('金额', { exact: true })).toHaveValue('25.00');
+  await note.fill('停车费27元');
+  await note.fill('');
+  await page.clock.runFor(1000);
+  await expect(panel).toHaveCount(0);
+  await note.fill('停车费28元');
+  await form.getByRole('button', { name: '返回', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '保留未保存草稿？', exact: true })
+    .getByRole('button', { name: '放弃草稿', exact: true })
+    .click();
+  await page.clock.runFor(1000);
+  await expect(form).toBeHidden();
+  await expect(page.locator('.recognition-panel')).toHaveCount(0);
+  await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
+  await expect(form.getByLabel('备注', { exact: true })).toHaveValue('');
+  await expect(panel).toHaveCount(0);
+});
+test('自动识别尚未执行时快速保存仍先核对，可以保留手动金额后正常保存', async ({ page }) => {
+  const form = await setup(page);
+  await form.getByLabel('金额', { exact: true }).fill('42.00');
+  await form.getByRole('button', { name: '早餐', exact: true }).click();
+  await form.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await form.getByLabel('备注', { exact: true }).fill('停车费10元');
+  await form.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(form.locator('.recognition-panel')).toContainText('金额 ¥ 10.00');
+  await expect(form.getByRole('alert')).toContainText('请先确认采用或保留备注识别结果');
+  await expect(form.getByLabel('金额', { exact: true })).toHaveValue('42.00');
+  await form.getByRole('button', { name: '保留手动填写', exact: true }).click();
+  await expect(form.getByRole('alert')).toHaveCount(0);
+  await form.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(form).toBeHidden();
+  await page.goto('./#/accounts');
+  await expect(page.getByRole('button', { name: '虚构备注现金，余额 ¥ 958.00', exact: true })).toBeVisible();
+});
+test('识别模式在重开与刷新解锁后保持，编辑旧账不自动弹预览，输入后才识别', async ({ page }) => {
+  const form = await setup(page);
+  await form.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await form.getByLabel('备注', { exact: true }).fill('停车费10元');
+  await expect(form.locator('.recognition-panel')).toContainText('金额 ¥ 10.00');
+  await form.getByRole('button', { name: '采用并继续核对', exact: true }).click();
+  await form.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(form).toBeHidden();
+  await page.reload();
+  await page.getByLabel('解锁密码', { exact: true }).fill(password);
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
+  await page.getByRole('button').filter({ hasText: '停车费10元' }).click();
+  await page.getByRole('button', { name: '编辑账目', exact: true }).click();
+  const edit = page.getByRole('dialog', { name: '编辑账目', exact: true });
+  await expect(edit.getByRole('switch', { name: '自动识别备注', exact: true })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await controlTime(page);
+  await page.clock.runFor(1000);
+  await expect(edit.locator('.recognition-panel')).toHaveCount(0);
+  await edit.getByLabel('备注', { exact: true }).fill('停车费11元');
+  await page.clock.runFor(350);
+  await expect(edit.locator('.recognition-panel')).toContainText('金额 ¥ 11.00');
+  await expect(edit.getByLabel('金额', { exact: true })).toHaveValue('10.00');
+  await edit.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    for (const width of [320, 393, 1024]) {
+      await page.setViewportSize({ width, height: 700 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+  }
+});

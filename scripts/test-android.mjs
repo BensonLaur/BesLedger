@@ -54,7 +54,7 @@ try {
     const form = page.getByRole('dialog', { name: '记一笔', exact: true });
     await form.getByLabel('金额', { exact: true }).fill('37.25');
     await form.getByRole('button', { name: '早餐', exact: true }).click();
-    await form.getByLabel('备注').fill('完全虚构的 Android 流水');
+    await form.getByLabel('备注', { exact: true }).fill('完全虚构的 Android 流水');
     await form.getByRole('button', { name: '付款账户', exact: true }).click();
     await page
       .getByRole('dialog', { name: '选择资金账户' })
