@@ -58,6 +58,23 @@ export function accountBalance(state: State, account: Entity<Account>): number {
   // 起算时点之前的记录保留作查询，但不能重复叠加已包含在期初的资金。
   return sum([account.data.opening, ...amounts]);
 }
+export function changeAccountOpeningTime(
+  state: State,
+  accountId: string,
+  openedAt: string,
+  expectedClock: Entity<Account>['clock'],
+): Entity<Account> {
+  const account = state.entities[accountId];
+  if (!account || account.deleted || account.data.kind !== 'account')
+    throw new Error('这个账户已不可用，请重新选择账户');
+  if (
+    Object.keys(account.clock).length !== Object.keys(expectedClock).length ||
+    Object.entries(expectedClock).some(([id, value]) => account.clock[id] !== value)
+  )
+    throw new Error('账户信息已有变化，请关闭后重新打开，再核对起算时间');
+  // 只调整时间，保留起始金额及其他账户信息；余额继续由已有流水按新边界计算。
+  return put(state, { ...account.data, openedAt }, accountId) as Entity<Account>;
+}
 export function validateEntry(state: State, input: Entry, entityId?: string): Entry {
   const e = entrySchema.parse(input);
   if (e.originalId && e.type !== 'refund') throw new Error('只有退款可以关联原支出');

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, reactive, ref, toRaw, onMounted } from 'vue';
+import { computed, reactive, ref, toRaw, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { accounts, currentEntries, mutate, newEntry, run, state, ui } from '../store';
 import { categories, quickCategories } from '../../domain/categories';
 import { list, put, type Entry } from '../../domain/model';
-import { saveEntry } from '../../domain/ledger';
+import { saveEntry, movements } from '../../domain/ledger';
 import { decimal, minor, money } from '../../domain/money';
 import { recognize, type Recognition } from '../../recognition/sms';
 import { localTime } from '../../domain/time';
@@ -11,6 +11,7 @@ import Modal from './Modal.vue';
 import Icon from './Icon.vue';
 import { entryIcon, loanIcons, transferIcons } from '../entry-presentation';
 import { accountIcon } from '../account-presentation';
+import AccountOpeningDialog from './AccountOpeningDialog.vue';
 const draft = reactive(structuredClone(toRaw(ui.draft!)));
 const amount = ref(draft.amount ? decimal(draft.amount) : ''),
   interest = ref(decimal(draft.interest));
@@ -165,9 +166,43 @@ function applyRecognition() {
   recognitionPending.value = false;
   parsed.value = undefined;
 }
-const hasPreOpening = computed(() =>
-  accounts.value.some((a) => [draft.from, draft.to].includes(a.id) && draft.at < a.data.openedAt),
+const normalizedEntryTime = computed(() => (draft.at.length === 16 ? `${draft.at}:00` : draft.at));
+const preOpeningAccounts = computed(() => {
+  const used = new Set(movements(draft).map((m) => m.accountId));
+  return accounts.value.filter((a) => used.has(a.id) && normalizedEntryTime.value < a.data.openedAt);
+});
+const hasPreOpening = computed(() => preOpeningAccounts.value.length > 0);
+const openingAccountId = ref(''),
+  openingNotice = ref('');
+let openingNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+onBeforeUnmount(() => clearTimeout(openingNoticeTimer));
+// 换账户、改发生时间或调整任一边的起算点后，不能沿用上一种情形的历史确认。
+watch(
+  [
+    () => draft.at,
+    () => draft.from,
+    () => draft.to,
+    () => preOpeningAccounts.value.map((a) => `${a.id}:${a.data.openedAt}`).join('|'),
+  ],
+  () => {
+    confirmOpening.value = false;
+  },
 );
+function openAccountOpening(id: string) {
+  openingAccountId.value = id;
+  error.value = ui.error = openingNotice.value = '';
+  clearTimeout(openingNoticeTimer);
+}
+async function openingAdjusted(message: string) {
+  openingAccountId.value = '';
+  error.value = '';
+  confirmOpening.value = false;
+  await nextTick();
+  openingNotice.value = message;
+  openingNoticeTimer = setTimeout(() => {
+    openingNotice.value = '';
+  }, 5500);
+}
 const duplicates = computed(() =>
   currentEntries.value.filter(
     (e) =>
@@ -467,12 +502,28 @@ async function save(again = false) {
           ><input v-model="confirmDuplicate" type="checkbox" />已核对，仍然保存本笔真实交易</label
         >
       </div>
-      <label v-if="hasPreOpening" class="checkbox warning-panel"
-        ><input
-          v-model="confirmOpening"
-          type="checkbox"
-        />早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额</label
-      >
+      <div v-if="hasPreOpening" class="warning-panel opening-warning">
+        <label class="checkbox"
+          ><input
+            v-model="confirmOpening"
+            type="checkbox"
+          />早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额</label
+        >
+        <div class="opening-warning-actions">
+          <button
+            v-for="a in preOpeningAccounts"
+            :key="a.id"
+            type="button"
+            class="text-button"
+            :disabled="ui.busy"
+            @click="openAccountOpening(a.id)"
+          >
+            <Icon name="calendar" :size="15" />{{
+              preOpeningAccounts.length === 1 ? '调整起算时间' : `调整「${a.data.name}」起算时间`
+            }}
+          </button>
+        </div>
+      </div>
       <p v-if="error || ui.error" class="field-error" role="alert">{{ error || ui.error }}</p>
       <p v-if="keypadTarget === 'interest' && showInterest" class="hint">
         正在输入利息 <button type="button" class="text-button" @click="keypadTarget = 'amount'">完成</button>
@@ -521,8 +572,21 @@ async function save(again = false) {
           </button>
         </template>
       </div>
-    </form></Modal
+    </form>
+    <template #feedback
+      ><div v-if="openingNotice" class="entry-opening-toast" role="status">
+        <Icon name="check" :size="18" /><span>{{ openingNotice }}</span>
+      </div></template
+    ></Modal
   >
+  <AccountOpeningDialog
+    v-if="openingAccountId"
+    :key="openingAccountId"
+    :account-id="openingAccountId"
+    :transaction-at="draft.at"
+    @close="openingAccountId = ''"
+    @applied="openingAdjusted"
+  />
   <Modal v-if="categoryPicker" title="全部分类" page @close="categoryPicker = false"
     ><input v-model="categorySearch" aria-label="搜索分类" placeholder="搜索大类或分类" />
     <div class="category-groups">
@@ -608,3 +672,39 @@ async function save(again = false) {
     </form></Modal
   >
 </template>
+<style scoped>
+.opening-warning .checkbox {
+  margin: 0;
+}
+.opening-warning-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.opening-warning-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.entry-opening-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 8px 24px #0003;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.entry-opening-toast svg {
+  flex-shrink: 0;
+}
+</style>

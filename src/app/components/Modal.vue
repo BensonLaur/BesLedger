@@ -66,6 +66,20 @@ onUnmounted(() => {
         </button>
       </header>
       <div class="modal-content"><slot /></div>
+      <div v-if="$slots.feedback" class="modal-feedback"><slot name="feedback" /></div>
     </section>
   </div>
 </template>
+<style scoped>
+.modal {
+  position: relative;
+}
+.modal-feedback {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 5;
+  pointer-events: none;
+}
+</style>
