@@ -64,8 +64,8 @@ test('账户起算快捷调整：短信日期推荐当天零点，取消不写�
   await initialize(page);
   await createAccount(page, true);
   const form = await editor(page);
-  await form.getByLabel('备注 · 粘贴银行短信即可识别').fill(sms);
-  await form.getByRole('button', { name: '重新识别短信', exact: true }).click();
+  await form.getByLabel('备注').fill(sms);
+  await form.getByRole('button', { name: '识别备注', exact: true }).click();
   await form.getByRole('button', { name: '采用并继续核对', exact: true }).click();
   await form.getByRole('button', { name: '早餐', exact: true }).click();
   const before = await stored(page);
@@ -107,7 +107,7 @@ test('账户起算快捷调整：短信日期推荐当天零点，取消不写�
   await expect(historical).toHaveCount(0);
   await expect(form.getByRole('status')).toContainText('起算时间已调整为 2026-09-01 00:00');
   await expect(form.getByLabel('金额', { exact: true })).toHaveValue('12.34');
-  await expect(form.getByLabel('备注 · 粘贴银行短信即可识别')).toHaveValue(sms);
+  await expect(form.getByLabel('备注')).toHaveValue(sms);
   await expect(form.getByRole('button', { name: '当前分类：早餐', exact: true })).toBeVisible();
   await expect(form.getByRole('button', { name: '修改发生时间', exact: true })).toContainText(
     '2026-09-01 08:09',
@@ -128,7 +128,7 @@ test('账户起算手动调整：仍晚于账目时保留提示，精确到同�
   await createAccount(page);
   const form = await editor(page);
   await form.getByLabel('金额', { exact: true }).fill('9.00');
-  await form.getByLabel('备注 · 粘贴银行短信即可识别').fill('虚构手动调整时间');
+  await form.getByLabel('备注').fill('虚构手动调整时间');
   await form.getByRole('button', { name: '早餐', exact: true }).click();
   await form.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
@@ -164,7 +164,7 @@ test('账户起算转账两端分别调整，另一账户仍晚于发生时间�
   const form = await editor(page);
   await form.getByRole('button', { name: '转账', exact: true }).click();
   await form.getByLabel('金额', { exact: true }).fill('10.00');
-  await form.getByLabel('备注 · 粘贴银行短信即可识别').fill('虚构双端转账');
+  await form.getByLabel('备注').fill('虚构双端转账');
   await form.locator('.account-direction > button').first().click();
   await page
     .getByRole('dialog', { name: '选择资金账户', exact: true })

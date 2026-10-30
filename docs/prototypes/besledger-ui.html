@@ -802,7 +802,7 @@
     const cats=quickCategories();
     const selected=transfer?`<span class="bl-selected-category" aria-live="polite">${circle(transferKinds[state.transferKind])}<span>${state.transferKind}</span></span>`:button(`<span class="bl-selected-category">${circle(categoryIcon(state.category))}<span>${esc(state.category)}</span></span>`,'go','data-page="categories"','');
     const accountOptions=field=>transferAccounts.map(name=>`<option value="${name}" ${state[field]===name?'selected':''}>${name}</option>`).join('');
-    return `<div class="bl-type-tabs" role="tablist" aria-label="记账类型">${['收入','支出','转账','借贷'].map(t=>button(t,'entry-type',`data-type="${t}" role="tab" aria-selected="${state.entryType===t}"`,'')).join('')}</div><div class="bl-entry-layout"><div><div class="bl-amount-card"><div class="bl-amount-line">${selected}<div class="bl-amount"><span>¥</span><input aria-label="记账金额" inputmode="decimal" data-field="amount" value="${esc(state.amount)}" placeholder="0.00"></div></div></div>${transfer?`<div class="bl-category-grid bl-transfer-types" aria-label="转账类型">${Object.entries(transferKinds).map(([name,i])=>button(`${circle(i)}<span>${name}</span>`,'transfer-kind',`data-kind="${name}" aria-pressed="${state.transferKind===name}"`,'')).join('')}</div><div class="bl-transfer-pair"><label><span>转出账户</span><select aria-label="转出账户" data-field="transferFrom">${accountOptions('transferFrom')}</select></label>${navIcon('arrow-right-left','swap-accounts','交换转出转入账户')}<label><span>转入账户</span><select aria-label="转入账户" data-field="transferTo">${accountOptions('transferTo')}</select></label></div><p class="bl-note">账户之间转移资金，不计入收入和支出。</p>`:`<div class="bl-category-grid" aria-label="${income?'收入':'支出'}分类">${cats.map(c=>button(`${circle(catIcons[c]||(income?'badge-dollar-sign':'shapes'))}<span>${c}</span>`,'select-category',`data-category="${c}" aria-pressed="${state.category===c}"`,'')).join('')}</div>`}</div><div><div class="bl-field-head"><label for="bl-note-input">备注</label>${!transfer?button(icon('sparkles')+' 试一条示例','sample-sms'):''}</div><textarea id="bl-note-input" data-field="note" placeholder="${transfer?'输入备注…':'在这里粘贴银行短信，自动填入账单信息'}">${esc(state.note)}</textarea>${!transfer&&state.recognized?`<div class="bl-recognition">${icon('circle-check')}<span>已识别金额、账户与月日时间<br>年份按本次补账设置：2026 · 可修改<br>建议分类：${esc(state.category)} · 保存前可修改</span></div>`:''}<div class="bl-chips">${button(icon('calendar-days')+esc(state.date.slice(5).replace('T',' ')),'date-picker','','bl-chip')}${!transfer?button(icon('credit-card')+esc(state.account),'account-picker','','bl-chip'):''}${button(icon('tag')+' 标签','tag-picker','','bl-chip')}</div>${openingWarning()}${keypad()}<details><summary class="bl-note">模拟起算时间场景</summary>${button('模拟历史短信日期','preview-opening-sample')}</details></div></div>`;
+    return `<div class="bl-type-tabs" role="tablist" aria-label="记账类型">${['收入','支出','转账','借贷'].map(t=>button(t,'entry-type',`data-type="${t}" role="tab" aria-selected="${state.entryType===t}"`,'')).join('')}</div><div class="bl-entry-layout"><div><div class="bl-amount-card"><div class="bl-amount-line">${selected}<div class="bl-amount"><span>¥</span><input aria-label="记账金额" inputmode="decimal" data-field="amount" value="${esc(state.amount)}" placeholder="0.00"></div></div></div>${transfer?`<div class="bl-category-grid bl-transfer-types" aria-label="转账类型">${Object.entries(transferKinds).map(([name,i])=>button(`${circle(i)}<span>${name}</span>`,'transfer-kind',`data-kind="${name}" aria-pressed="${state.transferKind===name}"`,'')).join('')}</div><div class="bl-transfer-pair"><label><span>转出账户</span><select aria-label="转出账户" data-field="transferFrom">${accountOptions('transferFrom')}</select></label>${navIcon('arrow-right-left','swap-accounts','交换转出转入账户')}<label><span>转入账户</span><select aria-label="转入账户" data-field="transferTo">${accountOptions('transferTo')}</select></label></div><p class="bl-note">账户之间转移资金，不计入收入和支出。</p>`:`<div class="bl-category-grid" aria-label="${income?'收入':'支出'}分类">${cats.map(c=>button(`${circle(catIcons[c]||(income?'badge-dollar-sign':'shapes'))}<span>${c}</span>`,'select-category',`data-category="${c}" aria-pressed="${state.category===c}"`,'')).join('')}</div>`}</div><div><div class="bl-field-head"><label for="bl-note-input">备注</label>${!transfer?button(icon('sparkles')+' 试一条示例','sample-sms'):''}</div><textarea id="bl-note-input" data-field="note" placeholder="${transfer?'输入备注…':'例如：停车费10块，也可以粘贴交易短信'}">${esc(state.note)}</textarea>${button('识别备注','preview-note-recognize')}${!transfer&&state.recognized?`<div class="bl-recognition">${icon('circle-check')}<span>已采用备注识别结果（模拟）<br>没有识别的日期和账户保留原填写<br>建议分类：${esc(state.category)} · 保存前可修改</span></div>`:''}<div class="bl-chips">${button(icon('calendar-days')+esc(state.date.slice(5).replace('T',' ')),'date-picker','','bl-chip')}${!transfer?button(icon('credit-card')+esc(state.account),'account-picker','','bl-chip'):''}${button(icon('tag')+' 标签','tag-picker','','bl-chip')}</div>${openingWarning()}${keypad()}<details><summary class="bl-note">模拟起算时间场景</summary>${button('模拟历史短信日期','preview-opening-sample')}</details></div></div>`;
   }
   function openingWarning(){
     const opened=state.previewOpeningAt||'2026-10-15T10:30:00',at=state.date.length===16?state.date+':00':state.date;
@@ -992,17 +992,13 @@
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     }
   });
-  function parseSms(){
-    const text=state.note;
-    const amount=text.match(/(?:消费|支出|扣款|支付|收入)(?:人民币|金额|[：:\s])*([\d,]+\.\d{1,2})\s*元?/);
-    if(!amount){state.recognized=false;return false;}
-    state.amount=amount[1].replace(/,/g,'');
-    state.entryType=/收入/.test(text)?'收入':'支出';
-    state.category=state.entryType==='收入'?'工资薪水':/食堂|餐|饭/.test(text)?'午餐':/加油/.test(text)?'加油':/停车/.test(text)?'停车费':'待分类';
-    state.account=/4321/.test(text)?'常用储蓄卡':'待选择账户';
-    const date=text.match(/(\d{1,2})月(\d{1,2})日\s*(\d{2}:\d{2})/);
-    if(date)state.date=`2026-${date[1].padStart(2,'0')}-${date[2].padStart(2,'0')}T${date[3]}`;
-    state.recognized=true;return true;
+  function previewNoteRecognition(){
+    // 原型仅演示两个虚构样例；正式应用使用 src/recognition 的完整规则和金额测试集。
+    const text=state.note.normalize('NFKC').trim();
+    const parking=/^(停车费|泊车)\s*10\s*(元|块钱?)$/.test(text),bank=text.includes('【示例银行】')&&text.includes('4321');
+    state.previewNoteResult=parking?{note:state.note,amount:'10.00',entryType:'支出',category:'停车费'}:bank?{note:state.note,amount:'32.00',entryType:'支出',category:'午餐',account:'常用储蓄卡',date:'2026-10-21T12:08'}:null;
+    const p=state.previewNoteResult;
+    showSheet('请核对识别结果（模拟）',`<p>${p?'金额 ¥ '+p.amount+' · '+p.entryType:'金额未识别，保留手动填写'}</p><p class="bl-note">${parking?'保留当前时间和已选账户':bank?'示例银行通知：日期 2026-10-21 12:08 · 常用储蓄卡':'原型可输入“停车费10块”或使用银行示例，正式应用支持更多写法。'}</p>${p?'<p>分类候选：'+p.category+'</p>':''}<p class="bl-note">原型模拟，不处理真实数据。实际金额以本地应用的核对结果为准。</p><div class="bl-actions">${button('保留手动填写','close-sheet')}${p?primary('采用并继续核对','preview-note-apply'):''}</div>`);
   }
   root.addEventListener('change',e=>{if(e.target.matches('#bl-demo-key-saved')){root.querySelector('#bl-demo-enter').disabled=!e.target.checked;return;}if(e.target.matches('[data-preview-damage]')){state.previewDamage=e.target.value;welcomePreview(state.previewWelcomeExisting);return;}if(e.target.matches('[data-preview-platform]')){state.previewLocalPlatform=e.target.value;welcomePreview(state.previewWelcomeExisting);return;}if(e.target.matches('[data-preview-state]')){state.previewConnection=e.target.value;render();syncPanel();}});
   root.addEventListener('input',e=>{
@@ -1010,6 +1006,7 @@
     if(accountField){accountDraft()[accountField]=e.target.value;const error=root.querySelector('#bl-account-error');if(error)error.hidden=true;return;}
     const field=e.target.dataset.field;if(!field)return;
     state[field]=e.target.value;
+    if(field==='note'){state.recognized=false;state.previewNoteResult=null;root.querySelector('.bl-recognition')?.remove();}
     if(['loanTotal','interest'].includes(field))refreshLoanSummary();
     if(field==='categoryQuery'||field==='search'){
       const pos=e.target.selectionStart;render();const input=root.querySelector(`[data-field="${field}"]`);input.focus();input.setSelectionRange(pos,pos);
@@ -1021,8 +1018,8 @@
       root.querySelector('.bl-keypad')?.setAttribute('aria-label',state.loanInputTarget==='interest'?'包含利息金额键盘':'金额键盘');
     }
   });
-  // 当前示例解析器只覆盖普通收支；转账备注不触发自动改写类型或两端账户。
-  root.addEventListener('paste',e=>{if(e.target.dataset.field==='note'&&state.entryType!=='转账')setTimeout(()=>{state.note=e.target.value;if(parseSms())render();},0);});
+  // 粘贴只打开核对预览，确认前不覆盖手动金额或账户。
+  root.addEventListener('paste',e=>{if(e.target.dataset.field==='note'&&state.entryType!=='转账')setTimeout(()=>{state.note=e.target.value;previewNoteRecognition();},0);});
   root.addEventListener('click',e=>{
     if(e.target===root.querySelector('.bl-modal-host')){const host=root.querySelector('.bl-modal-host');if(host.dataset.panel==='quick')closeQuickPanel();else if(host.dataset.panel==='support')closeSupportPanel();else host.innerHTML='';return;}
     const homeAction=e.target.closest('[data-home-action]');if(homeAction){ledgerHome.handle(homeAction);return;}
@@ -1049,7 +1046,9 @@
     if(action==='select-category'){state.category=el.dataset.category;render();return;}
     if(action==='pick-category'){if(!['收入','支出'].includes(state.entryType))state.entryType='支出';state.category=el.dataset.category;go('entry');return;}
     if(action==='expand-category'){state.categoryGroup=state.categoryGroup===el.dataset.group?'':el.dataset.group;render();return;}
-    if(action==='sample-sms'){state.note='【示例银行】您尾号4321账户10月21日12:08消费人民币32.00元，商户青禾食堂，余额12860.00元。';parseSms();render();return;}
+    if(action==='sample-sms'){state.note='【示例银行】您尾号4321账户10月21日12:08消费人民币32.00元，商户青禾食堂，余额12860.00元。';render();previewNoteRecognition();return;}
+    if(action==='preview-note-recognize'){previewNoteRecognition();return;}
+    if(action==='preview-note-apply'){const p=state.previewNoteResult;if(!p||p.note!==state.note){toast('备注已有变化，请重新识别');return;}const {note,...fields}=p;Object.assign(state,fields);state.recognized=true;state.previewNoteResult=null;render();return;}
     if(action==='key'){
       const field=state.page==='loan'?state.loanInputTarget:'amount',k=el.dataset.key;
       let v=state[field]||'';

@@ -71,9 +71,9 @@ try {
   await page.screenshot({ path: 'artifacts/native-ui-entry.png', animations: 'disabled' });
   await noOverflow();
   await editor
-    .getByLabel('备注 · 粘贴银行短信即可识别')
+    .getByLabel('备注')
     .fill('虚构软键盘验收：这是一条较长的备注，用来确认文字换行和保存操作。');
-  await editor.getByLabel('备注 · 粘贴银行短信即可识别').click();
+  await editor.getByLabel('备注').click();
   await editor.getByRole('button', { name: '保存账目' }).scrollIntoViewIfNeeded();
   await noOverflow();
   const saveBounds = await editor.getByRole('button', { name: '保存账目' }).boundingBox();

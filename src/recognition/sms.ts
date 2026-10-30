@@ -1,9 +1,13 @@
 import type { Account, Entity } from '../domain/model';
-import { minor } from '../domain/money';
 import { today, validTime } from '../domain/time';
+import { recognizeAmounts, type AmountCandidate } from './amounts';
+import { purposeCandidates } from './purposes';
 export type Recognition = {
   type?: 'expense' | 'income' | 'refund';
   amount?: number;
+  amountSource?: string;
+  amountIndex?: number;
+  amountCandidates: AmountCandidate[];
   balance?: number;
   accountIds: string[];
   categoryIds: string[];
@@ -18,24 +22,53 @@ export function recognize(
   now = new Date(),
   merchantRules: Record<string, string> = {},
 ): Recognition {
-  const raw = text.normalize('NFKC').replace(/(?<=\d),(?=\d{3}(?:\D|$))/g, '');
-  const result: Recognition = { accountIds: [], categoryIds: [], rawDate: '', yearBasis: '', warnings: [] };
-  const foreignCurrency = /美元|港币|港元|欧元|英镑|USD|HKD|EUR|GBP/i.test(raw);
+  const raw = text
+    .normalize('NFKC')
+    .replace(/[\u200b-\u200d\ufeff]/g, '')
+    .replace(/−/g, '-');
+  const result: Recognition = {
+    amountCandidates: [],
+    accountIds: [],
+    categoryIds: [],
+    rawDate: '',
+    yearBasis: '',
+    warnings: [],
+  };
+  const foreignCurrency =
+    /美元|港币|港元|欧元|英镑|日元|日币|韩元|澳元|加元|新币|USD|HKD|EUR|GBP|JPY|KRW|AUD|CAD|SGD|[$€£]/i.test(
+      raw,
+    );
+  const transferOrLoan = /转账|转入|转出|借入|借出|还款|还信用卡|收回借款/.test(raw);
+  const unfinished =
+    /(?:未|没|待|尚未)(?:付款|支付|扣款|到账|花)|(?:计划|预计|预算|打算).*(?:花|买|付)|(?:支付|退款|扣款)失败|免费|免单/.test(
+      raw,
+    );
   result.type = /退款|退货|冲正/.test(raw)
     ? 'refund'
-    : /支出|消费|扣款|支付|付出/.test(raw)
-      ? 'expense'
-      : /收入|入账|存入|到账|工资/.test(raw)
+    : transferOrLoan || unfinished
+      ? undefined
+      : /收入|入账|存入|到账|收到|收款/.test(raw)
         ? 'income'
-        : undefined;
-  const balance = raw.match(/(?:可用)?余额(?:为|:|人民币|RMB|\s)*([\d,]+(?:\.\d{1,2})?)元?/i);
-  if (balance) result.balance = minor(balance[1].replaceAll(',', ''));
-  // 余额片段先剔除，绝不把短信里唯一的余额填成交易金额。
-  const transactionPart = raw.split(/(?:可用)?余额/)[0];
-  const amounts = [...transactionPart.matchAll(/([\d,]+(?:\.\d{1,2})?)\s*(?:元|人民币)/g)];
-  if (result.type && amounts.length === 1 && !foreignCurrency)
-    result.amount = minor(amounts[0][1].replaceAll(',', ''));
-  else result.warnings.push(amounts.length > 1 ? '出现多个交易金额，请核对' : '未识别交易金额，请补填');
+        : /支出|消费|扣款|支付(?!宝)|付出|付款|花了|花费|买了/.test(raw)
+          ? 'expense'
+          : /工资|薪水|代发薪|奖金|年终奖|报销到账|收到补贴/.test(raw)
+            ? 'income'
+            : undefined;
+  const purposes = purposeCandidates(raw, result.type);
+  if (!result.type && purposes.length && !transferOrLoan && !unfinished) result.type = 'expense';
+  const amounts = recognizeAmounts(
+    raw,
+    !!result.type || !!purposes.length || /^\s*[-+]?\d[\d,.]*\s*$/.test(raw),
+  );
+  Object.assign(result, amounts);
+  if (foreignCurrency || unfinished) {
+    result.amount = result.amountSource = undefined;
+    result.amountIndex = undefined;
+    result.amountCandidates = [];
+  }
+  if (foreignCurrency) result.balance = undefined;
+  if (unfinished) result.warnings.push('这段备注可能是未完成的交易，请确认实际发生后再记账');
+  if (transferOrLoan) result.warnings.push('可能是转账或借还，请核对记账类型及两端账户');
   const tail = raw.match(/(?:尾号|尾数|\*{2,})(\d{4})/)?.[1];
   const bank = raw.match(/【([^】]*银行)】/)?.[1];
   if (tail)
@@ -43,7 +76,9 @@ export function recognize(
       .filter((a) => a.data.tail === tail && (!bank || a.data.bank === bank))
       .map((a) => a.id);
   if (result.accountIds.length !== 1)
-    result.warnings.push(result.accountIds.length ? '尾号匹配多个账户，请选择' : '账户未匹配，请选择');
+    result.warnings.push(
+      result.accountIds.length ? '尾号匹配多个账户，请选择' : '未匹配到资金账户，请核对已选账户或手动选择',
+    );
   const date =
     raw.match(/(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/) ??
     raw.match(/(?:(\d{4})[-/])?(\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
@@ -58,39 +93,19 @@ export function recognize(
     } else result.yearBasis = date[1] ? 'explicitText' : 'referenceDateCandidate';
     const candidate = `${year}${suffix}`;
     if (validTime(candidate)) result.at = candidate;
-    else result.warnings.push('短信日期无效，请手动修正');
+    else result.warnings.push('备注日期无效，请手动修正');
     if (!date[1]) result.warnings.push('年份为推断候选，请确认补账年份');
-    if (result.at && result.at.slice(0, 10) > today(now)) result.warnings.push('短信时间晚于今天，请确认');
+    if (result.at && result.at.slice(0, 10) > today(now)) result.warnings.push('备注时间晚于今天，请确认');
   } else result.warnings.push('缺少明确交易时间，保留草稿时间');
   for (const [merchant, category] of Object.entries(merchantRules))
     if (raw.includes(merchant)) result.categoryIds.push(category);
   if (!result.categoryIds.length) {
-    // 关键词只是候选，不把支付渠道当作消费用途；一词多义时保留所有候选供核对。
-    const rules: [RegExp, string[]][] =
-      result.type === 'income'
-        ? [
-            [/工资|薪水|代发薪/, ['income.001']],
-            [/利息/, ['income.011']],
-            [/奖金/, ['income.002']],
-          ]
-        : result.type === 'expense'
-          ? [
-              [/早餐|包点|包子|豆浆/, ['expense.food.001']],
-              [/餐厅|餐饮|餐费/, ['expense.food.002', 'expense.food.003']],
-              [/加油|石油|石化/, ['expense.transport.003']],
-              [/停车/, ['expense.transport.004']],
-              [/地铁/, ['expense.transport.005']],
-              [/电费|水费|燃气/, ['expense.home.002']],
-              [/话费|通讯费/, ['expense.home.001']],
-              [/药店|药品/, ['expense.health-education.001']],
-              [/超市/, ['expense.food.007', 'expense.shopping.002']],
-            ]
-          : [];
-    for (const [pattern, candidates] of rules) if (pattern.test(raw)) result.categoryIds.push(...candidates);
-    if (result.categoryIds.length) result.warnings.push('分类来自用途关键词，请核对；不是已学习的商户规则');
+    // 同义词给候选，弱用途保留多个选项；支付渠道不能代表消费用途。
+    result.categoryIds = purposes;
+    if (result.categoryIds.length) result.warnings.push('分类按用途关键词推荐，请核对');
   }
   result.categoryIds = [...new Set(result.categoryIds)];
-  if (foreignCurrency) result.warnings.push('当前仅支持人民币，此短信包含其他币种，不会自动填入金额');
+  if (foreignCurrency) result.warnings.push('当前仅支持人民币，备注包含其他币种，不会自动填入金额');
   if (!result.categoryIds.length) result.warnings.push('分类没有明确依据，请选择');
   if (result.type === 'refund') result.warnings.push('退款需选择原支出，不会计作普通收入');
   return result;

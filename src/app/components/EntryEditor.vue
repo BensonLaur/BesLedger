@@ -45,6 +45,14 @@ const accountPicker = ref<'from' | 'to' | ''>(''),
   confirmOpening = ref(false),
   recognitionPending = ref(false),
   error = ref('');
+// 修改备注后旧识别预览立即失效，避免采用上一段文字的金额；不自动覆盖手动字段。
+watch(
+  () => draft.note,
+  () => {
+    parsed.value = undefined;
+    recognitionPending.value = false;
+  },
+);
 const quick = {
   expense: quickCategories(state.value!, draft.ledgerId, 'expense').slice(0, 11),
   income: quickCategories(state.value!, draft.ledgerId, 'income').slice(0, 7),
@@ -239,7 +247,7 @@ async function createCategory() {
 async function save(again = false) {
   error.value = '';
   if (recognitionPending.value) {
-    error.value = '请先确认采用或忽略短信识别结果';
+    error.value = '请先确认采用或保留备注识别结果';
     return;
   }
   if (duplicates.value.length && !confirmDuplicate.value) {
@@ -378,19 +386,37 @@ async function save(again = false) {
       </div>
       <label
         >备注<textarea
-          aria-label="备注 · 粘贴银行短信即可识别"
+          aria-label="备注"
           v-model="draft.note"
-          placeholder="写点说明，或在这里粘贴一条交易短信"
+          placeholder="例如：停车费10块，也可以粘贴交易短信"
           rows="3"
           @paste="onPaste"
         ></textarea></label
-      ><button v-if="draft.note" class="text-button" type="button" @click="parse">重新识别短信</button>
+      ><button v-if="draft.note.trim()" class="text-button" type="button" @click="parse">识别备注</button>
       <div v-if="parsed" class="recognition-panel">
         <strong>请核对识别结果</strong>
         <p>
           金额 {{ parsed.amount === undefined ? '未识别' : '¥ ' + money(parsed.amount) }} ·
           {{ parsed.type ? typeLabels[parsed.type] : '类型待确认' }}
         </p>
+        <p v-if="parsed.amountSource" class="hint">金额依据：{{ parsed.amountSource }}</p>
+        <div v-if="parsed.amountCandidates.length > 1" class="recognition-candidates">
+          <small>金额候选 · 请选择本次实际金额</small>
+          <button
+            v-for="(candidate, index) in parsed.amountCandidates"
+            :key="index"
+            type="button"
+            class="secondary"
+            :aria-pressed="parsed.amountIndex === index"
+            @click="
+              parsed.amount = candidate.amount;
+              parsed.amountSource = candidate.text;
+              parsed.amountIndex = index;
+            "
+          >
+            {{ candidate.text }} · ¥ {{ money(candidate.amount) }}
+          </button>
+        </div>
         <p>{{ parsed.at?.replace('T', ' ') || '保留当前时间' }}</p>
         <div v-if="parsed.categoryIds.length" class="recognition-candidates">
           <small>分类候选</small>
@@ -423,7 +449,7 @@ async function save(again = false) {
         </div>
         <p v-for="warning in parsed.warnings" class="hint">{{ warning }}</p>
         <p v-if="parsed.balance !== undefined" class="hint">
-          短信余额 ¥ {{ money(parsed.balance) }} 仅供核对，不会覆盖账户余额。
+          备注中的余额 ¥ {{ money(parsed.balance) }} 仅供核对，不会覆盖账户余额。
         </p>
         <div class="actions">
           <button
@@ -673,6 +699,18 @@ async function save(again = false) {
   >
 </template>
 <style scoped>
+.recognition-candidates button {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.recognition-candidates button[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 700;
+}
+.recognition-panel .hint {
+  overflow-wrap: anywhere;
+}
 .opening-warning .checkbox {
   margin: 0;
 }

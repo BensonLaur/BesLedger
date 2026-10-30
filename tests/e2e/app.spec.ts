@@ -31,7 +31,7 @@ test('空白安装、保存编辑、主要页面和离线重开', async ({ page,
   const editor = page.getByRole('dialog', { name: '记一笔', exact: true });
   await editor.getByLabel('金额', { exact: true }).fill('23.45');
   await editor.getByRole('button', { name: '早餐', exact: true }).click();
-  await editor.getByLabel('备注 · 粘贴银行短信即可识别').fill('虚构测试早餐');
+  await editor.getByLabel('备注').fill('虚构测试早餐');
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
   await page.getByRole('dialog', { name: '选择资金账户' }).getByRole('button', { name: '虚构现金' }).click();
   await editor.getByRole('button', { name: '保存账目' }).click();
@@ -79,9 +79,9 @@ test('短信确认与日期不被分类选择重置', async ({ page }) => {
   await page.getByRole('dialog', { name: '全部分类' }).getByRole('button', { name: '餐饮 早餐' }).click();
   await expect(editor.getByRole('button', { name: '修改发生时间' })).toContainText('2026-10-01 12:00');
   await editor
-    .getByLabel('备注 · 粘贴银行短信即可识别')
+    .getByLabel('备注')
     .fill('尾号1234卡2026年10月20日08:09支出(消费示例店)6.50元，余额2,800.50元。【工商银行】');
-  await editor.getByRole('button', { name: '重新识别短信' }).click();
+  await editor.getByRole('button', { name: '识别备注' }).click();
   await expect(editor.getByText('金额 ¥ 6.50 · 支出')).toBeVisible();
   await editor.getByRole('button', { name: '采用并继续核对' }).click();
   await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('6.50');

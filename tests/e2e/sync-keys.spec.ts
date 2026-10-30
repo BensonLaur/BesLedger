@@ -46,7 +46,7 @@ test('模拟 GitHub：账本并存、密钥保持及错误替换不改数据，�
     const editor = b.getByRole('dialog', { name: '记一笔', exact: true });
     await editor.getByLabel('金额', { exact: true }).fill('9.87');
     await editor.getByRole('button', { name: '早餐', exact: true }).click();
-    await editor.getByLabel('备注 · 粘贴银行短信即可识别').fill('虚构仅本地流水');
+    await editor.getByLabel('备注').fill('虚构仅本地流水');
     await editor.getByRole('button', { name: '付款账户', exact: true }).click();
     await b
       .getByRole('dialog', { name: '选择资金账户' })
