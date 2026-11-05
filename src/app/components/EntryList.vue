@@ -7,7 +7,11 @@ import { money } from '../../domain/money';
 import { state, ui } from '../store';
 import Icon from './Icon.vue';
 import { entryIcon } from '../entry-presentation';
-const props = defineProps<{ items: Entity<Entry>[]; statistical?: boolean }>();
+const props = defineProps<{
+  items: Entity<Entry>[];
+  summaryItems?: Entity<Entry>[];
+  statistical?: boolean;
+}>();
 const labels: Record<Entry['type'], string> = {
   expense: '支出',
   income: '收入',
@@ -18,12 +22,20 @@ const labels: Record<Entry['type'], string> = {
   collect: '收款',
   refund: '退款',
 };
+const summaryGroups = computed(() => {
+  const result: Record<string, Entry[]> = {};
+  for (const e of props.summaryItems || props.items) (result[e.data.at.slice(0, 10)] ??= []).push(e.data);
+  return result;
+});
 const groups = computed(() => {
   const result: Record<string, Entity<Entry>[]> = {};
   for (const e of props.items) (result[e.data.at.slice(0, 10)] ??= []).push(e);
-  return Object.entries(result)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([day, items]) => ({ day, items, totals: totals(items.map((x) => x.data)) }));
+  return (
+    Object.entries(result)
+      .sort(([a], [b]) => b.localeCompare(a))
+      // 分批显示时，日期小计仍取完整筛选结果，不能把首批误报为当天总额。
+      .map(([day, items]) => ({ day, items, totals: totals(summaryGroups.value[day]) }))
+  );
 });
 function name(e: Entry) {
   if (props.statistical && ['repay', 'collect'].includes(e.type)) return `${labels[e.type]}利息`;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { accounts, currentEntries, currentLedgerId, mutate, newEntry, state, ui } from '../store';
 import { list, put } from '../../domain/model';
@@ -20,7 +20,7 @@ const filters = ref(false),
   from = ref(''),
   through = ref('');
 const metric = ref<'income' | 'expense'>('expense'),
-  collapsed = ref(false),
+  collapsed = ref(!currentEntries.value.length),
   budgetOpen = ref(false),
   budgetInput = ref(''),
   budgetError = ref('');
@@ -60,6 +60,69 @@ const visible = computed(() =>
   }),
 );
 const options = computed(() => categories(state.value!, currentLedgerId.value));
+const details = ref<HTMLElement>();
+const shown = ref(50);
+const activeFilters = computed(() => [
+  ...(search.value ? [{ key: 'search', label: `备注：${search.value}` }] : []),
+  ...(account.value
+    ? [{ key: 'account', label: accounts.value.find((a) => a.id === account.value)?.data.name || '指定账户' }]
+    : []),
+  ...(category.value
+    ? [{ key: 'category', label: options.value.find((c) => c.id === category.value)?.name || '指定分类' }]
+    : []),
+  ...(from.value ? [{ key: 'from', label: `从 ${from.value}` }] : []),
+  ...(through.value ? [{ key: 'through', label: `至 ${through.value}` }] : []),
+]);
+const selectedEntries = computed(() =>
+  currentEntries.value.filter((e) => e.data.at.startsWith(ui.selectedDay)),
+);
+const selectedTotal = computed(() => totals(selectedEntries.value.map((e) => e.data)));
+const emptyTitle = computed(() =>
+  activeFilters.value.length
+    ? '没有找到符合条件的账目'
+    : ui.selectedDay
+      ? '这一天还没有记账'
+      : currentEntries.value.length
+        ? '这个月还没有记录'
+        : '从第一笔开始',
+);
+function clearFilter(key?: string) {
+  if (!key || key === 'search') search.value = '';
+  if (!key || key === 'account') account.value = '';
+  if (!key || key === 'category') category.value = '';
+  if (!key || key === 'from') from.value = '';
+  if (!key || key === 'through') through.value = '';
+}
+// 只分批绘制，统计及筛选始终使用完整记录；切换范围时恢复首批。
+watch(
+  [() => ui.month, () => ui.selectedDay, () => ui.allTime, search, category, account, from, through],
+  () => {
+    shown.value = 50;
+  },
+);
+watch(
+  () => route.query.account,
+  (id) => {
+    account.value = typeof id === 'string' ? id : '';
+  },
+);
+watch(currentLedgerId, () => {
+  clearFilter();
+  shown.value = 50;
+});
+async function viewDetails() {
+  await nextTick();
+  details.value?.focus({ preventScroll: true });
+  details.value?.scrollIntoView({ behavior: 'instant', block: 'start' });
+}
+function changeMonth(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/.test(input.value)) {
+    ui.month = input.value;
+    ui.allTime = false;
+    ui.selectedDay = '';
+  } else input.value = ui.month;
+}
 const budget = computed(() =>
   list(state.value!, 'budget').find(
     (e) => e.data.ledgerId === currentLedgerId.value && e.data.month === ui.month,
@@ -110,15 +173,13 @@ async function saveBudget() {
     <div class="period-toolbar">
       <div class="month-picker">
         <button class="icon-button" aria-label="上个月" @click="shift(-1)"><Icon name="left" /></button
-        ><input
-          type="month"
-          v-model="ui.month"
-          aria-label="查看月份"
-          @change="
-            ui.allTime = false;
-            ui.selectedDay = '';
-          "
-        /><button class="icon-button" aria-label="下个月" @click="shift(1)"><Icon name="right" /></button>
+        ><input type="month" :value="ui.month" aria-label="查看月份" @change="changeMonth" /><button
+          class="icon-button"
+          aria-label="下个月"
+          @click="shift(1)"
+        >
+          <Icon name="right" />
+        </button>
       </div>
       <button
         class="home-current-month"
@@ -131,6 +192,22 @@ async function saveBudget() {
         本月
       </button>
     </div>
+    <section v-if="!accounts.length" class="home-first-step">
+      <Icon name="wallet" :size="28" />
+      <div>
+        <strong>先添加常用的资金账户</strong>
+        <p>现金、银行卡或微信零钱，选一个就能开始记账。</p>
+      </div>
+      <button
+        class="primary"
+        @click="
+          ui.accountId = '';
+          ui.accountForm = true;
+        "
+      >
+        添加账户
+      </button>
+    </section>
     <div class="home-columns">
       <section class="overview-column">
         <div class="overview">
@@ -199,6 +276,20 @@ async function saveBudget() {
               {{ collapsed ? '展开日历' : '收起日历' }}
             </button>
           </div>
+          <div v-if="ui.selectedDay" class="selected-day-summary" role="status">
+            <span
+              ><strong>{{ ui.selectedDay.replaceAll('-', ' / ') }}</strong
+              ><small
+                >已记 {{ selectedEntries.length }} 笔 · {{ metric === 'expense' ? '净支出' : '收入' }} ¥{{
+                  money(selectedTotal[metric])
+                }}</small
+              ></span
+            >
+            <button class="text-button" @click="viewDetails">查看当天明细</button>
+            <button class="icon-button" aria-label="取消日期选择" @click="ui.selectedDay = ''">
+              <Icon name="close" :size="18" />
+            </button>
+          </div>
           <template v-if="!collapsed"
             ><div class="calendar-week">
               <span v-for="day in ['一', '二', '三', '四', '五', '六', '日']">{{ day }}</span>
@@ -215,7 +306,7 @@ async function saveBudget() {
                     negative: value(day) < 0,
                     today: day === today(),
                   }"
-                  :aria-label="`${day} ${day > today() ? '未发生' : money(value(day)) + '元'}`"
+                  :aria-label="`${day} ${day > today() ? '未发生' : !days[day] ? '暂无记录' : (metric === 'expense' ? '净支出 ' : '收入 ') + money(value(day)) + '元'}`"
                   :aria-pressed="ui.selectedDay === day"
                   @click="ui.selectedDay = ui.selectedDay === day ? '' : day"
                 >
@@ -228,13 +319,19 @@ async function saveBudget() {
               >
             </div>
             <div class="calendar-legend">
-              <span>{{ scale ? '日常刻度 ¥' + money(scale) + '，超出折断' : '记账后生成日常刻度' }}</span
-              ><button class="text-button" @click="ui.selectedDay = ''">查看整月</button>
+              <details>
+                <summary>{{ scale ? '日常刻度 ¥' + money(scale) : '日历怎么看？' }}</summary>
+                <p>柱体越高，金额越多；超出刻度用折断标记。横线表示还没有记录，不代表没有花钱。</p>
+              </details>
+              <button class="text-button" @click="ui.selectedDay = ''">查看整月</button>
             </div></template
           >
+          <button v-if="!ui.selectedDay" class="calendar-to-details text-button" @click="viewDetails">
+            查看明细 · {{ visible.length }} 笔 <Icon name="down" :size="16" />
+          </button>
         </section>
       </section>
-      <section class="details-column">
+      <section ref="details" class="details-column" tabindex="-1" aria-label="账目明细">
         <div class="home-scope">
           <button
             :aria-pressed="!ui.allTime && !ui.selectedDay"
@@ -256,12 +353,18 @@ async function saveBudget() {
         </div>
         <div class="section-heading details-heading">
           <h2>{{ ui.selectedDay || (ui.allTime ? '全部时间' : ui.month) }} 明细</h2>
-          <button class="icon-button" aria-label="搜索与筛选" @click="filters = !filters">
+          <button
+            class="icon-button"
+            aria-label="搜索与筛选"
+            :aria-expanded="filters"
+            :class="{ 'filters-active': activeFilters.length }"
+            @click="filters = !filters"
+          >
             <Icon name="search" />
           </button>
         </div>
         <div v-if="filters" class="filter-panel">
-          <input v-model="search" aria-label="关键词搜索" placeholder="搜索备注 / 短信" /><select
+          <input v-model="search" type="search" aria-label="关键词搜索" placeholder="搜索备注或用途" /><select
             v-model="account"
             aria-label="账户筛选"
           >
@@ -272,22 +375,56 @@ async function saveBudget() {
             <option v-for="c in options" :value="c.id">{{ c.name }}</option></select
           ><label>起始<input v-model="from" type="date" /></label
           ><label>截止<input v-model="through" type="date" /></label
-          ><button
+          ><button class="text-button" @click="clearFilter()">清除筛选</button>
+        </div>
+        <div v-if="activeFilters.length" class="active-filter-list" aria-label="已启用的筛选">
+          <button
+            v-for="filter in activeFilters"
+            :key="filter.key"
+            :aria-label="`移除筛选：${filter.label}`"
+            @click="clearFilter(filter.key)"
+          >
+            <span>{{ filter.label }}</span
+            ><Icon name="close" :size="14" />
+          </button>
+          <button class="text-button" @click="clearFilter()">全部清除</button>
+        </div>
+        <p v-if="from && through && from > through" class="field-error" role="alert">
+          截止日期应在起始日期之后，请调整筛选日期。
+        </p>
+        <p v-if="activeFilters.length" class="hint" role="status">
+          找到 {{ visible.length }} 笔；上方概览仍为{{ ui.allTime ? '全部时间' : '整月' }}收支。
+        </p>
+        <EntryList v-if="visible.length" :items="visible.slice(0, shown)" :summary-items="visible" />
+        <div v-else class="empty-state home-empty">
+          <Icon :name="activeFilters.length ? 'search' : 'receipt'" :size="32" />
+          <h3>{{ emptyTitle }}</h3>
+          <p>
+            {{
+              activeFilters.length
+                ? '试试其他关键词，或清除筛选再看看。'
+                : !accounts.length
+                  ? '添加资金账户后，就可以记下第一笔。'
+                  : '只显示已保存的账目，未记账不代表没有花钱。'
+            }}
+          </p>
+          <button v-if="activeFilters.length" class="secondary" @click="clearFilter()">清除筛选</button>
+          <button v-else-if="accounts.length" class="primary" @click="newEntry()">＋ 记一笔</button>
+          <button
+            v-if="!activeFilters.length && currentEntries.length && !ui.allTime"
             class="text-button"
             @click="
-              search = '';
-              account = '';
-              category = '';
-              from = '';
-              through = '';
+              ui.allTime = true;
+              ui.selectedDay = '';
             "
           >
-            清除筛选
+            查看全部时间
           </button>
         </div>
-        <EntryList :items="visible" /><button v-if="!visible.length" class="text-button" @click="newEntry()">
-          ＋ 记一笔
-        </button>
+        <div v-if="visible.length > shown" class="load-more">
+          <p class="hint">已显示 {{ shown }} / {{ visible.length }} 笔</p>
+          <button class="secondary" @click="shown += 50">加载更多账目</button>
+        </div>
       </section>
     </div>
     <Modal v-if="budgetOpen" title="本月预算" @close="budgetOpen = false"
@@ -303,3 +440,105 @@ async function saveBudget() {
     >
   </template>
 </template>
+<style scoped>
+.home-first-step {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--soft);
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 14px;
+}
+.home-first-step > div {
+  flex: 1;
+  min-width: 170px;
+}
+.home-first-step p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.selected-day-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: var(--soft);
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.selected-day-summary > span {
+  flex: 1;
+  min-width: 160px;
+}
+.selected-day-summary small {
+  display: block;
+  color: var(--muted);
+}
+.calendar-to-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+}
+.calendar-legend details {
+  flex: 1;
+  min-width: 150px;
+}
+.calendar-legend summary {
+  cursor: pointer;
+}
+.calendar-legend p {
+  max-width: 30em;
+}
+.details-column {
+  scroll-margin-top: 16px;
+}
+.details-column:focus {
+  outline: none;
+}
+.filters-active {
+  background: var(--soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.active-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+.active-filter-list > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  background: var(--soft);
+  color: var(--accent);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.active-filter-list span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.home-empty {
+  padding: 30px 16px;
+}
+.home-empty .primary,
+.home-empty .secondary {
+  margin: 8px;
+}
+.load-more {
+  text-align: center;
+  padding: 12px;
+}
+</style>
