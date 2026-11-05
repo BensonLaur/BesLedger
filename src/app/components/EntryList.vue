@@ -11,6 +11,7 @@ const props = defineProps<{
   items: Entity<Entry>[];
   summaryItems?: Entity<Entry>[];
   statistical?: boolean;
+  hideAmounts?: boolean;
 }>();
 const labels: Record<Entry['type'], string> = {
   expense: '支出',
@@ -57,7 +58,9 @@ function account(id: string) {
   <section v-for="group in groups" :key="group.day" class="day-group">
     <div class="section-heading">
       <h3>{{ group.day.replaceAll('-', ' / ') }}</h3>
-      <small>支 {{ money(group.totals.expense) }} · 收 {{ money(group.totals.income) }}</small>
+      <small>{{
+        hideAmounts ? '金额已隐藏' : `支 ${money(group.totals.expense)} · 收 ${money(group.totals.income)}`
+      }}</small>
     </div>
     <div class="entry-list">
       <button v-for="e in group.items" :key="e.id" class="entry-row" @click="ui.detailId = e.id">
@@ -70,21 +73,25 @@ function account(id: string) {
           ><small
             >{{ e.data.at.slice(11, 16) }} · {{ account(e.data.from)
             }}{{ e.data.from && e.data.to ? ' → ' : '' }}{{ account(e.data.to) }}</small
-          ><small v-if="e.data.note" class="note-preview">{{ e.data.note }}</small></span
+          ><small v-if="e.data.note && !hideAmounts" class="note-preview">{{ e.data.note }}</small></span
         ><span
           class="entry-value"
           :class="{ positive: ['income', 'refund', 'collect', 'borrow'].includes(e.data.type) }"
           >{{
-            ['expense', 'repay', 'lend'].includes(e.data.type)
-              ? '−'
-              : ['income', 'refund', 'collect', 'borrow'].includes(e.data.type)
-                ? '+'
-                : ''
+            hideAmounts
+              ? ''
+              : ['expense', 'repay', 'lend'].includes(e.data.type)
+                ? '−'
+                : ['income', 'refund', 'collect', 'borrow'].includes(e.data.type)
+                  ? '+'
+                  : ''
           }}{{
-            money(
-              statistical && ['repay', 'collect'].includes(e.data.type) ? e.data.interest : e.data.amount,
-            )
-          }}<small v-if="e.data.interest">{{
+            hideAmounts
+              ? '••••••'
+              : money(
+                  statistical && ['repay', 'collect'].includes(e.data.type) ? e.data.interest : e.data.amount,
+                )
+          }}<small v-if="e.data.interest && !hideAmounts">{{
             statistical ? '业务总额 ' + money(e.data.amount) : '含利息 ' + money(e.data.interest)
           }}</small></span
         >

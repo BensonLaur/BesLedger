@@ -26,7 +26,7 @@ Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管
 | :---: | :---: | :---: |
 | <a href="docs/images/preview-home.png"><img src="docs/images/preview-home.png" width="260" alt="真实运行界面：月度收支、预算水印与每日金额日历，使用虚构数据" /></a> | <a href="docs/images/preview-entry.png"><img src="docs/images/preview-entry.png" width="260" alt="真实运行界面：午餐分类选中、金额、备注、付款账户和数字键盘" /></a> | <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="真实运行界面：现金、信用卡、银行卡和网络账户的虚构余额" /></a> |
 
-Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统一使用「日常钱包」图标。当前 APK 为 versionCode 11，沿用原包名与长期签名，可覆盖升级。
+Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统一使用「日常钱包」图标。公开稳定版 APK 为 versionCode 11，上方安卓测试版使用递增编号；沿用原包名与长期签名，可覆盖升级。
 
 ## 登录、解锁与同步
 
@@ -51,7 +51,7 @@ Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统�
 
 保留完整加密备份和恢复密钥；同步不能替代独立备份。手机安装或浏览器使用问题可结合 [安全与恢复说明](docs/SECURITY_AND_RECOVERY.md) 排查。
 
-测试分支已实现 0.1.4 的“忘记密码”：用本机恢复密钥设置新密码，保留已有账本与账目，Web 和 Android 均可离线完成。本地网页迭代同时补齐“我的”主动修改密码、恢复密钥保存和备份密码确认；跨设备同步迭代还补齐无空账取回、按账本预览下载、可继续的差异核对及清晰的移除/删除动作。本轮暂不重新打包 Android。当前公开下载仍为上方 0.1.3；验证范围见 [安全与恢复](docs/SECURITY_AND_RECOVERY.md#忘记本机解锁密码)。
+测试分支已实现 0.1.4 的“忘记密码”：用本机恢复密钥设置新密码，保留已有账本与账目，Web 和 Android 均可离线完成。同时补齐主动修改密码、备份确认、无空账取回及可继续的差异核对，已进入上方安卓测试版。2026-11-06 继续完成网页首页与 Android 逐页体验打磨，方案与边界见 [页面体验审查](docs/UI_REVIEW_2026-11-06.md)；本轮不创建公开 Release。恢复验证范围见 [安全与恢复](docs/SECURITY_AND_RECOVERY.md#忘记本机解锁密码)。
 
 ## 开发与构建
 

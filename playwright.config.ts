@@ -4,6 +4,8 @@ export default defineConfig({
   outputDir: './test-results/app',
   testIgnore: ['**/auth.spec.ts', '**/sync-keys.spec.ts', '**/sync-experience.spec.ts'],
   timeout: 45000,
+  // 创建和解锁含本地密钥派生，给 WebKit 与模拟器并行运行保留等待，不降低加密强度。
+  expect: { timeout: 15000 },
   fullyParallel: false,
   use: {
     baseURL: 'http://127.0.0.1:4173/BesLedger/',

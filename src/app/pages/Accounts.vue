@@ -172,7 +172,8 @@ function show(amount: number) {
         <h2>账户流水</h2>
         <small>本机所有账本</small>
       </div>
-      <EntryList :items="filterEntries(entries, { accountId: selected })" />
+      <p v-if="hidden" class="hint">流水金额与备注已隐藏，打开单笔详情可查看。</p>
+      <EntryList :items="filterEntries(entries, { accountId: selected })" :hide-amounts="hidden" />
     </section>
   </div>
 </template>

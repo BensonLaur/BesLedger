@@ -537,9 +537,8 @@ const deletedBooks = computed(() =>
   </div>
   <div class="book-intro">
     <h2>{{ ledgers.length ? '选择要使用或同步的账本' : '从其他设备取回账本' }}</h2>
-    <p>登录不会上传或替换账本。修改后，在两台设备分别点击“同步”获取更新。</p>
+    <p>本地账本无需登录。需要换设备时，再启用跨设备同步；登录不会上传或替换账目。</p>
   </div>
-  <GitHubConnection v-if="!auth" key="login" /><GitHubConnection v-else key="connected" compact />
   <p v-if="auth && cloudState.phase === 'preparing'" role="status" class="scope-note">
     正在检查云端账本，尚未上传任何账目…
   </p>
@@ -605,6 +604,7 @@ const deletedBooks = computed(() =>
       </article>
     </div>
   </section>
+  <GitHubConnection v-if="!auth" key="login" /><GitHubConnection v-else key="connected" compact />
   <section v-if="cloudOnly.length" class="section">
     <h2>其他设备已上传的账本</h2>
     <p class="hint">尚未下载到这里。验证原设备恢复密钥后，可先预览再添加。</p>

@@ -34,7 +34,7 @@ async function remove() {
   await run(async () => {
     await mutate((s) => deleteEntry(s, ui.detailId));
     ui.detailId = '';
-    ui.notice = '账目已删除，删除标记已保留';
+    ui.notice = '账目已移入回收站，可在“我的”中找回';
   });
 }
 </script>
@@ -110,7 +110,7 @@ async function remove() {
       ><button class="primary" @click="editEntry(entity.id)"><Icon name="edit" />编辑账目</button>
     </div>
     <div v-else class="warning-panel">
-      <p>确认删除本笔？余额和统计会同步更新；可从备份恢复。</p>
+      <p>确认将这笔账移入回收站？余额和统计会同步更新，可在“我的 → 回收站”找回。</p>
       <div class="actions">
         <button class="secondary" @click="deleting = false">取消</button
         ><button class="danger" :disabled="ui.busy" @click="remove">确认删除</button>

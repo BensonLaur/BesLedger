@@ -14,6 +14,7 @@ import {
   vault,
   state,
   mutate,
+  currentLedger,
 } from '../store';
 import { saveFile } from '../../inputs/files';
 import { today } from '../../domain/time';
@@ -205,6 +206,9 @@ async function restore() {
     <div>
       <h2>账本已打开</h2>
       <p>账目在{{ localSpace.place }}加密保存</p>
+      <RouterLink to="/books" class="text-button settings-current-book"
+        >{{ currentLedger?.data.name || '选择账本' }} · 管理账本</RouterLink
+      >
     </div>
   </div>
   <section class="settings-shortcuts">
@@ -310,9 +314,8 @@ async function restore() {
   </div>
   <SupportPanel v-if="supportOpen" @close="supportOpen = false" />
   <Modal v-if="recycleOpen" title="回收站" @close="recycleOpen = false"
-    ><p>
-      恢复会形成新版本；需先恢复所属账本和退款原单。恢复整本账时，先恢复账本，再选择需要的流水，不自动复活此前已删除的记录。
-    </p>
+    ><p>找回误删的账目。若所属账本或退款原单也被删除，请先恢复它们，再恢复这笔记录。</p>
+    <p v-if="!deleted.length" class="hint">回收站是空的。以后删除的账目可以在这里找回。</p>
     <div v-for="e in deleted" :key="e.id" class="rule-card">
       <span class="entry-main">{{
         e.data.kind === 'ledger'

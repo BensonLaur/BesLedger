@@ -15,6 +15,11 @@ import AccountOpeningDialog from './AccountOpeningDialog.vue';
 import { readAutoRecognition, rememberAutoRecognition } from '../recognition-mode';
 import { automaticFields } from '../automatic-recognition';
 const draft = reactive(structuredClone(toRaw(ui.draft!)));
+const noteInput = ref<HTMLTextAreaElement>();
+function focusNote() {
+  noteInput.value?.focus();
+  noteInput.value?.scrollIntoView({ block: 'center', behavior: 'instant' });
+}
 const amount = ref(draft.amount ? decimal(draft.amount) : ''),
   interest = ref(decimal(draft.interest));
 const protectedFields = reactive({
@@ -486,6 +491,9 @@ async function save(again = false) {
           />
         </div>
       </div>
+      <button type="button" class="text-button note-shortcut" @click="focusNote">
+        填写备注 · 识别金额和分类 <Icon name="down" :size="16" />
+      </button>
       <div v-if="draft.type === 'expense' || draft.type === 'income'" class="category-grid">
         <button
           v-for="c in quickItems"
@@ -540,6 +548,7 @@ async function save(again = false) {
       </div>
       <label
         >备注<textarea
+          ref="noteInput"
           aria-label="备注"
           v-model="draft.note"
           placeholder="例如：停车费10块，也可以粘贴交易短信"
@@ -865,6 +874,8 @@ async function save(again = false) {
       <button
         v-for="a in availableAccounts"
         :key="a.id"
+        :aria-pressed="draft[accountPicker as 'from' | 'to'] === a.id"
+        :class="{ active: draft[accountPicker as 'from' | 'to'] === a.id }"
         @click="
           selectAccount(accountPicker as 'from' | 'to', a.id);
           accountPicker = '';
@@ -903,6 +914,18 @@ async function save(again = false) {
   >
 </template>
 <style scoped>
+.note-shortcut {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+}
+.selection-list button.active {
+  background: var(--soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
 .recognition-panel > summary {
   cursor: pointer;
   font-weight: 700;

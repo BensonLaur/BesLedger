@@ -19,11 +19,13 @@ const all = computed(() =>
           currentLedgerId.value),
   ),
 );
-const sections = computed(() => [
-  { title: '已过期 · 待核对', items: all.value.filter((e) => e.day < today()) },
-  { title: '今天', items: all.value.filter((e) => e.day === today()) },
-  { title: '即将到来', items: all.value.filter((e) => e.day > today()) },
-]);
+const sections = computed(() =>
+  [
+    { title: '已过期 · 待核对', items: all.value.filter((e) => e.day < today()) },
+    { title: '今天', items: all.value.filter((e) => e.day === today()) },
+    { title: '即将到来', items: all.value.filter((e) => e.day > today()) },
+  ].filter((section) => section.items.length),
+);
 async function checkDue() {
   await run(async () => {
     const n = await mutate((s) => generateDue(s));
@@ -67,6 +69,20 @@ function open(event: FinancialEvent) {
   </div>
   <template v-if="tab === 'events'">
     <p class="scope-note">有日期的财务事项，核对后再记下实际收支。</p>
+    <div v-if="!all.length" class="empty-state">
+      <Icon name="events" :size="36" />
+      <h2>暂时没有待办</h2>
+      <p>房租、水电、固定收入，可以设为周期账。</p>
+      <button
+        class="secondary"
+        @click="
+          ui.ruleId = '';
+          ui.ruleForm = true;
+        "
+      >
+        添加第一笔周期账
+      </button>
+    </div>
     <section v-for="section in sections" :key="section.title" class="section">
       <h2>{{ section.title }}</h2>
       <div v-if="section.items.length" class="event-list">

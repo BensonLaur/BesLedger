@@ -12,6 +12,7 @@ import Icon from '../components/Icon.vue';
 import Modal from '../components/Modal.vue';
 import EntryList from '../components/EntryList.vue';
 import CalendarBar from '../components/CalendarBar.vue';
+import MonthInput from '../components/MonthInput.vue';
 const route = useRoute();
 const filters = ref(false),
   search = ref(''),
@@ -115,13 +116,10 @@ async function viewDetails() {
   details.value?.focus({ preventScroll: true });
   details.value?.scrollIntoView({ behavior: 'instant', block: 'start' });
 }
-function changeMonth(event: Event) {
-  const input = event.target as HTMLInputElement;
-  if (/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/.test(input.value)) {
-    ui.month = input.value;
-    ui.allTime = false;
-    ui.selectedDay = '';
-  } else input.value = ui.month;
+function changeMonth(value: string) {
+  ui.month = value;
+  ui.allTime = false;
+  ui.selectedDay = '';
 }
 const budget = computed(() =>
   list(state.value!, 'budget').find(
@@ -173,7 +171,7 @@ async function saveBudget() {
     <div class="period-toolbar">
       <div class="month-picker">
         <button class="icon-button" aria-label="上个月" @click="shift(-1)"><Icon name="left" /></button
-        ><input type="month" :value="ui.month" aria-label="查看月份" @change="changeMonth" /><button
+        ><MonthInput :model-value="ui.month" label="查看月份" @update:model-value="changeMonth" /><button
           class="icon-button"
           aria-label="下个月"
           @click="shift(1)"

@@ -151,6 +151,12 @@ async function save() {
           <p class="hint">
             填写开始记账时的金额，以后每笔收支会在此基础上增减。这笔起始金额不会算作收入或支出。
           </p>
+          <details class="hint">
+            <summary>补记以前的账，时间怎么选？</summary>
+            <p>
+              设在准备补记的最早一笔之前，并核对当时的起始金额。更早的账目只供查询，不影响起始时间之后的余额。
+            </p>
+          </details>
           <template v-if="['bank', 'credit'].includes(kind)">
             <label>银行名称（选填）<input v-model="draft.bank" placeholder="例如：工商银行" /></label>
             <label
