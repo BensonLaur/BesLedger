@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { setEntryTime } from '../support/entry-time-ui';
 async function initialize(page: Page) {
   await page.goto('./');
   await page.getByLabel('账本名称').fill('虚构验收账本');
@@ -33,7 +34,11 @@ test('空白安装、保存编辑、主要页面和离线重开', async ({ page,
   await editor.getByRole('button', { name: '早餐', exact: true }).click();
   await editor.getByLabel('备注', { exact: true }).fill('虚构测试早餐');
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
-  await page.getByRole('dialog', { name: '选择资金账户' }).getByRole('button', { name: '虚构现金' }).click();
+  await page
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
+    .getByRole('button', { name: '虚构现金' })
+    .click();
   await editor.getByRole('button', { name: '保存账目' }).click();
   await expect(editor).toBeHidden();
   await page.getByRole('button').filter({ hasText: '虚构测试早餐' }).click();
@@ -67,23 +72,25 @@ test('短信确认与日期不被分类选择重置', async ({ page }) => {
   await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
   const editor = page.getByRole('dialog', { name: '记一笔', exact: true });
   await editor.getByRole('button', { name: '修改发生时间' }).click();
-  await page
-    .getByRole('dialog', { name: '发生时间', exact: true })
-    .getByLabel('发生时间')
-    .fill('2026-10-01T12:00');
+  await setEntryTime(page.getByRole('dialog', { name: '发生时间', exact: true }), '2026-10-01T12:00');
   await page
     .getByRole('dialog', { name: '发生时间', exact: true })
     .getByRole('button', { name: '确定' })
     .click();
   await editor.getByRole('button', { name: '全部', exact: true }).click();
-  await page.getByRole('dialog', { name: '全部分类' }).getByRole('button', { name: '餐饮 早餐' }).click();
+  await page.getByRole('region', { name: '全部分类' }).getByRole('button', { name: '餐饮 早餐' }).click();
   await expect(editor.getByRole('button', { name: '修改发生时间' })).toContainText('2026-10-01 12:00');
   await editor
     .getByLabel('备注', { exact: true })
     .fill('尾号1234卡2026年10月20日08:09支出(消费示例店)6.50元，余额2,800.50元。【工商银行】');
   await editor.getByRole('button', { name: '识别备注' }).click();
-  await expect(editor.getByText('金额 ¥ 6.50 · 支出')).toBeVisible();
-  await editor.getByRole('button', { name: '采用并继续核对' }).click();
+  await expect(page.getByRole('dialog', { name: '备注识别结果' })).toContainText('金额 ¥ 6.50 · 支出');
+  await page.locator('.review-actions').getByRole('button', { name: '选择账户', exact: true }).click();
+  await page
+    .locator('.account-picker-backdrop')
+    .getByRole('button', { name: '虚构现金', exact: true })
+    .click();
+  await page.getByRole('button', { name: '采用并返回' }).click();
   await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('6.50');
   await expect(editor.getByRole('button', { name: '修改发生时间' })).toContainText('2026-10-20 08:09');
 });
@@ -141,10 +148,15 @@ test('借还总额与统计利息同源，资金账户余额保持准确', async
       await expect(form.getByText('本金 ¥ 100.00 · 包含利息 ¥ 10.00')).toBeVisible();
     }
     await form.locator('.account-direction > button').first().click();
-    await page.getByRole('dialog', { name: '选择资金账户' }).getByRole('button', { name: source }).click();
+    await page
+      .locator('.account-picker-backdrop')
+      .getByRole('dialog')
+      .getByRole('button', { name: source })
+      .click();
     await form.locator('.account-direction > button').last().click();
     await page
-      .getByRole('dialog', { name: '选择资金账户' })
+      .locator('.account-picker-backdrop')
+      .getByRole('dialog')
       .getByRole('button', { name: destination })
       .click();
     await form.getByRole('button', { name: '保存账目' }).click();
@@ -153,6 +165,7 @@ test('借还总额与统计利息同源，资金账户余额保持准确', async
   await page.goto('./#/accounts');
   await expect(page.getByRole('button', { name: /余额 ¥ 990[.]00/ })).toBeVisible();
   await page.goto('./#/statistics');
+  await page.locator('.statistic-rank-row').first().click();
   await expect(page.locator('.entry-row')).toHaveCount(1);
   await expect(page.locator('.entry-row').getByText('还款利息', { exact: true })).toBeVisible();
   await expect(page.locator('.entry-row .entry-value')).toHaveText(/−10\.00\s*业务总额 110\.00/);

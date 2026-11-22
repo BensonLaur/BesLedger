@@ -61,7 +61,8 @@ try {
   await expect(editor).toBeVisible();
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '选择资金账户' })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
     .getByRole('button', { name: '虚构信用卡' })
     .click();
   for (const key of ['3', '2', '.', '5'])

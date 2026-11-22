@@ -35,6 +35,7 @@ import {
   ChevronRight,
   ChevronUp,
   CircleDollarSign,
+  CircleHelp,
   Clapperboard,
   Clock,
   Cloud,
@@ -130,6 +131,7 @@ import {
 const props = defineProps<{ name: string; size?: number }>();
 const icons: Record<string, unknown> = {
   eye: Eye,
+  help: CircleHelp,
   'eye-off': EyeOff,
   book: BookOpen,
   wallet: Wallet,

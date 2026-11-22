@@ -1,0 +1,459 @@
+/* 只有中间内容滚动，金额与录入底栏不参与分类列表的滚动。 */
+.entry-backdrop {
+  top: var(--entry-viewport-top, 0px);
+  bottom: auto;
+  height: var(--entry-viewport-height, 100dvh);
+}
+.entry-backdrop > .modal {
+  height: min(840px, 100%);
+  max-height: 100%;
+  padding: 0;
+}
+.entry-backdrop > .modal > .modal-header {
+  padding: 4px 16px;
+  min-height: 48px;
+}
+.entry-backdrop > .modal > .modal-header h2 {
+  font-size: 20px;
+}
+.entry-backdrop > .modal > .modal-content {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.entry-form {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.entry-top {
+  flex: none;
+  padding: 0 16px 6px;
+}
+.entry-top .type-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  margin: 0 0 6px;
+}
+.entry-top .type-tabs button {
+  min-height: 40px;
+  padding: 5px 2px;
+  font-size: 15px;
+}
+.entry-top .entry-amount-card {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 14px;
+  gap: 8px;
+}
+.entry-top .selected-category .entry-icon {
+  width: 32px;
+  height: 32px;
+}
+.entry-top .selected-category strong {
+  font-size: 13px;
+}
+.entry-top .entry-amount-value input {
+  font-size: 28px;
+  min-height: 40px;
+}
+.entry-choices {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px;
+  scrollbar-width: thin;
+}
+.entry-choices .category-grid {
+  padding: 10px 0;
+  gap: 10px 8px;
+}
+.entry-choices .category-grid button {
+  min-height: 66px;
+  gap: 5px;
+}
+.entry-choices .category-grid button > span {
+  width: 40px;
+  height: 40px;
+}
+.entry-choices .category-groups {
+  margin: 8px 0;
+}
+.entry-choices .all-categories {
+  max-height: none;
+  margin: 0;
+  overflow: visible;
+}
+.entry-choices .all-categories button {
+  min-height: 52px;
+}
+.entry-choices .account-direction {
+  margin: 8px 0;
+  padding: 10px;
+}
+.entry-choices .category-return {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.entry-choices .entry-all-categories > input {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.entry-dock {
+  flex: none;
+  padding: 0 12px 6px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 14px #27344405;
+}
+.entry-note-tools {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 44px;
+}
+.entry-note-tools .recognition-mode-switch {
+  gap: 5px;
+  min-height: 44px;
+  font-size: 12px;
+}
+.entry-note-tools .recognition-mode-switch small {
+  font-size: 11px;
+}
+.entry-note-tools .recognition-switch-track {
+  width: 28px;
+  height: 16px;
+  padding: 3px;
+}
+.entry-note-tools .recognition-switch-track > span {
+  width: 10px;
+  height: 10px;
+}
+.entry-note-tools .recognition-mode-switch[aria-checked='true'] .recognition-switch-track > span {
+  transform: translateX(12px);
+}
+.entry-note-tools .text-button {
+  font-size: 12px;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+.entry-note-tools .note-expand,
+.entry-note-tools .note-finish {
+  margin-left: auto;
+}
+.entry-note-tools .icon-button {
+  width: 36px;
+  min-width: 36px;
+  min-height: 44px;
+}
+.entry-note {
+  margin: 0;
+}
+.entry-note textarea {
+  display: block;
+  width: 100%;
+  height: 32px;
+  min-height: 32px;
+  max-height: min(112px, calc(var(--entry-viewport-height, 100dvh) * 0.24));
+  resize: none;
+  padding: 5px 8px;
+  font-size: 14px;
+  background: var(--bg);
+  line-height: 20px;
+  overflow-y: auto;
+  border-radius: 9px;
+}
+.entry-context {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.entry-context > .entry-chips {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  margin: 4px 0;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+.entry-context .entry-chip {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 3px 8px;
+  font-size: 12px;
+  border-radius: 16px;
+  white-space: nowrap;
+}
+.entry-context .entry-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.entry-context .direction-summary {
+  max-width: 56%;
+}
+/* 文字键盘只替换数字键盘，时间和账户始终留在备注下方。 */
+.keyboard-open .entry-note textarea {
+  max-height: min(112px, calc(var(--entry-viewport-height, 100dvh) * 0.24));
+}
+.keyboard-open .entry-top .type-tabs button {
+  min-height: 32px;
+  padding-block: 2px;
+}
+.keyboard-open .entry-top .entry-amount-card {
+  padding-block: 4px;
+}
+.keyboard-open .entry-note-tools,
+.keyboard-open .entry-note-tools button {
+  min-height: 36px;
+}
+/* iOS 聚焦小于 16px 的输入框会自动缩放，保持文字输入时的视口稳定。 */
+@supports (-webkit-touch-callout: none) {
+  .entry-note textarea {
+    font-size: 16px;
+    line-height: 21px;
+  }
+}
+.entry-feedback-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  align-items: center;
+}
+.entry-feedback-strip button {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  min-height: 32px;
+  font-size: 12px;
+  color: var(--accent);
+}
+.entry-feedback-strip .pending,
+.entry-feedback-strip .entry-check-summary {
+  color: var(--red);
+}
+.entry-mode-warning {
+  font-size: 11px;
+  margin: 3px 0;
+}
+.entry-dock .entry-keypad {
+  margin: 0;
+  border-radius: 12px;
+}
+.entry-dock .entry-keypad button {
+  min-height: 48px;
+  font-size: 21px;
+}
+.entry-dock .entry-keypad .key-again {
+  font-size: 13px;
+}
+.entry-dock .entry-keypad .key-save {
+  font-size: 16px;
+}
+.entry-dock .entry-error {
+  max-height: 54px;
+  overflow-y: auto;
+  margin: 3px 0;
+  font-size: 12px;
+}
+.entry-keypad-area > .hint {
+  margin: 0;
+  font-size: 12px;
+}
+@media (max-width: 730px) {
+  .entry-backdrop {
+    padding: var(--app-safe-top) var(--app-safe-right) var(--app-safe-bottom) var(--app-safe-left);
+  }
+  .entry-backdrop > .modal.page-dialog.wide {
+    height: 100%;
+    max-height: 100%;
+    padding: 0;
+  }
+}
+@media (max-height: 740px) {
+  .entry-dock .entry-keypad button {
+    min-height: 44px;
+  }
+  .entry-choices .category-grid {
+    gap: 6px 8px;
+  }
+}
+@media (max-height: 500px) {
+  .keyboard-open .entry-choices {
+    display: none;
+  }
+  .keyboard-open .entry-top .entry-amount-card {
+    padding: 3px 10px;
+  }
+  .keyboard-open .entry-top .type-tabs {
+    margin-bottom: 2px;
+  }
+}
+@media (min-width: 650px) and (max-height: 600px) {
+  .entry-backdrop {
+    padding: 4px;
+  }
+  .entry-backdrop > .modal.wide {
+    max-width: 900px;
+  }
+  .entry-form:not(.keyboard-open) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .entry-form:not(.keyboard-open) > .entry-top {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .entry-form:not(.keyboard-open) > .entry-choices {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .entry-form:not(.keyboard-open) > .entry-dock {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    overflow-y: auto;
+  }
+}
+
+/* 一次打开的日期/时间滚轮，Web 与原生共用，不再叠加系统选择框。 */
+.entry-date-backdrop > .modal {
+  max-width: 500px;
+}
+.entry-date-backdrop .modal-header {
+  padding: 6px 16px;
+  min-height: 52px;
+}
+.entry-date-header-spacer {
+  width: 40px;
+  flex: none;
+}
+.entry-date-backdrop .modal-content {
+  padding: 0 16px 12px;
+}
+.entry-date-tabs {
+  display: flex;
+  width: 176px;
+  margin: 0 auto;
+  padding: 3px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+.entry-date-tabs button {
+  flex: 1;
+  min-height: 36px;
+  text-align: center;
+  font-size: 15px;
+  border-radius: 10px;
+}
+.entry-date-tabs button[aria-selected='true'] {
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 1px 4px #27344412;
+  font-weight: 600;
+}
+.entry-date-wheels {
+  --wheel-row: 36px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.entry-date-wheels.time {
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+.wheel-selection {
+  position: absolute;
+  top: calc(var(--wheel-row) * 3);
+  left: 0;
+  right: 0;
+  height: var(--wheel-row);
+  border-radius: 10px;
+  background: var(--soft);
+  pointer-events: none;
+}
+.wheel-column {
+  position: relative;
+  height: calc(var(--wheel-row) * 7);
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+  mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+}
+.wheel-column::-webkit-scrollbar {
+  display: none;
+}
+.wheel-column:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+.wheel-options {
+  padding-block: calc(var(--wheel-row) * 3);
+}
+.wheel-option {
+  height: var(--wheel-row);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  color: var(--muted);
+  font-size: 17px;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.wheel-option.selected {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 19px;
+}
+.entry-date-wheels.time .wheel-column:nth-child(2) .wheel-option {
+  font-size: 15px;
+}
+.entry-date-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.entry-date-current .text-button {
+  min-height: 36px;
+}
+.entry-date-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+}
+.entry-date-actions button {
+  min-height: 44px;
+}
+@media (max-width: 730px) {
+  .entry-date-backdrop {
+    align-items: flex-end;
+  }
+}
+@media (max-height: 500px) {
+  .entry-date-wheels {
+    --wheel-row: 28px;
+  }
+  .entry-date-backdrop .modal {
+    max-height: 100%;
+  }
+}

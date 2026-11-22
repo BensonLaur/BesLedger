@@ -4,11 +4,36 @@ import { accounts, entries, state, ui, newEntry } from '../store';
 import { accountBalance } from '../../domain/ledger';
 import { money, sum } from '../../domain/money';
 import { accountIcon, accountKind, accountKinds, balanceLabel } from '../account-presentation';
+import { accountAmountsHidden as hidden, toggleAccountAmounts } from '../account-privacy';
 import Icon from '../components/Icon.vue';
 import EntryList from '../components/EntryList.vue';
+import Modal from '../components/Modal.vue';
 import { filterEntries } from '../../domain/reports';
-const selected = ref(''),
-  hidden = ref(false);
+const selected = ref('');
+const explanation = ref(false);
+// 仅保存列表展开偏好，不写入账本，也不参与云端同步。
+function readGroups(): Record<string, boolean> {
+  try {
+    const value = JSON.parse(localStorage.getItem('besledger.account-groups') || '{}');
+    return Object.fromEntries(
+      Object.entries(value).filter(([key, item]) => key in accountKinds && typeof item === 'boolean'),
+    ) as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+const collapsed = ref(readGroups());
+function isCollapsed(kind: string) {
+  return collapsed.value[kind] ?? accounts.value.length > 4;
+}
+function toggleGroup(kind: string) {
+  collapsed.value[kind] = !isCollapsed(kind);
+  try {
+    localStorage.setItem('besledger.account-groups', JSON.stringify(collapsed.value));
+  } catch {
+    /* 存储不可用时，本次展开仍可正常使用。 */
+  }
+}
 const values = computed(() =>
   accounts.value.map((account) => ({ account, balance: accountBalance(state.value!, account) })),
 );
@@ -24,6 +49,13 @@ const groups = computed(() =>
     }))
     .filter((g) => g.items.length),
 );
+function groupSummary(group: (typeof groups.value)[number]) {
+  const owed = sum(group.items.filter((item) => item.balance < 0).map((item) => -item.balance));
+  const positive = sum(group.items.filter((item) => item.balance > 0).map((item) => item.balance));
+  // 待还款与卡内余款分别显示，避免多张卡互相抵消欠款。
+  if (group.kind === 'credit') return `待还 ${show(owed)}${positive ? ` · 余款 ${show(positive)}` : ''}`;
+  return show(sum(group.items.map((item) => item.balance)));
+}
 function show(amount: number) {
   return hidden.value ? '••••••' : money(amount);
 }
@@ -63,12 +95,15 @@ function show(amount: number) {
     <div>
       <section class="assets-hero">
         <div class="section-heading">
-          <span>{{ current ? balanceLabel(current.account.data, current.balance) : '净资产' }}</span
+          <span class="assets-title"
+            >{{ current ? balanceLabel(current.account.data, current.balance) : '净资产'
+            }}<button class="icon-button assets-help" aria-label="余额说明" @click="explanation = true">
+              <Icon name="shield" :size="16" /></button></span
           ><button
             class="icon-button"
             :aria-label="hidden ? '显示金额' : '隐藏金额'"
             :aria-pressed="hidden"
-            @click="hidden = !hidden"
+            @click="toggleAccountAmounts"
           >
             <Icon :name="hidden ? 'eye-off' : 'eye'" />
           </button>
@@ -89,10 +124,6 @@ function show(amount: number) {
           }}{{ current.account.data.tail ? ' · 尾号 ' + current.account.data.tail : '' }}
         </p>
       </section>
-      <details class="account-scope">
-        <summary>账户在多个账本间共用 · 查看余额说明</summary>
-        <p>余额根据开始记账时的金额，以及本机已保存、已下载的账目计算。其他设备尚未同步的记录不会计入。</p>
-      </details>
       <div v-if="current" class="actions">
         <button class="primary" @click="newEntry('expense', { from: current.account.id })">
           <Icon name="plus" />记一笔</button
@@ -109,8 +140,18 @@ function show(amount: number) {
     </div>
     <div v-if="!current" class="account-groups">
       <section v-for="group in groups" :key="group.kind" class="account-group">
-        <h2>{{ group.info.name }}</h2>
-        <div class="account-list">
+        <button
+          class="account-group-heading"
+          :aria-expanded="!isCollapsed(group.kind)"
+          :aria-controls="`accounts-${group.kind}`"
+          @click="toggleGroup(group.kind)"
+        >
+          <span
+            >{{ group.info.name }} <small>({{ group.items.length }})</small></span
+          ><strong>{{ groupSummary(group) }}</strong
+          ><Icon :name="isCollapsed(group.kind) ? 'down' : 'chevron-up'" :size="16" />
+        </button>
+        <div v-show="!isCollapsed(group.kind)" :id="`accounts-${group.kind}`" class="account-list">
           <div v-for="{ account, balance } in group.items" :key="account.id" class="account-list-row">
             <button
               class="account-row"
@@ -176,4 +217,9 @@ function show(amount: number) {
       <EntryList :items="filterEntries(entries, { accountId: selected })" :hide-amounts="hidden" />
     </section>
   </div>
+  <Modal v-if="explanation" title="余额说明" @close="explanation = false"
+    ><p>资金账户在本机多个账本间共用。</p>
+    <p>余额根据开始记账时的金额，以及本机已保存、已下载的账目计算。其他设备尚未同步的记录不会计入。</p>
+    <p>总资产汇总正余额，总负债汇总欠款；净资产为两者之差。信用卡待还款和卡内余款分开显示。</p></Modal
+  >
 </template>

@@ -13,7 +13,7 @@ const originals = fs.mkdtempSync(path.join(os.tmpdir(), 'besledger-readme-'));
 fs.mkdirSync(output, { recursive: true });
 const modules = await createServer({
   configFile: false,
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, hmr: false, ws: false },
   appType: 'custom',
   optimizeDeps: { noDiscovery: true, include: [] },
 });
@@ -81,7 +81,7 @@ try {
   serving = await preview({ preview: { host: '127.0.0.1', port: 4187, strictPort: true, open: false } });
   browser = await chromium.launch({ channel: 'msedge' });
   const context = await browser.newContext({
-    viewport: { width: 393, height: 1120 },
+    viewport: { width: 393, height: 852 },
     deviceScaleFactor: 2,
     locale: 'zh-CN',
     timezoneId: 'Asia/Shanghai',
@@ -146,7 +146,8 @@ try {
   await editor.getByLabel('备注', { exact: true }).fill('一碗面，一份小菜');
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '选择资金账户' })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
     .getByRole('button', { name: '日常银行卡' })
     .click();
   await editor.getByRole('button', { name: '当前分类：午餐' }).focus();
@@ -162,10 +163,17 @@ try {
     .click();
   await expect(page.getByRole('heading', { name: '账户', exact: true })).toBeVisible();
   await capture('preview-accounts');
+  await page
+    .getByRole('navigation', { name: '底部导航' })
+    .getByRole('link', { name: '统计', exact: true })
+    .click();
+  await expect(page.getByRole('heading', { name: '统计', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '大类', exact: true }).click();
+  await capture('preview-statistics');
   expect(errors).toEqual([]);
   console.log(
     JSON.stringify(
-      { source: 'production Web/PWA', viewport: '393x1120', fictionalDataOnly: true, originals, sizes },
+      { source: 'production Web/PWA', viewport: '393x852', fictionalDataOnly: true, originals, sizes },
       null,
       2,
     ),

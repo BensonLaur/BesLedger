@@ -1,8 +1,10 @@
-# 安卓测试版 0.1.4-test.1
+# Android 0.1.4 安装与验收
 
-[下载 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4-test.1/BesLedger-0.1.4-test.1-release.apk) · [版本说明和校验文件](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4-test.1)
+当前统一版本为 **0.1.4 / versionCode 20**，同时提供 Android 和 Web/PWA。备注核对突出金额和待处理项，可直接补分类、改时间及选账户；识别依据和余额说明默认折叠。核对中的修改明确采用后才写回，关闭或保留填写不改原草稿。包含账户选择、金额隐私、固定记账布局、滑动选时和统计等累计改进。详细规则见 [记账页布局](ENTRY_EDITOR_LAYOUT.md) 和 [页面审查](UI_REVIEW_2026-11-22.md)。
 
-Android 10 起可用。包名和长期签名不变，versionCode 13，可覆盖正式版和此前 0.1.4 测试包。
+[下载 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-release.apk) · [版本说明和校验文件](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4)
+
+Android 10 起可用。包名和长期签名不变，versionCode 20，可覆盖 0.1.3 及 0.1.4-test.1 至 test.7。
 
 1. 先独立保存加密备份和恢复密钥。
 2. 下载 APK，直接安装覆盖，不要先卸载或清空应用数据。
@@ -15,6 +17,6 @@ Android 10 起可用。包名和长期签名不变，versionCode 13，可覆盖�
 - 多个金额/分类、推断单位和未确认年份等继续选择；餐饮用途结合原文时间推荐餐次。旧自动值会在新备注不明确时撤回。
 - 账户起算时间可从历史记录提示快捷调整。本包也包含网页已体验的解锁密码重设、备份恢复、“我的”和跨设备同步改进；同步仍需主动点击。
 
-343 项核心测试、51 条浏览器流程、Android 构建及 Lint 通过。隔离 API 36 模拟器验证了签名包覆盖、旧虚构账本解锁、登录恢复及加密记录保持；浏览器流程使用 Edge、Android 尺寸及 WebKit iPad，不能替代物理设备验收。
+本版 375 项核心测试、Android 签名构建及完整 Release Lint 通过。浏览器流程使用 Edge、Android 尺寸及 WebKit iPad；隔离 API 36 模拟器验证实际软键盘和签名包覆盖升级，完整结果与历史真实登录验收分别记录在 [逐项验收](DELIVERY_VERIFICATION.md)。本轮没有以模拟 GitHub 响应或空凭证表重新宣称真实授权通过。
 
-请实测手机上的输入法、软键盘、粘贴、滑动及覆盖升级后数据保持。此包是测试版，公开稳定版 Web/PWA 仍为 0.1.3。
+请实测手机上的输入法、软键盘、粘贴、滑动及覆盖升级后的数据保持。公开 Web/PWA 与 APK 均为 0.1.4；使用原网址更新，保留已有站点数据。

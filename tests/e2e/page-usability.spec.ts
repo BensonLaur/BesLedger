@@ -25,7 +25,8 @@ async function initialize(page: Page, withEntry = true) {
   await editor.getByLabel('备注', { exact: true }).fill('虚构停车费10元');
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '选择资金账户' })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
     .getByRole('button', { name: '虚构现金', exact: true })
     .click();
   await editor.getByRole('button', { name: '保存账目', exact: true }).click();
@@ -50,13 +51,18 @@ test('隐藏金额同时保护流水、小计和含金额的备注，恢复显�
 test('统计筛选收起仍可见并可清除，切换范围不残留钻取选择或无效月份', async ({ page }) => {
   await initialize(page);
   await page.goto('./#/statistics');
-  await page.locator('.chart-row').first().click();
+  await page.locator('.statistic-rank-row').first().click();
+  await expect(page.getByRole('dialog', { name: '统计明细', exact: true })).toContainText('10.00');
+  await page
+    .getByRole('dialog', { name: '统计明细', exact: true })
+    .getByRole('button', { name: '返回', exact: true })
+    .click();
   await page.getByRole('button', { name: '筛选', exact: true }).click();
   await page.getByLabel('统计账户').selectOption({ label: '虚构现金' });
   await page.getByRole('button', { name: '筛选 · 已启用', exact: true }).click();
   await expect(page.locator('.filter-panel')).toHaveCount(0);
   await expect(page.locator('.report-filter-summary')).toContainText('虚构现金');
-  await expect(page.getByRole('heading', { name: '当前范围 · 明细', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '统计明细', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '清除筛选', exact: true }).click();
   await expect(page.locator('.report-filter-summary')).toHaveCount(0);
   await page.getByLabel('统计月份').fill('');
@@ -88,10 +94,10 @@ test('本地账本优先、事件空状态单一、备注可直达且账户选�
     .click();
   await page.goto('./#/');
   await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
-  await page.getByRole('button', { name: '填写备注 · 识别金额和分类', exact: true }).click();
+  await page.getByRole('button', { name: '展开备注', exact: true }).click();
   await expect(page.getByLabel('备注', { exact: true })).toBeFocused();
   await page.getByRole('button', { name: '付款账户', exact: true }).click();
-  const picker = page.getByRole('dialog', { name: '选择资金账户' });
+  const picker = page.locator('.account-picker-backdrop').getByRole('dialog');
   await picker.getByRole('button', { name: '虚构现金', exact: true }).click();
   await page.getByRole('button', { name: '付款账户', exact: true }).click();
   await expect(picker.getByRole('button', { name: '虚构现金', exact: true })).toHaveAttribute(

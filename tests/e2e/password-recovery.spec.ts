@@ -62,7 +62,8 @@ test('离线重设密码保留账户流水，错误与取消不改数据，刷�
   await editor.getByLabel('备注', { exact: true }).fill('虚构恢复测试午餐');
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '选择资金账户' })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
     .getByRole('button', { name: '虚构恢复现金' })
     .click();
   await editor.getByRole('button', { name: '保存账目' }).click();

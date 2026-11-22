@@ -57,7 +57,8 @@ try {
     await form.getByLabel('备注', { exact: true }).fill('完全虚构的 Android 流水');
     await form.getByRole('button', { name: '付款账户', exact: true }).click();
     await page
-      .getByRole('dialog', { name: '选择资金账户' })
+      .locator('.account-picker-backdrop')
+      .getByRole('dialog')
       .getByRole('button', { name: '虚构 Android 现金' })
       .click();
     await form.getByRole('button', { name: '保存账目' }).click();

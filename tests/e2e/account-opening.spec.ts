@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { setEntryTime } from '../support/entry-time-ui';
 test.use({ reducedMotion: 'reduce' });
 const password = 'fictional-opening-ui-password';
 const sms = '尾号1234卡2026年9月1日08:09支出(消费虚构早餐店)12.34元，余额1,234.56元。【工商银行】';
@@ -56,7 +57,7 @@ async function stored(page: Page) {
 async function setDate(page: Page, value = '2026-09-01T08:09') {
   await page.getByRole('button', { name: '修改发生时间', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '发生时间', exact: true });
-  await dialog.getByLabel('发生时间').fill(value);
+  await setEntryTime(dialog, value);
   await dialog.getByRole('button', { name: '确定', exact: true }).click();
 }
 
@@ -66,14 +67,15 @@ test('账户起算快捷调整：短信日期推荐当天零点，取消不写�
   const form = await editor(page);
   await form.getByLabel('备注', { exact: true }).fill(sms);
   await form.getByRole('button', { name: '识别备注', exact: true }).click();
-  await form.getByRole('button', { name: '采用并继续核对', exact: true }).click();
+  await page.getByRole('button', { name: '采用并返回', exact: true }).click();
   await form.getByRole('button', { name: '早餐', exact: true }).click();
+  await form.locator('.entry-check-summary').click();
   const before = await stored(page);
-  const historical = form.getByLabel('早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额', {
+  const historical = page.getByLabel('早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额', {
     exact: true,
   });
   await expect(historical).not.toBeChecked();
-  await form.getByRole('button', { name: '调整起算时间', exact: true }).click();
+  await page.getByRole('button', { name: '调整起算时间', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '调整账户起算时间', exact: true });
   await expect(dialog).toContainText('虚构储蓄卡');
   await expect(dialog).toContainText('当前起算时间：2026-10-15 10:30');
@@ -100,7 +102,7 @@ test('账户起算快捷调整：短信日期推荐当天零点，取消不写�
   await dialog.getByRole('button', { name: '取消', exact: true }).click();
   expect(await stored(page)).toBe(before);
   await expect(historical).not.toBeChecked();
-  await form.getByRole('button', { name: '调整起算时间', exact: true }).click();
+  await page.getByRole('button', { name: '调整起算时间', exact: true }).click();
   await dialog.getByRole('button', { name: '使用推荐时间：2026-09-01 00:00', exact: true }).click();
   await dialog.getByRole('button', { name: '确认调整', exact: true }).click();
   await expect(dialog).toBeHidden();
@@ -132,22 +134,24 @@ test('账户起算手动调整：仍晚于账目时保留提示，精确到同�
   await form.getByRole('button', { name: '早餐', exact: true }).click();
   await form.getByRole('button', { name: '付款账户', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '选择资金账户', exact: true })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
     .getByRole('button', { name: '虚构现金', exact: true })
     .click();
   await setDate(page);
-  const historical = form.getByLabel('早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额', {
+  await form.locator('.entry-check-summary').click();
+  const historical = page.getByLabel('早于账户起算时间，本笔仅供历史查询，不改变期初之后的余额', {
     exact: true,
   });
   await historical.check();
-  await form.getByRole('button', { name: '调整起算时间', exact: true }).click();
+  await page.getByRole('button', { name: '调整起算时间', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '调整账户起算时间', exact: true });
   await dialog.getByLabel('起算时间', { exact: true }).fill('2026-09-01T09:00');
   await expect(dialog).toContainText('历史记录提示仍会保留');
   await dialog.getByRole('button', { name: '确认调整', exact: true }).click();
   await expect(historical).toBeVisible();
   await expect(historical).not.toBeChecked();
-  await form.getByRole('button', { name: '调整起算时间', exact: true }).click();
+  await page.getByRole('button', { name: '调整起算时间', exact: true }).click();
   await dialog.getByLabel('起算时间', { exact: true }).fill('2026-09-01T08:09');
   await dialog.getByRole('button', { name: '确认调整', exact: true }).click();
   await expect(historical).toHaveCount(0);
@@ -167,25 +171,28 @@ test('账户起算转账两端分别调整，另一账户仍晚于发生时间�
   await form.getByLabel('备注', { exact: true }).fill('虚构双端转账');
   await form.locator('.account-direction > button').first().click();
   await page
-    .getByRole('dialog', { name: '选择资金账户', exact: true })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
     .getByRole('button', { name: '虚构现金', exact: true })
     .click();
   await form.locator('.account-direction > button').last().click();
   await page
-    .getByRole('dialog', { name: '选择资金账户', exact: true })
-    .getByRole('button', { name: '虚构储蓄卡 尾号 1234', exact: true })
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
+    .getByRole('button', { name: '虚构储蓄卡', exact: true })
     .click();
   await setDate(page);
-  await form.getByRole('button', { name: '调整「虚构现金」起算时间', exact: true }).click();
+  await form.locator('.entry-check-summary').click();
+  await page.getByRole('button', { name: '调整「虚构现金」起算时间', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '调整账户起算时间', exact: true });
   await dialog.getByRole('button', { name: '使用推荐时间：2026-09-01 00:00', exact: true }).click();
   await dialog.getByRole('button', { name: '确认调整', exact: true }).click();
-  await expect(form.getByRole('button', { name: '调整起算时间', exact: true })).toBeVisible();
-  await form.getByRole('button', { name: '调整起算时间', exact: true }).click();
+  await expect(page.getByRole('button', { name: '调整起算时间', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '调整起算时间', exact: true }).click();
   await expect(dialog).toContainText('虚构储蓄卡');
   await dialog.getByRole('button', { name: '使用推荐时间：2026-09-01 00:00', exact: true }).click();
   await dialog.getByRole('button', { name: '确认调整', exact: true }).click();
-  await expect(form.locator('.opening-warning')).toHaveCount(0);
+  await expect(page.locator('.opening-warning')).toHaveCount(0);
   await form.getByRole('button', { name: '保存账目', exact: true }).click();
   await page.goto('./#/accounts');
   await expect(page.getByRole('button', { name: '虚构现金，余额 ¥ 990.00', exact: true })).toBeVisible();

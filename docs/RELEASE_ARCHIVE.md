@@ -1,6 +1,8 @@
 # 历史版本记录
 
-当前版本为 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3)。旧 Release 及两份历史归档附件均已按用户要求移除，不再提供旧版下载。以下保留版本与校验记录，源码提交和标签继续保留。
+当前版本为 **[0.1.4](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4)**，统一提供 Android versionCode 20、Web/PWA、校验和签名说明。此前的 [0.1.3](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3) 和 [0.1.4-test.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4-test.1) 保留为历史记录；本轮不删除它们。
+
+以下五个早期 Release 及两份历史归档附件已按此前用户要求移除，不再提供对应下载。保留版本与校验记录，源码提交和标签继续保留。
 
 ## v0.1.0-preview.1
 

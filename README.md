@@ -10,23 +10,30 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-**安卓测试版 [0.1.4-test.1](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4-test.1)**：[下载 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4-test.1/BesLedger-0.1.4-test.1-release.apk)。自动识别可直接填入明确金额和分类，手动修改受保护；包含本轮备注识别、账户起算时间及密码/备份/同步页面改进。沿用长期签名，versionCode 13，可覆盖旧版；先备份，不要卸载。使用方法与测试边界见 [安卓测试说明](docs/ANDROID_TESTING.md)。公开 Web/PWA 和稳定版下载仍为下述 0.1.3。
+当前版本为 **[0.1.4](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4)**，统一发布 Android 与 Web/PWA，包含此前测试版的累计改进。
 
-当前完整版本为 **0.1.3**：统一采用「日常钱包」图标，首页轻立体日历恢复原型的连续三面、配色与比例。包含五项底部导航、分步创建账户、分类选择反馈，以及本地加密记账、登录保持、设备保存同步密钥和跨端同步。
+- **补账更顺手**：备注支持自动或手动识别；明确金额、分类直接填入，手动修改受保护。核对面板突出金额和待处理项，可直接补分类、时间与账户。
+- **记账区始终可用**：金额、备注、时间、账户与数字键盘固定，中间分类独立滚动；文字键盘打开时仍可看到时间与账户，点时间直接滑动选择。
+- **账户与统计更清楚**：账户分组汇总、折叠与搜索；统计支持月、年、自选范围、趋势、分类占比和账户分布，并可查看对应明细。
+- **恢复与同步流程统一**：用恢复密钥重设解锁密码，保留已有账目；备份先校验再确认，账本管理明确区分本地、云端及同步状态。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 [Android 0.1.3 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-release.apk)（Android 10 起）。[0.1.3 完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.3) 提供长期签名 APK、Web 生产包与 SHA-256。Android versionCode 11 已验签，与原正式预览包及 0.1.0–0.1.2 使用相同证书；升级前独立保存加密备份，直接覆盖安装，不先卸载或清空数据。提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/BesLedger-0.1.3-web-pwa.zip) 和 [SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.3/SHA256SUMS.txt)。0.1.2 及更早 Release 已清理，稳定版保留 0.1.3，安卓测试版单独标注，源码标签保留；旧版本信息见 [历史版本记录](docs/RELEASE_ARCHIVE.md)。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 **[Android 0.1.4 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-release.apk)**（Android 10 起）。[完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4) 同时提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-web-pwa.zip)、[SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/SHA256SUMS.txt) 与签名说明。versionCode 20 沿用原包名与长期签名，可覆盖 0.1.3 和此前 0.1.4 测试包；**先独立保存加密备份与恢复密钥，再直接覆盖安装，不要先卸载或清空数据**。安装与验证边界见 [安卓说明](docs/ANDROID_TESTING.md)，历史版本见 [版本记录](docs/RELEASE_ARCHIVE.md)。
 
-Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)。两个网址的本地存储相互独立；已有账目请继续使用原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
+Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)；备用站目前保留 0.1.3，新版体验以主站为准。两个网址的本地存储相互独立；已有账目请继续保留在原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
 ## 界面预览
 
-以下为当前 0.1.3 构建实际运行的 Web/PWA 手机布局，与 Android 共用界面；首页柱体已按原型的连续三面、配色和比例重新绘制后截图。全部账本、账户和金额均为虚构演示数据；工资示例为 6,000 元，另有 400 元奖金。点击图片可查看大图。
+以下为 0.1.4 生产构建实际运行的 Web/PWA 手机布局，与 Android 共用界面。全部账本、账户和金额均为虚构演示数据；工资示例为 6,000 元，另有 400 元奖金。点击图片可查看大图。
 
-| 收支日历与月预算 | 分类记账与数字键盘 | 账户与资产总览 |
-| :---: | :---: | :---: |
-| <a href="docs/images/preview-home.png"><img src="docs/images/preview-home.png" width="260" alt="真实运行界面：月度收支、预算水印与每日金额日历，使用虚构数据" /></a> | <a href="docs/images/preview-entry.png"><img src="docs/images/preview-entry.png" width="260" alt="真实运行界面：午餐分类选中、金额、备注、付款账户和数字键盘" /></a> | <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="真实运行界面：现金、信用卡、银行卡和网络账户的虚构余额" /></a> |
+| 收支日历与月预算 | 固定记账区与数字键盘 |
+| :---: | :---: |
+| <a href="docs/images/preview-home.png"><img src="docs/images/preview-home.png" width="260" alt="实际运行界面：月度收支、预算与每日金额日历，使用虚构数据" /></a> | <a href="docs/images/preview-entry.png"><img src="docs/images/preview-entry.png" width="260" alt="实际运行界面：固定金额、备注、时间、付款账户和数字键盘，中间分类独立滚动" /></a> |
 
-Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统一使用「日常钱包」图标。公开稳定版 APK 为 versionCode 11，上方安卓测试版使用递增编号；沿用原包名与长期签名，可覆盖升级。
+| 账户分组与资产总览 | 分类占比与明细入口 |
+| :---: | :---: |
+| <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="实际运行界面：现金、信用卡、银行卡与网络账户分组及虚构余额" /></a> | <a href="docs/images/preview-statistics.png"><img src="docs/images/preview-statistics.png" width="260" alt="实际运行界面：月度收支汇总、大类占比环形图和可查看明细的分类列表" /></a> |
+
+Android、Web/PWA、浏览器标签、创建/解锁页与“我的”统一使用「日常钱包」图标。当前 APK 为 versionCode 20，沿用原包名与长期签名，可覆盖升级。
 
 ## 登录、解锁与同步
 
@@ -38,7 +45,7 @@ Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统�
 
 默认安装选择 **All repositories**，令牌具备其他及未来仓库内容的读写能力。当前代码只使用确认过的账本存储，应用行为限制不等同平台隔离；也可自行选择 Only select repositories 限定范围，但首次须已有专用仓库。GitHub App 仅申请 Contents 写入、Repository creation 写入、Metadata 只读，已不使用旧 OAuth 的 repo 授权。
 
-真实 GitHub App 登录、自动私有建库、Android 与 Web 双向同步及令牌续期已验收。0.1.3 的 73 项核心测试、相关界面与离线浏览器流程、20 组原型渲染像素对照，以及正式签名包从 0.1.2 到 0.1.3 的覆盖升级均通过；物理 Android/iPad 的验收仍待用户实测，不将模拟器或浏览器尺寸测试视为真机结果。产物与证据见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
+真实 GitHub App 登录、自动私有建库、Android 与 Web 双向同步及令牌续期已有独立验收记录。本版通过 375 项核心测试，并对浏览器流程、实际 Android 模拟器软键盘和正式签名包覆盖升级进行验证；本轮未重新执行真实 GitHub 授权。物理 Android/iPad 仍待用户实测，不将模拟器或浏览器尺寸测试视为真机结果。完整范围见 [逐项验收](docs/DELIVERY_VERIFICATION.md)，维护者配置见 [部署说明](docs/DEPLOYMENT.md)。
 
 ## 开始使用
 
@@ -51,7 +58,7 @@ Android、Web/PWA、浏览器标签、创建/解锁页与“我的”现已统�
 
 保留完整加密备份和恢复密钥；同步不能替代独立备份。手机安装或浏览器使用问题可结合 [安全与恢复说明](docs/SECURITY_AND_RECOVERY.md) 排查。
 
-测试分支已实现 0.1.4 的“忘记密码”：用本机恢复密钥设置新密码，保留已有账本与账目，Web 和 Android 均可离线完成。同时补齐主动修改密码、备份确认、无空账取回及可继续的差异核对，已进入上方安卓测试版。2026-11-06 继续完成网页首页与 Android 逐页体验打磨，方案与边界见 [页面体验审查](docs/UI_REVIEW_2026-11-06.md)；本轮不创建公开 Release。恢复验证范围见 [安全与恢复](docs/SECURITY_AND_RECOVERY.md#忘记本机解锁密码)。
+0.1.4 的“忘记密码”可用本机恢复密钥设置新密码，保留已有账本与账目，Web 和 Android 均可离线完成；同时补齐主动修改密码、备份确认、无空账取回及可继续的差异核对。页面设计与边界见 [逐页体验审查](docs/UI_REVIEW_2026-11-22.md) 和 [记账页布局](docs/ENTRY_EDITOR_LAYOUT.md)，恢复验证范围见 [安全与恢复](docs/SECURITY_AND_RECOVERY.md#忘记本机解锁密码)。
 
 ## 开发与构建
 

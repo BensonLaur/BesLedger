@@ -65,9 +65,12 @@ try {
   await expect(candidate).toBeVisible();
   await candidate.check();
   await page.getByRole('button', { name: '逐条核对 1 条短信' }).click();
+  const editor = page.getByRole('dialog', { name: '记一笔', exact: true });
+  await expect(editor.getByLabel('备注', { exact: true })).toHaveValue(/尾号1234卡2026年10月22日08:09/);
+  await editor.getByRole('button', { name: /^(识别备注|立即识别)$/ }).click();
   await expect(
-    page.getByRole('dialog', { name: '记一笔', exact: true }).getByText(/金额 ¥ 6.50/),
-  ).toBeVisible();
+    page.getByRole('dialog', { name: '备注识别结果', exact: true }).getByLabel('本次金额'),
+  ).toHaveValue('6.50');
   adb('shell', 'pm', 'revoke', pkg, 'android.permission.READ_SMS');
   console.log(
     'PASS: SMS permission denial, ordinary runtime grant, bank/date candidates, explicit selection, local recognition and revocation',

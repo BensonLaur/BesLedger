@@ -1,0 +1,258 @@
+/* 沿用原生桥接的系统安全区，Web 则使用浏览器提供的 env；不要叠加两份边距。 */
+:root {
+  --app-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --app-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --app-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --app-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+}
+body {
+  padding: var(--app-safe-top) var(--app-safe-right) 0 var(--app-safe-left);
+}
+.page-heading {
+  margin-bottom: 14px;
+  min-height: 44px;
+}
+.section {
+  margin-top: 18px;
+}
+.scope-note {
+  margin: 12px 0;
+}
+.scope-note summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.scope-note summary:before {
+  content: '▸';
+  margin-right: 5px;
+}
+.scope-note[open] summary:before {
+  content: '▾';
+}
+.assets-hero {
+  padding: 12px 18px 16px;
+  border-radius: 18px;
+}
+.assets-hero .section-heading {
+  margin: 0 0 2px;
+}
+.assets-title {
+  display: flex;
+  align-items: center;
+}
+.assets-help {
+  opacity: 0.8;
+}
+.assets-total {
+  line-height: 1.25;
+  font-size: 32px;
+}
+.assets-secondary {
+  margin-top: 12px;
+  gap: 4px 20px;
+}
+.assets-secondary > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 7px;
+}
+.assets-secondary strong {
+  display: inline;
+  font-size: 14px;
+}
+.assets-hero > p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: inherit;
+}
+.accounts-layout {
+  gap: 20px;
+}
+.account-groups {
+  display: grid;
+  gap: 10px;
+}
+.account-group {
+  margin: 0;
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.account-group-heading {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.account-group-heading > span {
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.account-group-heading > strong {
+  min-width: 0;
+  max-width: 52%;
+  font-size: 14px;
+  text-align: right;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.account-group-heading:active {
+  background: var(--soft);
+}
+.account-list {
+  border-radius: 0;
+}
+.account-group-heading[aria-expanded='true'] {
+  border-bottom: 1px solid var(--line);
+}
+.account-row {
+  padding: 10px 0;
+  min-height: 64px;
+}
+.account-row .entry-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+}
+.account-row-name {
+  flex-basis: 40%;
+}
+.account-row-value {
+  min-width: 0;
+  max-width: 46%;
+}
+.entry-row {
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+.settings-profile {
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.settings-shortcuts {
+  margin-bottom: 16px;
+}
+.support-entry {
+  padding: 13px 16px;
+  border-radius: 16px;
+}
+.book-card {
+  padding: 16px;
+}
+.event-card,
+.rule-card {
+  padding: 12px 14px;
+}
+.banner > button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.banner {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.banner.saved-banner {
+  position: fixed;
+  bottom: calc(24px + var(--app-safe-bottom));
+  left: 246px;
+  right: 24px;
+  margin: 0 auto;
+  max-width: 760px;
+  z-index: 25;
+  box-shadow: 0 4px 20px #27344426;
+  border: 1px solid var(--line);
+}
+@media (max-width: 900px) {
+  .accounts-layout {
+    gap: 12px;
+  }
+}
+@media (max-width: 730px) {
+  .banner.saved-banner {
+    bottom: calc(86px + var(--app-safe-bottom));
+    left: 16px;
+    right: 16px;
+  }
+  .topbar {
+    height: 76px;
+  }
+  .calendar-cell {
+    height: 50px;
+  }
+  .date-watermark {
+    font-size: clamp(28px, 8vw, 36px);
+  }
+  .calendar-toolbar {
+    margin-bottom: 2px;
+  }
+  .calendar-week {
+    padding-bottom: 2px;
+  }
+  .category-grid {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .category-grid button > span {
+    width: 44px;
+    height: 44px;
+  }
+  .app-shell:not(.is-home) .page {
+    padding-top: 12px;
+  }
+  .page {
+    padding-bottom: calc(90px + var(--app-safe-bottom));
+  }
+  .page-heading {
+    margin-bottom: 12px;
+  }
+  .bottom-nav {
+    height: calc(74px + var(--app-safe-bottom));
+    padding: 6px 8px calc(6px + var(--app-safe-bottom));
+    left: var(--app-safe-left);
+    right: var(--app-safe-right);
+  }
+  .modal.page-dialog,
+  .modal.page-dialog.wide {
+    padding-top: var(--app-safe-top);
+    padding-bottom: var(--app-safe-bottom);
+  }
+  .page-dialog .modal-header {
+    padding: 10px 16px 12px;
+  }
+  .page-dialog .modal-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .modal:not(.page-dialog) {
+    max-height: calc(100dvh - var(--app-safe-top) - var(--app-safe-bottom) - 24px);
+  }
+  .modal-backdrop {
+    padding-bottom: var(--app-safe-bottom);
+  }
+  .page-backdrop {
+    padding-bottom: 0;
+  }
+  .welcome {
+    min-height: calc(100dvh - var(--app-safe-top));
+  }
+  .settings-actions > button,
+  .settings-actions > a {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .settings-grid {
+    gap: 16px;
+  }
+  .category-grid {
+    gap: 10px 8px;
+  }
+  .entry-amount-card {
+    margin-bottom: 12px;
+  }
+}

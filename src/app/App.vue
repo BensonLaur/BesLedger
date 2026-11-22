@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import brandIcon from '../assets/brand.svg?no-inline';
 import { useRoute } from 'vue-router';
 import { closeTopModal, modalCount } from './modal-stack';
@@ -21,6 +21,18 @@ const offline = ref(!navigator.onLine);
 const unlockPage = ref<InstanceType<typeof Unlock>>();
 const route = useRoute();
 const localSpace = getLocalSpace();
+let savedNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+watch(
+  () => ui.notice,
+  (notice) => {
+    clearTimeout(savedNoticeTimer);
+    // 普通保存反馈短暂出现；同步、恢复等需要阅读的说明仍由用户关闭。
+    if (notice === '已安全保存在本机')
+      savedNoticeTimer = setTimeout(() => {
+        ui.notice = '';
+      }, 5500);
+  },
+);
 const navigation = [
   { path: '/', name: '明细', icon: 'book' },
   { path: '/accounts', name: '账户', icon: 'wallet' },
@@ -72,6 +84,7 @@ function onVisibility() {
   if (!document.hidden && state.value) void run(catchUp);
 }
 onUnmounted(() => {
+  clearTimeout(savedNoticeTimer);
   window.removeEventListener('focus', checkUpdate);
   document.removeEventListener('visibilitychange', onVisibility);
 });
@@ -149,7 +162,12 @@ onMounted(() => {
         <span>{{ ui.error }}</span
         ><button aria-label="关闭错误提示" @click="ui.error = ''"><Icon name="close" /></button>
       </div>
-      <div v-if="ui.notice" class="banner" role="status">
+      <div
+        v-if="ui.notice"
+        class="banner"
+        :class="{ 'saved-banner': ui.notice === '已安全保存在本机' }"
+        role="status"
+      >
         <span>{{ ui.notice }}</span
         ><button aria-label="关闭提示" @click="ui.notice = ''"><Icon name="close" /></button>
       </div>

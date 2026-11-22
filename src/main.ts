@@ -9,6 +9,10 @@ import Settings from './app/pages/Settings.vue';
 import Books from './app/pages/Books.vue';
 import './app/style.css';
 import './app/interface.css';
+import './app/compact.css';
+import './app/entry-editor.css';
+import './app/account-picker.css';
+import './app/recognition-review.css';
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [

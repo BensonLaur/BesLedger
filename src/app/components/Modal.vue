@@ -57,15 +57,18 @@ onUnmounted(() => {
       @keydown="keyboard"
     >
       <header class="modal-header">
-        <button v-if="page" class="icon-button page-back" aria-label="返回" @click="emit('close')">
-          <Icon name="left" />
-        </button>
-        <h2>{{ title }}</h2>
-        <button v-if="!page" class="icon-button" aria-label="关闭" @click="emit('close')">
-          <Icon name="close" />
-        </button>
+        <slot name="header">
+          <button v-if="page" class="icon-button page-back" aria-label="返回" @click="emit('close')">
+            <Icon name="left" />
+          </button>
+          <h2>{{ title }}</h2>
+          <button v-if="!page" class="icon-button" aria-label="关闭" @click="emit('close')">
+            <Icon name="close" />
+          </button>
+        </slot>
       </header>
       <div class="modal-content"><slot /></div>
+      <div v-if="$slots.footer" class="modal-footer"><slot name="footer" /></div>
       <div v-if="$slots.feedback" class="modal-feedback"><slot name="feedback" /></div>
     </section>
   </div>

@@ -186,7 +186,11 @@ test('分类图标和选中名称一致，数字键盘精度、连续保存和�
   await expect(page.getByRole('dialog', { name: '发生时间', exact: true })).toBeHidden();
   await expect(editor).toBeVisible();
   await editor.getByRole('button', { name: '付款账户', exact: true }).click();
-  await page.getByRole('dialog', { name: '选择资金账户' }).getByRole('button', { name: '虚构现金' }).click();
+  await page
+    .locator('.account-picker-backdrop')
+    .getByRole('dialog')
+    .getByRole('button', { name: '虚构现金' })
+    .click();
   await noOverflow(page);
   await editor.locator('.modal-content').evaluate((e) => (e.scrollTop = 0));
   await page.screenshot({ path: `artifacts/entry-aligned-${info.project.name}.png`, animations: 'disabled' });
