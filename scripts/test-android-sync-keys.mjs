@@ -1,4 +1,4 @@
-import { _android as android } from 'playwright';
+import { chromium } from 'playwright';
 import { expect } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { deriveCredentialKey, encrypt, importKey, recoveryText, unlockKey } from '../src/crypto/vault.ts';
@@ -43,25 +43,49 @@ remote.files.set(`${ledgerId}.json`, {
     ),
   ).toString('base64'),
 });
-let device, page;
+let browser, page, forwardedPort;
+async function disconnect() {
+  await browser?.close().catch(() => undefined);
+  browser = undefined;
+  if (forwardedPort) adb('forward', '--remove', `tcp:${forwardedPort}`);
+  forwardedPort = undefined;
+}
 async function connect() {
-  device = (await android.devices()).find((d) => d.serial() === serial);
-  if (!device) throw new Error('Isolated emulator unavailable');
-  device.setDefaultTimeout(30000);
-  page = await (await device.webView({ pkg })).page();
-  page.setDefaultTimeout(20000);
+  let socket;
+  // 重启后必须连接当前应用进程的套接字，不能复用已退出 WebView 的调试目标。
+  for (let attempt = 0; attempt < 60; attempt++) {
+    let pid = '';
+    try {
+      pid = adb('shell', 'pidof', pkg).trim();
+    } catch {
+      // Activity 启动返回时，进程可能还未创建。
+    }
+    const candidate = `webview_devtools_remote_${pid}`;
+    if (pid && adb('shell', 'cat', '/proc/net/unix').includes(candidate)) {
+      socket = candidate;
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  if (!socket) throw new Error('Current application WebView socket unavailable');
+  forwardedPort = adb('forward', 'tcp:0', `localabstract:${socket}`).trim();
+  if (!/^\d+$/.test(forwardedPort)) throw new Error('WebView forwarding port unavailable');
+  // 保留原生 WebView 的焦点和媒体设置；测试只控制当前隔离应用的调试会话。
+  browser = await chromium.connectOverCDP(`http://127.0.0.1:${forwardedPort}`, { noDefaults: true });
+  const context = browser.contexts()[0];
+  page = context.pages()[0];
+  if (!page) throw new Error('Current application page unavailable');
+  page.setDefaultTimeout(30000);
   await page.route('https://api.github.com/**', async (route) => {
     const req = route.request(),
       reply = remote.handle(req.url(), req.method(), req.postData() ? req.postDataJSON() : undefined);
     await route.fulfill({ status: reply.status, json: reply.body });
   });
-  await page.getByRole('heading').first().waitFor();
+  await page.waitForURL('https://localhost/**');
+  await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 60000 });
 }
 async function restart() {
-  await Promise.race([
-    device?.close().catch(() => undefined),
-    new Promise((resolve) => setTimeout(resolve, 3000)),
-  ]);
+  await disconnect();
   adb('shell', 'am', 'force-stop', pkg);
   adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
   await connect();
@@ -167,11 +191,8 @@ try {
   console.error(error);
   process.exitCode = 1;
 } finally {
-  await Promise.race([
-    device?.close().catch(() => undefined),
-    new Promise((resolve) => setTimeout(resolve, 3000)),
-  ]);
+  await disconnect();
 }
 
-// Windows 驱动断开可能保留调试套接字；断言与证据写入均已完成，再结束测试进程。
+// 明确保留断言失败状态，结束连接库可能遗留的后台句柄。
 process.exit(process.exitCode || 0);
