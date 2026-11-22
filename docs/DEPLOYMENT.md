@@ -10,6 +10,8 @@
 
 `npm ci && npm run build` 生成 dist，固定部署子路径 /BesLedger/。GitHub Pages 使用 .github/workflows/pages.yml；推送 master 或手动运行触发。只有 dist 会公开，private、.env、测试报告、签名文件不进入发布目录。
 
+Pages 产物按 `github.run_attempt` 命名，部署前以只读 API 确认本次产物已可见且唯一，再交给部署步骤。这样可处理上传刚结束时元数据尚未可见，以及重跑留下同名产物的情况；不会删除历史产物或改动应用数据。命名与选择参数依据 [upload-pages-artifact](https://github.com/actions/upload-pages-artifact) 和 [deploy-pages](https://github.com/actions/deploy-pages) 的公开输入定义。
+
 首次联网访问完成 Service Worker 缓存后可离线重开。更新可用时先保存草稿，再点击重新加载；本地解锁空间独立于应用缓存。清理浏览器站点数据会删除本机账本，请先导出加密备份。
 
 GitHub Pages 与 Cloudflare 备用网址具有不同浏览器来源，本地账本和登录不会自动互通。已有用户继续使用原网址即可取得中转修复；不要通过清空站点数据强制更新。需要换网址时先导出加密备份，或在新网址登录后输入原设备同步恢复密钥下载；新来源首次 GitHub 登录属于新客户端，之后仍安全保持登录。
