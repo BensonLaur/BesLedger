@@ -53,6 +53,7 @@ jobs:
         run: sudo chmod 666 /dev/kvm
       - run: npx playwright install android
       - name: 原生 SQLite 同步密钥与重启验证
+        timeout-minutes: 10
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         env:
           BESLEDGER_TEST_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}

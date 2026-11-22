@@ -57,6 +57,15 @@ async function connect() {
   });
   await page.getByRole('heading').first().waitFor();
 }
+async function restart() {
+  await Promise.race([
+    device?.close().catch(() => undefined),
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
+  adb('shell', 'am', 'force-stop', pkg);
+  adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
+  await connect();
+}
 const native = (method, options = {}) =>
   page.evaluate(({ method, options }) => window.Capacitor.nativePromise('EncryptedVault', method, options), {
     method,
@@ -116,7 +125,8 @@ try {
   );
   if (!(await native('compareSwapCredential', { expected: saved?.revision ?? 0, payload })).saved)
     throw new Error('Credential fixture CAS failed');
-  await page.reload();
+  // 原生凭证通过实际进程重启读回，避免 WebView 自动化热重载遗留桥接回调。
+  await restart();
   await unlock();
   await books();
   await page.getByRole('button', { name: '预览并下载', exact: true }).click();
@@ -141,13 +151,7 @@ try {
   await page.getByRole('button', { name: '锁定账本', exact: true }).last().click();
   await unlock();
   await sync();
-  await Promise.race([
-    device.close().catch(() => undefined),
-    new Promise((resolve) => setTimeout(resolve, 3000)),
-  ]);
-  adb('shell', 'am', 'force-stop', pkg);
-  adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
-  await connect();
+  await restart();
   await unlock();
   await sync();
   await page.getByRole('button', { name: '虚构 Android 云端密钥验收的更多操作', exact: true }).click();
@@ -159,6 +163,9 @@ try {
   console.log(
     'PASS: native API 36 WebView/SQLite: verified cloud key encrypted, route return, lock/unlock and process restart sync without re-entry; forget preserves ledger. GitHub API/session simulated.',
   );
+} catch (error) {
+  console.error(error);
+  process.exitCode = 1;
 } finally {
   await Promise.race([
     device?.close().catch(() => undefined),
@@ -167,4 +174,4 @@ try {
 }
 
 // Windows 驱动断开可能保留调试套接字；断言与证据写入均已完成，再结束测试进程。
-process.exit(0);
+process.exit(process.exitCode || 0);
