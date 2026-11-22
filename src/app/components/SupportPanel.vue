@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue';
 import { Capacitor } from '@capacitor/core';
 import brandIcon from '../../assets/brand.svg?no-inline';
-import wechatImage from '../../assets/support/wechat.webp?no-inline';
-import alipayImage from '../../assets/support/alipay.webp?no-inline';
+import wechatImage from '../../assets/support/wechat.png?no-inline';
+import alipayImage from '../../assets/support/alipay.png?no-inline';
 import { saveSupportImage } from '../../inputs/support-image';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
