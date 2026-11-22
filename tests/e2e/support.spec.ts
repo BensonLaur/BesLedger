@@ -1,5 +1,5 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
-import sharp from 'sharp';
 async function initialize(page: Page) {
   await page.goto('./');
   const logo = page.locator('.welcome-brand img');
@@ -59,9 +59,9 @@ test('钱包标识一致，自愿支持切换与 PNG 保存不修改账本', asy
     expect(download.suggestedFilename()).toBe(`BesLedger-${method}.png`);
     const target = info.outputPath(`${method}.png`);
     await download.saveAs(target);
-    const actual = await sharp(target).ensureAlpha().raw().toBuffer();
-    const original = await sharp(`src/assets/support/${method}.webp`).ensureAlpha().raw().toBuffer();
-    expect(actual.equals(original), '保存的 PNG 与包内无损图片逐像素一致').toBe(true);
+    const actual = await readFile(target);
+    const packaged = await readFile(`src/assets/support/${method}.png`);
+    expect(actual.equals(packaged), '保存的 PNG 与包内减色 PNG 逐字节一致').toBe(true);
   }
   await dialog.getByRole('button', { name: '查看大图' }).click();
   await expect(page.getByRole('dialog', { name: '支付宝收款码大图' })).toBeVisible();

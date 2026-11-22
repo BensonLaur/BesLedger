@@ -2,23 +2,11 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 
-// 包内使用无损 WebP 减小体积；保存时按原尺寸还原 PNG，供支付应用从相册识别。
-export async function supportPng(url: string): Promise<Blob> {
-  const image = new Image();
-  image.src = url;
-  await image.decode();
-  const canvas = document.createElement('canvas');
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('暂时无法保存，请打开大图后重试');
-  context.drawImage(image, 0, 0);
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('图片转换失败，请重试'))), 'image/png'),
-  );
-}
 export async function saveSupportImage(url: string, name: string): Promise<void> {
-  const png = await supportPng(url);
+  // 直接保存包内 PNG，保留减色压缩后的文件字节。
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('图片读取失败，请重试');
+  const png = await response.blob();
   if (Capacitor.isNativePlatform()) {
     const base64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
