@@ -76,12 +76,14 @@ async function books() {
 }
 async function sync() {
   await books();
-  const button = page.getByRole('button', { name: '同步', exact: true });
-  await expect(button).toBeEnabled();
+  const card = page.locator(`[data-book-id="${ledgerId}"]`);
+  const button = card.getByRole('button', { name: '同步', exact: true });
+  await expect(button).toBeEnabled({ timeout: 30000 });
   if (await page.getByRole('button', { name: '关闭提示', exact: true }).isVisible())
     await page.getByRole('button', { name: '关闭提示', exact: true }).click();
   await button.click();
   await expect(page.getByRole('status')).toContainText('同步成功', { timeout: 30000 });
+  await expect(card.getByText('上次同步成功', { exact: true })).toBeVisible();
 }
 try {
   adb('shell', 'am', 'start', '-n', `${pkg}/.MainActivity`);
@@ -118,9 +120,13 @@ try {
   await unlock();
   await books();
   await page.getByRole('button', { name: '预览并下载', exact: true }).click();
-  await page.getByLabel('原设备的恢复密钥', { exact: true }).fill(recovery);
-  await page.getByRole('button', { name: '验证并预览', exact: true }).click();
-  await page.getByRole('button', { name: '确认添加账本', exact: true }).click();
+  const transfer = page.getByRole('dialog', { name: '取回这本账', exact: true });
+  await transfer.getByLabel('原设备的恢复密钥', { exact: true }).fill(recovery);
+  await transfer.getByRole('button', { name: '验证并预览', exact: true }).click();
+  await transfer.getByRole('button', { name: '确认添加账本', exact: true }).click();
+  // 确认后仍需重新校验远端并写入 SQLite；完成前跳页会按产品规则取消取回。
+  await expect(transfer).toBeHidden({ timeout: 30000 });
+  await expect(page.locator(`[data-book-id="${ledgerId}"]`)).toBeVisible();
   await page.goto('https://localhost/#/settings');
   await sync();
   const stored = (await native('read')).value;
