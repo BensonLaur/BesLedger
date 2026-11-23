@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   web:
     runs-on: ubuntu-latest
@@ -29,6 +32,7 @@ jobs:
           path: dist
   android:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: actions/setup-node@v7.1.0
@@ -39,6 +43,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-provider: basic
       - uses: android-actions/setup-android@v4.0.4
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - run: npm ci
@@ -48,7 +55,7 @@ jobs:
           VITE_GITHUB_APP_ID: ${{ vars.BESLEDGER_GITHUB_APP_ID }}
           VITE_GITHUB_APP_CLIENT_ID: ${{ vars.BESLEDGER_GITHUB_APP_CLIENT_ID }}
           VITE_GITHUB_APP_SLUG: ${{ vars.BESLEDGER_GITHUB_APP_SLUG }}
-      - run: bash android/gradlew -p android --no-daemon assembleDebug lintDebug
+      - run: bash scripts/run-android-ci.sh assembleDebug lintDebug
       - name: 为隔离模拟器启用 KVM
         run: sudo chmod 666 /dev/kvm
       - name: 原生 SQLite 同步密钥与重启验证

@@ -19,7 +19,7 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 **[Android 0.1.4 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-release.apk)**（Android 10 起）。[完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4) 同时提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-web-pwa.zip)、[SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/SHA256SUMS.txt) 与签名说明。versionCode 20 沿用原包名与长期签名，可覆盖 0.1.3 和此前 0.1.4 测试包；**先独立保存加密备份与恢复密钥，再直接覆盖安装，不要先卸载或清空数据**。安装与验证边界见 [安卓说明](docs/ANDROID_TESTING.md)，历史版本见 [版本记录](docs/RELEASE_ARCHIVE.md)。
 
-Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。另有 [Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/)；备用站目前保留 0.1.3，新版体验以主站为准。两个网址的本地存储相互独立；已有账目请继续保留在原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
+Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。[Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/) 与主站均为 0.1.4，应用文件和缓存资源清单已核对。Cloudflare 账号仅供维护部署，普通用户使用自己的 GitHub 账号授权即可。两个网址的本地存储相互独立；已有账目请继续保留在原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
 ## 界面预览
 

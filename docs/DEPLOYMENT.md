@@ -4,7 +4,7 @@
 
 当前统一下载入口为 [0.1.4](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4)：长期签名 Android versionCode 20、对应 Web/PWA、SHA-256 与签名说明，包含此前测试版累计改进。包名与原签名不变，可覆盖 0.1.3 和 test.1 至 test.7；先独立保存加密备份及恢复密钥，不先卸载或清空数据。安装与验证边界见 [安卓说明](ANDROID_TESTING.md)。
 
-旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1、v0.1.2 的版本与校验信息见 [历史版本记录](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/，2026-11-23 读回仍为 0.1.3；本机 Wrangler 未找到可用登录配置，本轮未部署备用站。两个站点各自保存本地数据，已有用户保留原网址的数据，通过加密备份或同步迁移，不能清空站点强制更新。
+旧 v0.1.0-preview.1、v0.1.0、web-20261023、v0.1.1、v0.1.2 的版本与校验信息见 [历史版本记录](RELEASE_ARCHIVE.md)，不再作为当前下载入口。源码标签和提交继续保留。备用站点为 https://besledger-bensonlaur.pages.dev/BesLedger/，2026-11-23 已更新至 0.1.4，与主站的 19 个生产文件逐项哈希一致。两个站点各自保存本地数据，已有用户保留原网址的数据，通过加密备份或同步迁移，不能清空站点强制更新。
 
 ## Web/PWA
 
@@ -17,6 +17,8 @@ Pages 产物按 `github.run_attempt` 命名，部署前以只读 API 确认本�
 GitHub Pages 与 Cloudflare 备用网址具有不同浏览器来源，本地账本和登录不会自动互通。已有用户继续使用原网址即可取得中转修复；不要通过清空站点数据强制更新。需要换网址时先导出加密备份，或在新网址登录后输入原设备同步恢复密钥下载；新来源首次 GitHub 登录属于新客户端，之后仍安全保持登录。
 
 维护者更新备用站点时，先设置上述四个公开 VITE_ 构建变量并运行 npm run build，将 dist 的内容复制到一个新建暂存目录的 public/BesLedger/，在 public/_redirects 写入 `/ /BesLedger/ 302`。暂存目录的 wrangler.jsonc 使用 name=besledger-bensonlaur、pages_build_output_dir=./public、compatibility_date=2026-10-21、send_metrics=false，再运行仓库 services/auth-relay/node_modules/wrangler/bin/wrangler.js 的 pages deploy，指定 --cwd 暂存目录、--project-name besledger-bensonlaur、--branch main、--upload-source-maps=false。只上传公开构建目录，禁止指向仓库根目录。当前项目已存在，不重复创建。
+
+本轮备用站取自已校验 SHA-256 的 0.1.4 Release 网页包。Windows 与 Linux 生成的 Service Worker 仅预缓存条目排序不同，验证清单及其余代码相同后，备用站采用主站的同一份 Worker，使两站逐文件一致；应用资源与 Release 保持一致。维护者登录恢复使用 Cloudflare 设备授权，只读取账号并发布 Pages，凭据仍由系统钥匙串保护。普通用户无需 Cloudflare 账号。
 
 ## GitHub App 注册与配置
 
@@ -54,6 +56,10 @@ package ID：com.bensoftware.besledger；Android 10/API 29 起，compile/target 
 调试验收包只用于测试，不可覆盖不同签名的发布包。仅在本任务隔离模拟器内删除虚构测试应用后切换签名；真实用户升级不要卸载已有账目，必须使用同签名且递增 versionCode 的 APK。
 
 ## 自动化与设备
+
+Android CI 使用固定版本的 `gradle/actions/setup-gradle` 基础缓存，复用 Gradle Wrapper 和依赖下载；同一分支只保留最新验证运行，构建最多两个 worker。验证与签名构建共用 `scripts/run-android-ci.sh`：仅在 429、502/503/504 或连接超时等临时网络错误时，保留已下载内容，退避 60 秒重试一次；编译等其他错误直接保留原退出码，连续失败仍使检查失败。校验同时覆盖临时错误恢复、永久错误不重试及重试耗尽三种场景。
+
+采用缓存减少重复请求的依据见 [Maven Central 限流说明](https://central.sonatype.org/faq/429-error/)；缓存范围与参数见 [Gradle Actions 文档](https://github.com/gradle/actions/blob/v6.4.1/docs/setup-gradle.md)。签名材料保留在 Runner 临时目录，不进入依赖缓存。
 
 - npm test：金额、借贷、退款、日期、周期、加密、恢复、冲突和生命周期。
 - npm run test:e2e：Edge 桌面、Pixel 7 布局模拟、WebKit iPad 布局；不等于物理 iPad/Android。
