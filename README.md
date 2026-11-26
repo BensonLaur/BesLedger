@@ -10,16 +10,18 @@ BesLedger 是 Bes 系列的个人记账项目。作者已经习惯挖财记账�
 
 ## 当前阶段
 
-当前版本为 **[0.1.4](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4)**，统一发布 Android 与 Web/PWA，包含此前测试版的累计改进。
+当前版本为 **[0.1.5](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.5)**，提供批量短信补账、自定义分类规则和账目左滑快捷操作。
 
+- **批量短信补账**：首页“快捷 → 短信记账”，Android 按银行和日期查找，网页逐行粘贴；集中核对、勾选保存，重查标记已记账。
+- **分类与快捷操作**：自定义文字规则支持通配和调序，“三餐*自动”按原文餐次或时间归类；账目左滑可编辑、复制和删除。
 - **补账更顺手**：备注支持自动或手动识别；明确金额、分类直接填入，手动修改受保护。核对面板突出金额和待处理项，可直接补分类、时间与账户。
 - **记账区始终可用**：金额、备注、时间、账户与数字键盘固定，中间分类独立滚动；文字键盘打开时仍可看到时间与账户，点时间直接滑动选择。
 - **账户与统计更清楚**：账户分组汇总、折叠与搜索；统计支持月、年、自选范围、趋势、分类占比和账户分布，并可查看对应明细。
 - **恢复与同步流程统一**：用恢复密钥重设解锁密码，保留已有账目；备份先校验再确认，账本管理明确区分本地、云端及同步状态。
 
-打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 **[Android 0.1.4 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-release.apk)**（Android 10 起）。[完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.4) 同时提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/BesLedger-0.1.4-web-pwa.zip)、[SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.4/SHA256SUMS.txt) 与签名说明。versionCode 20 沿用原包名与长期签名，可覆盖 0.1.3 和此前 0.1.4 测试包；**先独立保存加密备份与恢复密钥，再直接覆盖安装，不要先卸载或清空数据**。安装与验证边界见 [安卓说明](docs/ANDROID_TESTING.md)，历史版本见 [版本记录](docs/RELEASE_ARCHIVE.md)。
+打开 [Web/PWA](https://bensonlaur.github.io/BesLedger/)，或下载 **[Android 0.1.5 APK](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.5/BesLedger-0.1.5-release.apk)**（Android 10 起）。[完整版本页](https://github.com/BensonLaur/BesLedger/releases/tag/v0.1.5) 同时提供 [Web/PWA 生产包](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.5/BesLedger-0.1.5-web-pwa.zip)、[SHA-256 校验](https://github.com/BensonLaur/BesLedger/releases/download/v0.1.5/SHA256SUMS.txt) 与签名说明。versionCode 21 沿用原包名与长期签名，可覆盖 0.1.4 和此前版本；**先独立保存加密备份与恢复密钥，再直接覆盖安装，不要先卸载或清空数据**。安装与验证边界见 [安卓说明](docs/ANDROID_TESTING.md)，历史版本见 [版本记录](docs/RELEASE_ARCHIVE.md)。
 
-Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。[Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/) 与主站均为 0.1.4，应用文件和缓存资源清单已核对。Cloudflare 账号仅供维护部署，普通用户使用自己的 GitHub 账号授权即可。两个网址的本地存储相互独立；已有账目请继续保留在原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
+Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管账号、部署服务或填写地址。[Cloudflare 备用 Web/PWA](https://besledger-bensonlaur.pages.dev/BesLedger/) 与主站均提供 0.1.5。Cloudflare 账号仅供维护部署，普通用户使用自己的 GitHub 账号授权即可。两个网址的本地存储相互独立；已有账目请继续保留在原网址，需要迁移时使用加密备份或同步恢复密钥，不要清除原站点数据。
 
 ## 界面预览
 
@@ -33,7 +35,7 @@ Web/PWA 已内置维护者提供的登录服务，普通用户无需注册托管
 | :---: | :---: |
 | <a href="docs/images/preview-accounts.png"><img src="docs/images/preview-accounts.png" width="260" alt="实际运行界面：现金、信用卡、银行卡与网络账户分组及虚构余额" /></a> | <a href="docs/images/preview-statistics.png"><img src="docs/images/preview-statistics.png" width="260" alt="实际运行界面：月度收支汇总、大类占比环形图和可查看明细的分类列表" /></a> |
 
-Android、Web/PWA、浏览器标签、创建/解锁页与“我的”统一使用「日常钱包」图标。当前 APK 为 versionCode 20，沿用原包名与长期签名，可覆盖升级。
+Android、Web/PWA、浏览器标签、创建/解锁页与“我的”统一使用「日常钱包」图标。当前 APK 为 versionCode 21，沿用原包名与长期签名，可覆盖升级。
 
 ## 登录、解锁与同步
 
