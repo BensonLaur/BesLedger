@@ -78,7 +78,16 @@ it('支付渠道与时段不足以判定餐饮；收入、退款和用户商户�
   expect(parse('08:20 收到餐费12元').categoryIds).toEqual([]);
   expect(parse('08:20 退款包點12元').categoryIds).toEqual([]);
   expect(parse('08:20 超市12元').categoryIds).toHaveLength(2);
-  const r = recognize('08:20 示例包點店12元', [], now, { 示例包點店: 'expense.food.009' });
+  const r = recognize('08:20 示例包點店12元', [], now, {
+    categoryRules: [{ pattern: '示例包點店', categoryId: 'expense.food.009', type: 'expense' }],
+  });
   expect(r.categoryIds).toEqual(['expense.food.009']);
   expect(r.warnings.join()).not.toContain('推荐早餐');
+});
+
+it('膳食商户只推荐对应餐次，地点和支付渠道本身没有分类依据', () => {
+  const catering = parse('10月20日18:35支出(消费财付通-示例膳食服务有限公司)23元');
+  expect(catering.categoryIds).toEqual(['expense.food.003']);
+  expect(catering.categoryNeedsReview).toBe(true);
+  expect(parse('10月21日08:15支出(消费财付通-示例山庄东门)9元').categoryIds).toEqual([]);
 });

@@ -50,14 +50,19 @@ export function recognitionPreview(
     ? draft.categoryId
     : '';
   const candidateCategory =
-    result.categoryIds.length === 1 && available.some((category) => category.id === result.categoryIds[0])
+    !result.categoryNeedsReview &&
+    result.categoryIds.length === 1 &&
+    available.some((category) => category.id === result.categoryIds[0])
       ? result.categoryIds[0]
       : currentCategory;
   return {
     type,
     amount:
       automatic && protectedFields.amount ? reviewAmount(amount) : (result.amount ?? reviewAmount(amount)),
-    categoryId: automatic && protectedFields.category ? currentCategory : candidateCategory,
+    categoryId:
+      (automatic || result.categoryRulePattern) && protectedFields.category
+        ? currentCategory
+        : candidateCategory,
     at: automatic && protectedFields.at ? draft.at : result.at || draft.at,
     accountId:
       automatic && protectedFields[side]

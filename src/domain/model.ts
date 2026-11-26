@@ -125,6 +125,8 @@ export const syncReviewSchema = z.object({
   remoteHash: z.string().optional(),
 });
 export type SyncReview = z.infer<typeof syncReviewSchema>;
+const textCategoryRuleSchema = z.object({ pattern: z.string().trim().min(1).max(120), categoryId: id });
+export type TextCategoryRule = z.infer<typeof textCategoryRuleSchema>;
 export const stateSchema = z.object({
   schemaVersion: z.literal(2),
   deviceId: id,
@@ -132,7 +134,12 @@ export const stateSchema = z.object({
   bindings: z.record(id, bindingSchema),
   // 待核对的双方记录只保存在本地加密空间，不计入账目、余额或云端投影。
   syncReviews: z.record(id, syncReviewSchema).optional(),
-  preferences: z.object({ currentLedger: z.string(), quick: z.record(z.string(), z.array(z.string())) }),
+  preferences: z.object({
+    currentLedger: z.string(),
+    quick: z.record(z.string(), z.array(z.string())),
+    // 与本机偏好一起加密保存。旧账本没有此字段时视为无规则。
+    textCategoryRules: z.record(id, z.array(textCategoryRuleSchema)).optional(),
+  }),
 });
 export type State = z.infer<typeof stateSchema>;
 export function emptyState(): State {

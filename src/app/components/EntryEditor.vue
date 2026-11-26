@@ -6,6 +6,7 @@ import { list, put, type Entry } from '../../domain/model';
 import { saveEntry, movements } from '../../domain/ledger';
 import { decimal, minor, money } from '../../domain/money';
 import { recognize, type Recognition } from '../../recognition/sms';
+import { autoThreeMealsRuleTarget, type CategoryRule } from '../../recognition/text-category-rules';
 import { localTime } from '../../domain/time';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
@@ -146,6 +147,7 @@ const autoRecognition = ref(readAutoRecognition()),
   composingNote = ref(false),
   modeNotRemembered = ref(false);
 let recognitionTimer: ReturnType<typeof setTimeout> | undefined;
+let recognitionTime = new Date();
 function cancelScheduledRecognition() {
   clearTimeout(recognitionTimer);
   recognitionTimer = undefined;
@@ -336,27 +338,58 @@ function accountPlan(result: Recognition) {
     availableIds: accounts.value.map((account) => account.id),
   });
 }
+function recognizeNote() {
+  const local = state.value!;
+  const available = new Map(
+    [autoThreeMealsRuleTarget, ...categories(local, draft.ledgerId)].map((category) => [
+      category.id,
+      category,
+    ]),
+  );
+  const configured = local.preferences.textCategoryRules?.[draft.ledgerId] ?? [];
+  const categoryRules = configured.flatMap<CategoryRule>((rule) => {
+    const category = available.get(rule.categoryId);
+    return category ? [{ ...rule, type: category.type }] : [];
+  });
+  return recognize(draft.note, accounts.value, recognitionTime, {
+    categoryRules,
+    fallbackType: draft.type === 'expense' || draft.type === 'income' ? draft.type : undefined,
+  });
+}
+function planFields(result: Recognition) {
+  return automaticFields(result, {
+    type: draft.type,
+    protectedAmount: protectedFields.amount,
+    protectedCategory: protectedFields.category,
+    protectedAt: protectedFields.at,
+    automaticAmount: automatic.amount,
+    automaticCategory: automatic.category,
+  });
+}
+function applyAutomaticCategory(categoryId: string | null | undefined) {
+  if (categoryId === undefined) return;
+  draft.categoryId = categoryId ?? '';
+  automatic.category = categoryId !== null;
+}
+function refreshCategoryRules() {
+  if (!parsed.value) return;
+  const result = recognizeNote();
+  // 规则变化只重算分类，保留其他字段及核对过程中已经做出的选择。
+  if (autoRecognition.value) applyAutomaticCategory(planFields(result).categoryId);
+  parsed.value = result;
+}
 function parse(showReview = !autoRecognition.value) {
   cancelScheduledRecognition();
   if (composingNote.value || !draft.note.trim()) return;
-  parsed.value = recognize(draft.note, accounts.value);
+  recognitionTime = new Date();
+  parsed.value = recognizeNote();
   if (autoRecognition.value) {
-    const plan = automaticFields(parsed.value, {
-      type: draft.type,
-      protectedAmount: protectedFields.amount,
-      protectedCategory: protectedFields.category,
-      protectedAt: protectedFields.at,
-      automaticAmount: automatic.amount,
-      automaticCategory: automatic.category,
-    });
+    const plan = planFields(parsed.value);
     if (plan.amount !== undefined) {
       amount.value = plan.amount === null ? '' : decimal(plan.amount);
       automatic.amount = plan.amount !== null;
     }
-    if (plan.categoryId !== undefined) {
-      draft.categoryId = plan.categoryId ?? '';
-      automatic.category = plan.categoryId !== null;
-    }
+    applyAutomaticCategory(plan.categoryId);
     if (plan.at !== undefined) {
       draft.at = plan.at;
       automatic.at = true;
@@ -382,7 +415,7 @@ const recognitionReview = computed(() => {
   if (
     ['expense', 'income'].includes(draft.type) &&
     !protectedFields.category &&
-    (p.categoryIds.length !== 1 || (!!p.type && p.type !== draft.type))
+    (p.categoryNeedsReview || p.categoryIds.length !== 1 || (!!p.type && p.type !== draft.type))
   )
     reasons.push('请选择分类');
   if (p.type && p.type !== draft.type && !protectedFields.type) reasons.push('请核对记账类型');
@@ -1036,6 +1069,7 @@ async function save(again = false) {
     @close="finishRecognition"
     @keep="clearRecognition"
     @apply="applyRecognition"
+    @rules-updated="refreshCategoryRules"
     @add-account="
       ui.accountId = '';
       ui.accountForm = true;

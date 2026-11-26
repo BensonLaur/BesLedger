@@ -1,7 +1,8 @@
 import type { Account, Entity } from '../domain/model';
 import { today, validTime } from '../domain/time';
 import { recognizeAmounts, type AmountCandidate } from './amounts';
-import { recognizePurpose } from './purposes';
+import { recognizePurpose, recognizeThreeMeals } from './purposes';
+import { autoThreeMealsRuleTarget, firstCategoryRule, type CategoryRule } from './text-category-rules';
 export type Recognition = {
   type?: 'expense' | 'income' | 'refund';
   amount?: number;
@@ -12,6 +13,8 @@ export type Recognition = {
   balance?: number;
   accountIds: string[];
   categoryIds: string[];
+  categoryNeedsReview?: boolean;
+  categoryRulePattern?: string;
   at?: string;
   dateAmbiguous?: boolean;
   rawDate: string;
@@ -22,7 +25,7 @@ export function recognize(
   text: string,
   accounts: Entity<Account>[],
   now = new Date(),
-  merchantRules: Record<string, string> = {},
+  options: { categoryRules?: readonly CategoryRule[]; fallbackType?: 'expense' | 'income' } = {},
 ): Recognition {
   const raw = text
     .normalize('NFKC')
@@ -119,12 +122,25 @@ export function recognize(
     (!date || result.at)
       ? `${time[1].padStart(2, '0')}:${time[2]}`
       : undefined;
-  for (const [merchant, category] of Object.entries(merchantRules))
-    if (raw.includes(merchant)) result.categoryIds.push(category);
-  if (!result.categoryIds.length) {
+  const categoryType = result.type ?? options.fallbackType;
+  const matchedRule =
+    !transferOrLoan &&
+    !unfinished &&
+    (categoryType === 'expense' || categoryType === 'income') &&
+    firstCategoryRule(raw, categoryType, options.categoryRules ?? []);
+  if (matchedRule) {
+    result.categoryRulePattern = matchedRule.pattern;
+    if (matchedRule.categoryId === autoThreeMealsRuleTarget.id) {
+      const meals = recognizeThreeMeals(raw, writtenTime);
+      result.categoryIds = meals.categoryIds;
+      result.warnings.push(meals.basis);
+      if (meals.categoryIds.length > 1) result.categoryNeedsReview = true;
+    } else result.categoryIds = [matchedRule.categoryId];
+  } else {
     // 同义词给候选，弱用途保留多个选项；支付渠道不能代表消费用途。
     const purpose = recognizePurpose(raw, result.type, writtenTime);
     result.categoryIds = purpose.categoryIds;
+    if (purpose.needsReview) result.categoryNeedsReview = true;
     if (result.categoryIds.length) result.warnings.push(purpose.basis || '分类按用途关键词推荐，请核对');
   }
   result.categoryIds = [...new Set(result.categoryIds)];

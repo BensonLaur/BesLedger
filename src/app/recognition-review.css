@@ -129,6 +129,17 @@
   font-size: 12px;
   white-space: nowrap;
 }
+.review-category-actions {
+  display: grid;
+  justify-items: end;
+}
+.review-category-actions .text-button {
+  min-height: 32px;
+}
+.review-category-actions .review-rules-link {
+  color: var(--muted);
+  font-size: 11px;
+}
 .review-year-confirm {
   grid-column: 2 / -1;
   justify-self: start;

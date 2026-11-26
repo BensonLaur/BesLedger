@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { categories } from '../../domain/categories';
 import { list, type Entry, type State } from '../../domain/model';
 import { decimal, money } from '../../domain/money';
@@ -16,6 +16,7 @@ import Modal from './Modal.vue';
 import Icon from './Icon.vue';
 import AccountPicker from './AccountPicker.vue';
 import EntryDateTimePicker from './EntryDateTimePicker.vue';
+import TextCategoryRules from './TextCategoryRules.vue';
 
 const props = defineProps<{
   result: Recognition;
@@ -25,17 +26,31 @@ const props = defineProps<{
   protectedFields: RecognitionProtection;
   state: State;
 }>();
-const emit = defineEmits<{ apply: [value: ReviewedRecognition]; keep: []; close: []; addAccount: [] }>();
+const emit = defineEmits<{
+  apply: [value: ReviewedRecognition];
+  keep: [];
+  close: [];
+  addAccount: [];
+  rulesUpdated: [];
+}>();
 // 选项先留在本面板，明确采用才写回草稿；关闭、返回和“保留我的填写”均可安全退出。
-const choice = reactive(
-  recognitionPreview(
+function preview() {
+  return recognitionPreview(
     props.result,
     props.draft,
     props.amount,
     props.automatic,
     props.protectedFields,
     props.state,
-  ),
+  );
+}
+const choice = reactive(preview());
+watch(
+  () => props.result,
+  () => {
+    // 从规则列表返回时只刷新分类候选，保留本面板中已确认的选项。
+    if (!choice.changed.category) choice.categoryId = preview().categoryId;
+  },
 );
 const amountInput = ref(choice.amount === undefined ? '' : decimal(choice.amount));
 const amountIndex = ref(props.result.amountIndex);
@@ -46,6 +61,7 @@ const categoryOpen = ref(false),
   categorySearch = ref(''),
   accountOpen = ref(false),
   dateOpen = ref(false),
+  rulesOpen = ref(false),
   error = ref('');
 const typeLabel = computed(
   () =>
@@ -106,7 +122,10 @@ const amountProtected = computed(
   () => props.automatic && props.protectedFields.amount && !choice.changed.amount,
 );
 const categoryProtected = computed(
-  () => props.automatic && props.protectedFields.category && !choice.changed.category,
+  () =>
+    (props.automatic || !!props.result.categoryRulePattern) &&
+    props.protectedFields.category &&
+    !choice.changed.category,
 );
 const timeProtected = computed(() => props.automatic && props.protectedFields.at && !choice.changed.at);
 const accountProtected = computed(
@@ -322,12 +341,30 @@ async function apply() {
             <div>
               <strong>{{ categoryName }}</strong
               ><small v-if="categoryProtected">保留手动选择</small
-              ><small v-else-if="!choice.categoryId">请选择分类</small>
+              ><small
+                v-else-if="!choice.categoryId && result.categoryRulePattern && result.categoryNeedsReview"
+                >请核对餐次</small
+              ><small v-else-if="!choice.categoryId">{{
+                result.categoryNeedsReview ? '建议核对分类' : '请选择分类'
+              }}</small
+              ><small v-else-if="result.categoryRulePattern && !choice.changed.category"
+                >命中自定义规则</small
+              >
             </div>
-            <button type="button" class="text-button" @click="categoryOpen = true">
-              {{ choice.categoryId ? '修改分类' : '选择分类' }}
-            </button>
-            <div v-if="categoryCandidates.length > 1" class="review-candidates">
+            <div class="review-category-actions">
+              <button type="button" class="text-button" @click="categoryOpen = true">
+                {{ choice.categoryId ? '修改分类' : '选择分类' }}
+              </button>
+              <button type="button" class="text-button review-rules-link" @click="rulesOpen = true">
+                分类规则
+              </button>
+            </div>
+            <div
+              v-if="
+                categoryCandidates.length > 1 || (result.categoryNeedsReview && categoryCandidates.length)
+              "
+              class="review-candidates"
+            >
               <button
                 v-for="category in categoryCandidates"
                 :key="category.id"
@@ -413,6 +450,7 @@ async function apply() {
           </p>
           <p v-if="result.amountSource">金额依据：{{ result.amountSource }}</p>
           <p v-if="result.rawDate">原文时间：{{ result.rawDate }}</p>
+          <p v-if="result.categoryRulePattern">命中规则：{{ result.categoryRulePattern }}</p>
           <p v-for="warning in result.warnings" :key="warning">{{ warning }}</p>
           <p v-if="result.balance !== undefined">
             备注中的余额 ¥
@@ -447,4 +485,14 @@ async function apply() {
     @add="emit('addAccount')"
   />
   <EntryDateTimePicker v-if="dateOpen" :value="choice.at" @confirm="setDate" @close="dateOpen = false" />
+  <TextCategoryRules
+    v-if="rulesOpen"
+    :state="state"
+    :ledger-id="draft.ledgerId"
+    @close="rulesOpen = false"
+    @saved="
+      rulesOpen = false;
+      emit('rulesUpdated');
+    "
+  />
 </template>

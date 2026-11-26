@@ -20,7 +20,10 @@ export function automaticFields(result: Recognition, context: AutomaticFieldCont
   const matchingType = !result.type || result.type === context.type;
   const categoryId = context.protectedCategory
     ? undefined
-    : matchingType && ['expense', 'income'].includes(context.type) && result.categoryIds.length === 1
+    : matchingType &&
+        ['expense', 'income'].includes(context.type) &&
+        !result.categoryNeedsReview &&
+        result.categoryIds.length === 1
       ? result.categoryIds[0]
       : context.automaticCategory
         ? null

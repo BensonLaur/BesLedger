@@ -65,6 +65,101 @@ async function bank(page: Page) {
     .click();
 }
 
+test('分类规则可在窄屏新增、调序、持久化并自动采用，同时保留手选分类', async ({ page }) => {
+  const editor = await open(page);
+  await page.setViewportSize({ width: 320, height: 650 });
+  const note = '尾号1234卡2026年11月20日07:45支出(消费财付通-示例新城一号东门)9元。【示例银行】';
+  const dialog = await recognize(page, note);
+  const classification = dialog.locator('.review-fields section').first();
+  await expect(classification).toContainText('未识别');
+  const rules = page.getByRole('dialog', { name: '自定义分类规则', exact: true });
+  await classification.getByRole('button', { name: '分类规则', exact: true }).click();
+  const add = rules.getByRole('button', { name: '添加规则', exact: true });
+  const save = rules.getByRole('button', { name: '保存规则', exact: true });
+  await add.click();
+  await save.click();
+  await expect(rules.getByRole('alert')).toHaveText('请为第 1 条规则填写匹配文字');
+  await rules.getByLabel('第 1 条匹配文字').fill('示例新城');
+  await rules.getByLabel('第 1 条匹配分类').selectOption({ label: '停车费' });
+  await add.click();
+  await rules.getByLabel('第 2 条匹配文字').fill('示例新城*东门');
+  await rules.getByLabel('第 2 条匹配分类').selectOption({ label: '物业' });
+  await rules.getByRole('button', { name: '上移第 2 条规则', exact: true }).click();
+  await expect(rules.getByLabel('第 1 条匹配文字')).toHaveValue('示例新城*东门');
+  expect(await rules.locator('.modal-content').evaluate((el) => el.scrollWidth === el.clientWidth)).toBe(
+    true,
+  );
+  await save.click();
+  await expect(rules).toBeHidden();
+  await expect(classification).toContainText('物业');
+  await expect(classification).toContainText('命中自定义规则');
+  await expect(dialog.getByLabel('本次金额', { exact: true })).toHaveValue('9.00');
+  await expect(dialog).toContainText('2026-11-20 07:45');
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '欢迎回来', exact: true })).toBeVisible();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-picker-password');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
+  await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const noteField = editor.getByLabel('备注', { exact: true });
+  await noteField.fill(note);
+  await expect(editor.getByRole('button', { name: '当前分类：物业', exact: true })).toBeVisible();
+  await editor.getByRole('button', { name: '完成备注', exact: true }).click();
+  await editor.getByRole('button', { name: '早餐', exact: true }).click();
+  await noteField.fill(note.replace('一号', '二号'));
+  await editor.locator('.recognition-summary').click();
+  await expect(classification).toContainText('早餐');
+  await expect(classification).toContainText('保留手动选择');
+});
+
+test('膳食备注给出可选餐次，采用前不自动填入分类', async ({ page }) => {
+  const editor = await open(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await editor
+    .getByLabel('备注', { exact: true })
+    .fill('尾号1234卡2026年11月20日18:35支出(消费财付通-示例膳食服务有限公司)23元。【示例银行】');
+  const pending = editor.getByRole('button', { name: '识别结果待核对', exact: true });
+  await expect(pending).toBeVisible();
+  await expect(editor.getByRole('button', { name: '当前分类：未选择', exact: true })).toBeVisible();
+  await pending.click();
+  const dialog = review(page);
+  await dialog.getByRole('button', { name: '晚餐', exact: true }).click();
+  await dialog.getByRole('button', { name: '完成核对', exact: true }).click();
+  await expect(editor.getByRole('button', { name: '当前分类：晚餐', exact: true })).toBeVisible();
+});
+
+test('三餐*自动可作为规则目标，按时间填入实际餐次，时段不明时给出三个候选', async ({ page }) => {
+  const editor = await open(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const note = editor.getByLabel('备注', { exact: true });
+  const bankNote = '尾号1234卡2026年11月20日12:20支出(消费财付通-示例餐馆)13元。【示例银行】';
+  await note.fill(bankNote);
+  const pending = editor.getByRole('button', { name: '识别结果待核对', exact: true });
+  await pending.click();
+  const dialog = review(page);
+  await dialog.getByRole('button', { name: '分类规则', exact: true }).click();
+  const rules = page.getByRole('dialog', { name: '自定义分类规则', exact: true });
+  await rules.getByRole('button', { name: '添加规则', exact: true }).click();
+  await rules.getByLabel('第 1 条匹配文字').fill('示例餐馆');
+  await rules.getByLabel('第 1 条匹配分类').selectOption({ label: '三餐*自动' });
+  await rules.getByRole('button', { name: '保存规则', exact: true }).click();
+  const classification = dialog.locator('.review-fields section').first();
+  await expect(classification).toContainText('午餐');
+  await dialog.getByRole('button', { name: '关闭', exact: true }).click();
+  await expect(editor.getByRole('button', { name: '当前分类：午餐', exact: true })).toBeVisible();
+
+  await note.fill(bankNote.replace('12:20', '22:20'));
+  await expect(editor.getByRole('button', { name: '当前分类：未选择', exact: true })).toBeVisible();
+  await pending.click();
+  await expect(classification).toContainText('请核对餐次');
+  const candidates = classification.locator('.review-candidates').getByRole('button');
+  await expect(candidates).toHaveText(['早餐', '午餐', '晚餐']);
+  await classification.getByRole('button', { name: '晚餐', exact: true }).click();
+  await dialog.getByRole('button', { name: '完成核对', exact: true }).click();
+  await expect(editor.getByRole('button', { name: '当前分类：晚餐', exact: true })).toBeVisible();
+});
+
 test('复制带退款的支出生成独立草稿，保留新日期，放弃不新增且保存不复制退款', async ({ page }) => {
   const form = await open(page);
   const note = '尾号1234卡2026年11月21日08:20停车费10元。【示例银行】';

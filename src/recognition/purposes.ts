@@ -1,9 +1,13 @@
 type PurposeRule = [RegExp, string[]];
+const threeMeals = [
+  { id: 'expense.food.001', name: '早餐', pattern: /早餐|早饭|早飯|早膳|早点|早點/, from: 5, to: 11 },
+  { id: 'expense.food.002', name: '午餐', pattern: /午餐|午饭|午膳/, from: 11, to: 15 },
+  { id: 'expense.food.003', name: '晚餐', pattern: /晚餐|晚饭|晚膳/, from: 17, to: 21 },
+];
+const nightMeal = { id: 'expense.food.004', name: '夜宵', pattern: /夜宵|宵夜/ };
+const allMeals = [...threeMeals, nightMeal];
 const expenseRules: PurposeRule[] = [
-  [/早餐|早饭|早飯|早膳|早点|早點/, ['expense.food.001']],
-  [/午餐|午饭|午膳/, ['expense.food.002']],
-  [/晚餐|晚饭|晚膳/, ['expense.food.003']],
-  [/夜宵|宵夜/, ['expense.food.004']],
+  ...allMeals.map(({ pattern, id }): PurposeRule => [pattern, [id]]),
   [/零食|薯片|饼干|糖果/, ['expense.food.005']],
   [/水果|饮料|奶茶|果汁|矿泉水/, ['expense.food.006']],
   [/买菜|菜市场|蔬菜|生鲜|买肉|猪肉|牛肉|鸡蛋/, ['expense.food.007']],
@@ -72,43 +76,58 @@ const incomeRules: PurposeRule[] = [
   [/公积金/, ['income.014']],
   [/赔付/, ['income.016']],
 ];
-const mealNames: Record<string, string> = {
-  'expense.food.001': '早餐',
-  'expense.food.002': '午餐',
-  'expense.food.003': '晚餐',
-  'expense.food.004': '夜宵',
-};
 const mealPattern =
   /包点|包點|包子|豆浆|豆漿|肠粉|腸粉|餐厅|餐廳|餐饮|餐飲|餐费|餐費|吃饭|吃飯|饭店|飯店|食堂|快餐|外卖|外賣|面馆|麵館|面店|麵店|拉面|拉麵|粥店|小吃/;
+const mealBusinessPattern = /膳食|团餐|團餐|配餐|供餐/;
+
+function threeMealAt(hour: number) {
+  return threeMeals.find(({ from, to }) => hour >= from && hour < to);
+}
+
+/** 自定义规则已确认餐饮用途，明写餐次优先，时段不明时给出三餐候选。 */
+export function recognizeThreeMeals(text: string, writtenTime?: string) {
+  const named = threeMeals.filter(({ pattern }) => pattern.test(text));
+  const meal = named.length
+    ? named.length === 1
+      ? named[0]
+      : undefined
+    : threeMealAt(Number(writtenTime?.slice(0, 2)));
+  if (meal && !nightMeal.pattern.test(text)) {
+    return {
+      categoryIds: [meal.id],
+      basis: named.length ? `备注写明${meal.name}` : `按备注时间 ${writtenTime} 归为${meal.name}`,
+    };
+  }
+  // 保留命中的规则；多个餐次或夜宵不能落到优先级更低的规则。
+  return {
+    categoryIds: (named.length > 1 ? named : threeMeals).map(({ id }) => id),
+    basis: '三餐*自动未能确定餐次，请选择',
+  };
+}
+
 export function recognizePurpose(text: string, type?: 'expense' | 'income' | 'refund', writtenTime?: string) {
   const rules = type === 'income' ? incomeRules : type === 'refund' ? [] : expenseRules;
   const matches = rules.flatMap(([pattern, ids]) => (pattern.test(text) ? ids : []));
   let basis = '';
+  let needsReview = false;
   if (type !== 'income' && type !== 'refund') {
     // 明写的餐次和具体食物分类优先；只有笼统餐饮用途才参考原文时间，不读当前时钟。
-    if (!matches.some((id) => id.startsWith('expense.food.')) && mealPattern.test(text)) {
-      const hour = writtenTime ? Number(writtenTime.slice(0, 2)) : undefined;
-      const meal =
-        hour === undefined
-          ? undefined
-          : hour >= 5 && hour < 11
-            ? 'expense.food.001'
-            : hour >= 11 && hour < 15
-              ? 'expense.food.002'
-              : hour >= 17 && hour < 21
-                ? 'expense.food.003'
-                : hour >= 21 || hour < 5
-                  ? 'expense.food.004'
-                  : undefined;
+    const clearMeal = mealPattern.test(text);
+    const mealBusiness = mealBusinessPattern.test(text);
+    if (!matches.some((id) => id.startsWith('expense.food.')) && (clearMeal || mealBusiness)) {
+      const hour = Number(writtenTime?.slice(0, 2));
+      const meal = threeMealAt(hour) ?? (hour >= 21 || hour < 5 ? nightMeal : undefined);
       if (meal) {
-        matches.push(meal);
-        basis = `已识别餐饮用途，按备注时间 ${writtenTime!.slice(0, 5)} 推荐${mealNames[meal]}，请核对`;
+        matches.push(meal.id);
+        // 餐饮公司的渠道名称也可能对应团餐、充值等，只作一键候选。
+        needsReview = !clearMeal;
+        basis = `已识别餐饮用途，按备注时间 ${writtenTime!.slice(0, 5)} 推荐${meal.name}，请核对`;
       } else {
-        matches.push(...Object.keys(mealNames));
+        matches.push(...allMeals.map(({ id }) => id));
         basis = '已识别餐饮用途，用餐时段不明确，请选择早餐、午餐、晚餐或夜宵';
       }
     }
     if (!matches.length && /超市/.test(text)) matches.push('expense.food.007', 'expense.shopping.002');
   }
-  return { categoryIds: [...new Set(matches)], basis };
+  return { categoryIds: [...new Set(matches)], basis, needsReview };
 }

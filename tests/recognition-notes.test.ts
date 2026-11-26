@@ -248,7 +248,9 @@ describe('用途同义词只推荐候选，支付渠道、收入与退款保持�
     expect(parse('退款停车费10元').categoryIds).toEqual([]);
     expect(parse('收到停车费10元').categoryIds).toEqual([]);
     expect(
-      recognize('示例小店午餐25元', accounts, now, { 示例小店: 'expense.food.009' }).categoryIds,
+      recognize('示例小店午餐25元', accounts, now, {
+        categoryRules: [{ pattern: '示例小店', categoryId: 'expense.food.009', type: 'expense' }],
+      }).categoryIds,
     ).toEqual(['expense.food.009']);
   });
 });
