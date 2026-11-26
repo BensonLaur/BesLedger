@@ -65,6 +65,51 @@ async function bank(page: Page) {
     .click();
 }
 
+test('短信记账从首页快捷查找、批量核对保存，重新解锁后识别已记账', async ({ page }) => {
+  const normal = await open(page);
+  await normal.getByRole('button', { name: '返回', exact: true }).click();
+  await page.setViewportSize({ width: 360, height: 740 });
+  const incoming = [
+    '尾号1234卡2026年11月20日12:20支出(消费财付通-示例奶茶铺)8.50元，余额500.00元。【示例银行】',
+    '尾号1234卡2026年11月20日12:22支出(消费财付通-示例奶茶铺)8.50元，余额491.50元。【示例银行】',
+    '尾号1234卡2026年11月20日12:24支出(消费财付通-示例小区)12元。【示例银行】',
+    '尾号1234卡需于2026年11月22日18:00前还款，应还金额500元。【示例银行】',
+    '请核对登录验证码。',
+  ];
+  const inbox = page.getByRole('dialog', { name: '短信记账', exact: true });
+  async function find() {
+    await page.getByRole('button', { name: '快捷', exact: true }).click();
+    const shortcuts = page.getByRole('dialog', { name: '快捷记账', exact: true });
+    await expect(shortcuts.locator('.quick-grid button').first()).toHaveText('短信记账');
+    await shortcuts.getByRole('button', { name: '短信记账', exact: true }).click();
+    await inbox.getByLabel('银行交易短信').fill([...incoming, incoming[0]].join('\n'));
+    await inbox.getByRole('button', { name: '查找交易', exact: true }).click();
+  }
+  await find();
+  await expect(inbox.getByRole('button', { name: '可保存 2', exact: true })).toBeVisible();
+  await expect(inbox.getByRole('button', { name: '保存 2 笔', exact: true })).toBeEnabled();
+  await inbox.getByRole('button', { name: '待核对 1', exact: true }).click();
+  const pending = inbox.locator('.sms-transaction');
+  await pending.getByRole('button', { name: '选择分类', exact: true }).click();
+  await pending.getByLabel('交易分类').selectOption({ label: '停车费' });
+  await pending.getByRole('button', { name: '确认本笔', exact: true }).click();
+  await inbox.getByRole('button', { name: '保存 3 笔', exact: true }).click();
+  await expect(inbox.getByRole('status')).toHaveText('已保存 3 笔');
+  await expect(inbox.getByRole('button', { name: '已记账 3', exact: true })).toBeVisible();
+  await inbox.getByRole('button', { name: '查看账目', exact: true }).first().click();
+  const detail = page.getByRole('dialog', { name: '账目详情', exact: true });
+  await expect(detail).toContainText('示例小区');
+  await expect(detail).not.toContainText('尾号1234卡');
+  await detail.getByRole('button', { name: '关闭', exact: true }).click();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '欢迎回来', exact: true })).toBeVisible();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-picker-password');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
+  await find();
+  await expect(inbox.getByRole('button', { name: '已记账 3', exact: true })).toBeVisible();
+  await expect(inbox.getByRole('button', { name: '保存 0 笔', exact: true })).toBeDisabled();
+});
+
 test('分类规则可在窄屏新增、调序、持久化并自动采用，同时保留手选分类', async ({ page }) => {
   const editor = await open(page);
   await page.setViewportSize({ width: 320, height: 650 });

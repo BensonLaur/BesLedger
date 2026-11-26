@@ -6,7 +6,7 @@ import { list, put, type Entry } from '../../domain/model';
 import { saveEntry, movements } from '../../domain/ledger';
 import { decimal, minor, money } from '../../domain/money';
 import { recognize, type Recognition } from '../../recognition/sms';
-import { autoThreeMealsRuleTarget, type CategoryRule } from '../../recognition/text-category-rules';
+import { categoryRulesFor } from '../../recognition/text-category-rules';
 import { localTime } from '../../domain/time';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
@@ -339,20 +339,8 @@ function accountPlan(result: Recognition) {
   });
 }
 function recognizeNote() {
-  const local = state.value!;
-  const available = new Map(
-    [autoThreeMealsRuleTarget, ...categories(local, draft.ledgerId)].map((category) => [
-      category.id,
-      category,
-    ]),
-  );
-  const configured = local.preferences.textCategoryRules?.[draft.ledgerId] ?? [];
-  const categoryRules = configured.flatMap<CategoryRule>((rule) => {
-    const category = available.get(rule.categoryId);
-    return category ? [{ ...rule, type: category.type }] : [];
-  });
   return recognize(draft.note, accounts.value, recognitionTime, {
-    categoryRules,
+    categoryRules: categoryRulesFor(state.value!, draft.ledgerId),
     fallbackType: draft.type === 'expense' || draft.type === 'income' ? draft.type : undefined,
   });
 }
@@ -637,10 +625,9 @@ async function save(again = false) {
     ui.draft = undefined;
     ui.notice = '已安全保存在本机';
   });
-  if (ok && (again || ui.smsQueue.length)) {
+  if (ok && again) {
     await new Promise((resolve) => setTimeout(resolve, 0));
-    const note = ui.smsQueue.shift();
-    newEntry(note ? 'expense' : draft.type, note ? { note } : {});
+    newEntry(draft.type);
   }
 }
 </script>

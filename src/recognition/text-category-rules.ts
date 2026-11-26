@@ -1,4 +1,5 @@
-import type { TextCategoryRule } from '../domain/model';
+import { categories } from '../domain/categories';
+import type { State, TextCategoryRule } from '../domain/model';
 
 export type CategoryRule = TextCategoryRule & { type: 'expense' | 'income' };
 // 只存为规则目标，识别后解析为实际账目分类。
@@ -8,6 +9,20 @@ export const autoThreeMealsRuleTarget = {
   group: '餐饮',
   type: 'expense',
 } as const;
+
+export function categoryRulesFor(state: State, ledgerId: string): CategoryRule[] {
+  const available = new Map(
+    [...categories(state, ledgerId), autoThreeMealsRuleTarget].map((category) => [
+      category.id,
+      category.type,
+    ]),
+  );
+  const configured = state.preferences.textCategoryRules?.[ledgerId] ?? [];
+  return configured.flatMap((rule) => {
+    const type = available.get(rule.categoryId);
+    return type ? [{ ...rule, type }] : [];
+  });
+}
 
 function normalize(text: string): string {
   return text

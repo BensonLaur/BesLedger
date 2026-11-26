@@ -185,15 +185,21 @@ onMounted(() => {
         ><Icon :name="item.icon" /><span>{{ item.name }}</span></RouterLink
       >
     </nav>
+    <SmsPicker v-if="ui.smsPicker" />
     <EntryEditor v-if="ui.editor && ui.draft" :key="ui.editingId || ui.draft.createdAt" />
     <EntryDetail v-if="ui.detailId" />
     <AccountForm v-if="ui.accountForm" />
     <RuleForm v-if="ui.ruleForm" />
     <EntryDeleteDialog v-if="ui.deletingEntryId" :id="ui.deletingEntryId" />
-    <SmsPicker v-if="ui.smsPicker" />
     <Modal v-if="ui.quick" class="quick-overlay" title="快捷记账" @close="ui.quick = false"
       ><div class="quick-grid">
-        <button @click="newEntry()"><Icon name="receipt" :size="28" />备注记账</button
+        <button
+          @click="
+            ui.quick = false;
+            ui.smsPicker = true;
+          "
+        >
+          <Icon name="receipt" :size="28" />短信记账</button
         ><button @click="newEntry('borrow')"><Icon name="users" :size="28" />借贷</button
         ><button
           @click="

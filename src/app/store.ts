@@ -30,7 +30,6 @@ export const ui = reactive({
   draft: undefined as Entry | undefined,
   confirm: '',
   smsPicker: false,
-  smsQueue: [] as string[],
   loginRecovery: false,
   loginProblem: '',
   passwordRecoveryRequested: false,
@@ -179,7 +178,6 @@ export function lock(): void {
   ui.editor = false;
   ui.draft = undefined;
   ui.detailId = '';
-  ui.smsQueue = [];
   ui.deletingEntryId = '';
   ui.smsPicker = false;
 }

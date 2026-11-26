@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 @CapacitorPlugin(name = "SmsInbox", permissions = @Permission(alias = "sms", strings = { Manifest.permission.READ_SMS }))
 public class SmsInboxPlugin extends Plugin {
@@ -26,6 +27,8 @@ public class SmsInboxPlugin extends Plugin {
         "95588", "95533", "95599", "95566", "95555", "95559", "95580"
     )));
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private static final Pattern PRIVATE_CODE = Pattern.compile("验证码|动态口令|校验码");
+    private static final Pattern MOVEMENT = Pattern.compile("支出|消费|收入|入账|扣款|扣收|到账|存入|实付|支付|转账|转入|转出|退款|冲正|还款成功|还款已完成");
 
     @PluginMethod
     public void query(PluginCall call) {
@@ -53,7 +56,8 @@ public class SmsInboxPlugin extends Plugin {
             try (Cursor cursor = getContext().getContentResolver().query(Uri.parse("content://sms/inbox"), new String[]{"_id", "body", "date"}, "date >= ? AND date <= ? AND address = ?", args, "date DESC")) {
                 if (cursor != null) while (cursor.moveToNext() && messages.length() < 200) {
                     String body = cursor.getString(1);
-                    if (body == null || body.matches("(?s).*(验证码|动态口令|优惠|营销).*") || !body.matches("(?s).*(支出|消费|收入|退款|扣款|到账|支付).*[0-9].*")) continue;
+                    // 先排除认证短信，完成交易的字段核对由共用识别流程处理。
+                    if (body == null || PRIVATE_CODE.matcher(body).find() || !MOVEMENT.matcher(body).find()) continue;
                     JSObject item = new JSObject(); item.put("id", cursor.getString(0)); item.put("body", body); item.put("date", cursor.getLong(2)); messages.put(item);
                 }
                 JSObject result = new JSObject(); result.put("messages", messages); call.resolve(result);
