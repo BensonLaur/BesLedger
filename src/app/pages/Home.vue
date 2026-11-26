@@ -393,7 +393,12 @@ async function saveBudget() {
         <p v-if="activeFilters.length" class="hint" role="status">
           找到 {{ visible.length }} 笔；上方概览仍为{{ ui.allTime ? '全部时间' : '整月' }}收支。
         </p>
-        <EntryList v-if="visible.length" :items="visible.slice(0, shown)" :summary-items="visible" />
+        <EntryList
+          v-if="visible.length"
+          :items="visible.slice(0, shown)"
+          :summary-items="visible"
+          quick-actions
+        />
         <div v-else class="empty-state home-empty">
           <Icon :name="activeFilters.length ? 'search' : 'receipt'" :size="32" />
           <h3>{{ emptyTitle }}</h3>

@@ -7,7 +7,7 @@ test.use({ reducedMotion: 'reduce' });
 test.beforeAll(async () => {
   modules = await createServer({
     configFile: false,
-    server: { middlewareMode: true, hmr: false, ws: false },
+    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
     appType: 'custom',
     optimizeDeps: { noDiscovery: true, include: [] },
   });
@@ -95,8 +95,10 @@ test('复制带退款的支出生成独立草稿，保留新日期，放弃不�
   );
   expect(bounds.every((b) => b.left >= 0 && b.right <= 320 && b.top === bounds[0].top)).toBe(true);
   await footer.getByRole('button', { name: '删除', exact: true }).click();
-  await expect(detail.getByRole('button', { name: '确认删除', exact: true })).toBeVisible();
-  await detail.getByRole('button', { name: '取消', exact: true }).click();
+  const deletion = page.getByRole('dialog', { name: '删除账目', exact: true });
+  await deletion.getByRole('button', { name: '确认删除', exact: true }).click();
+  await expect(deletion.getByRole('alert')).toHaveText('请先删除关联退款，再删除原单');
+  await deletion.getByRole('button', { name: '取消', exact: true }).click();
 
   const copy = page.getByRole('dialog', { name: '复制记一笔', exact: true });
   await footer.getByRole('button', { name: '复制记一笔', exact: true }).click();

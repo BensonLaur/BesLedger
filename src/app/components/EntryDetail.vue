@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { copyEntry, editEntry, entries, mutate, newEntry, run, state, ui } from '../store';
+import { computed } from 'vue';
+import { copyEntry, editEntry, entries, newEntry, state, ui } from '../store';
 import { categoryName } from '../../domain/categories';
 import { money, sum } from '../../domain/money';
-import { deleteEntry } from '../../domain/ledger';
 import Modal from './Modal.vue';
 import Icon from './Icon.vue';
 import { entryIcon } from '../entry-presentation';
-const deleting = ref(false);
 const entity = computed(() => entries.value.find((e) => e.id === ui.detailId));
 const refunds = computed(() => entries.value.filter((e) => e.data.originalId === ui.detailId));
 const refundTotal = computed(() => sum(refunds.value.map((e) => e.data.amount)));
@@ -29,13 +27,6 @@ function addRefund() {
   const e = entity.value!;
   ui.detailId = '';
   newEntry('refund', { originalId: e.id, categoryId: e.data.categoryId, to: e.data.from });
-}
-async function remove() {
-  await run(async () => {
-    await mutate((s) => deleteEntry(s, ui.detailId));
-    ui.detailId = '';
-    ui.notice = '账目已移入回收站，可在“我的”中找回';
-  });
 }
 </script>
 <template>
@@ -106,8 +97,15 @@ async function remove() {
     </section>
     <p v-if="ui.error" class="field-error">{{ ui.error }}</p>
     <template #footer>
-      <div v-if="!deleting" class="actions detail-actions">
-        <button type="button" class="danger-outline" @click="deleting = true">
+      <div class="actions detail-actions">
+        <button
+          type="button"
+          class="danger-outline"
+          @click="
+            ui.error = '';
+            ui.deletingEntryId = entity.id;
+          "
+        >
           <Icon name="delete" :size="16" />删除
         </button>
         <button v-if="!ui.editor" type="button" class="secondary" @click="copyEntry(entity.id)">
@@ -117,26 +115,14 @@ async function remove() {
           <Icon name="edit" :size="16" />编辑账目
         </button>
       </div>
-      <div v-else class="detail-delete">
-        <div class="warning-panel">
-          <p>确认将这笔账移入回收站？余额和统计会同步更新，可在“我的 → 回收站”找回。</p>
-          <div class="actions">
-            <button class="secondary" @click="deleting = false">取消</button>
-            <button class="danger" :disabled="ui.busy" @click="remove">确认删除</button>
-          </div>
-        </div>
-      </div>
     </template></Modal
   >
 </template>
 
 <style scoped>
-.detail-actions,
-.detail-delete {
+.detail-actions {
   border-top: 1px solid var(--line);
   padding: 12px 16px max(12px, env(safe-area-inset-bottom));
-}
-.detail-actions {
   margin-top: 0;
   flex-wrap: wrap;
   gap: 8px;

@@ -21,6 +21,7 @@ export const ui = reactive({
   editingId: '',
   copiedFromId: '',
   detailId: '',
+  deletingEntryId: '',
   accountForm: false,
   accountId: '',
   quick: false,
@@ -179,6 +180,7 @@ export function lock(): void {
   ui.draft = undefined;
   ui.detailId = '';
   ui.smsQueue = [];
+  ui.deletingEntryId = '';
   ui.smsPicker = false;
 }
 export function requestPasswordRecovery(): void {

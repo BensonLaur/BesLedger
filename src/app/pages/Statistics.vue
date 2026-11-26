@@ -459,7 +459,7 @@ function share(index: number) {
         {{ money(sum(drill.map((e) => statisticValue(e.data, metric)))) }} 元
       </p>
     </div>
-    <EntryList :items="drill.slice(0, detailLimit)" :summary-items="drill" statistical /><button
+    <EntryList :items="drill.slice(0, detailLimit)" :summary-items="drill" statistical quick-actions /><button
       v-if="drill.length > detailLimit"
       class="secondary full"
       @click="detailLimit += 50"

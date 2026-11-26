@@ -12,6 +12,7 @@ import Unlock from './components/Unlock.vue';
 import UpdateNotice from './components/UpdateNotice.vue';
 import EntryEditor from './components/EntryEditor.vue';
 import EntryDetail from './components/EntryDetail.vue';
+import EntryDeleteDialog from './components/EntryDeleteDialog.vue';
 import AccountForm from './components/AccountForm.vue';
 import RuleForm from './components/RuleForm.vue';
 import Modal from './components/Modal.vue';
@@ -188,6 +189,7 @@ onMounted(() => {
     <EntryDetail v-if="ui.detailId" />
     <AccountForm v-if="ui.accountForm" />
     <RuleForm v-if="ui.ruleForm" />
+    <EntryDeleteDialog v-if="ui.deletingEntryId" :id="ui.deletingEntryId" />
     <SmsPicker v-if="ui.smsPicker" />
     <Modal v-if="ui.quick" class="quick-overlay" title="快捷记账" @close="ui.quick = false"
       ><div class="quick-grid">
