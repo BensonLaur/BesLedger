@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import type { StoredVault } from '../../src/storage/backend';
 import { setEntryTime } from '../support/entry-time-ui';
-let modules: ViteDevServer, row: StoredVault;
+let modules: ViteDevServer, row: StoredVault, manyRow: StoredVault, ambiguousRow: StoredVault;
 test.use({ reducedMotion: 'reduce' });
 test.beforeAll(async () => {
   modules = await createServer({
@@ -13,32 +13,39 @@ test.beforeAll(async () => {
   });
   const { accountPickerFixture } = await modules.ssrLoadModule('/tests/support/account-picker-fixture.ts');
   row = await accountPickerFixture('single');
+  manyRow = await accountPickerFixture('many');
+  ambiguousRow = await accountPickerFixture('ambiguous');
 });
 test.afterAll(async () => {
   await modules?.close();
 });
-async function open(page: Page) {
+async function open(page: Page, mode: 'single' | 'many' | 'ambiguous' = 'single') {
   await page.setViewportSize({ width: 393, height: 852 });
   await page.clock.setFixedTime(new Date('2026-11-22T23:00:00+08:00'));
   await page.goto('./');
   await expect(page.getByRole('button', { name: '创建账本', exact: true })).toBeVisible();
-  await page.evaluate(async (row) => {
-    await new Promise<void>((resolve, reject) => {
-      const r = indexedDB.open('BesLedger.encrypted.v1');
-      r.onsuccess = () => {
-        const db = r.result,
-          tx = db.transaction('vault', 'readwrite');
-        tx.objectStore('vault').put(row);
-        tx.oncomplete = () => {
-          db.close();
-          resolve();
+  await page.evaluate(
+    async (row) => {
+      await new Promise<void>((resolve, reject) => {
+        const r = indexedDB.open('BesLedger.encrypted.v1');
+        r.onsuccess = () => {
+          const db = r.result,
+            tx = db.transaction('vault', 'readwrite');
+          tx.objectStore('vault').put(row);
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
         };
-        tx.onerror = () => reject(tx.error);
-      };
-      r.onerror = () => reject(r.error);
-    });
-  }, row);
+        r.onerror = () => reject(r.error);
+      });
+    },
+    mode === 'many' ? manyRow : mode === 'ambiguous' ? ambiguousRow : row,
+  );
   await page.reload();
+  // 等待读回注入的密文，避免与创建页同名密码框发生初始化竞态。
+  await expect(page.getByRole('heading', { name: '欢迎回来', exact: true })).toBeVisible();
   await page.getByLabel('解锁密码', { exact: true }).fill('fictional-picker-password');
   await page.getByRole('button', { name: '打开账本', exact: true }).click();
   await page.getByRole('button', { name: '记一笔', exact: true }).filter({ visible: true }).click();
@@ -57,6 +64,174 @@ async function bank(page: Page) {
     .getByRole('button', { name: '日常储蓄卡', exact: true })
     .click();
 }
+
+test('唯一尾号在分类和年份仍待核对时已填入主页面，关闭核对仍保留，保存重开账户正确', async ({ page }) => {
+  const editor = await open(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await editor
+    .getByLabel('备注', { exact: true })
+    .fill('尾号1234卡11月21日17:37支出(消费虚构商户)15元，余额1,200.00元。【示例银行】');
+  const payment = editor.getByRole('button', { name: '付款账户', exact: true });
+  await expect(payment).toContainText('日常储蓄卡');
+  await editor.locator('.recognition-summary').click();
+  await expect(review(page).locator('.review-task-heading')).toContainText('2 项');
+  await expect(review(page).getByText('已自动选用', { exact: false })).toBeVisible();
+  await review(page).getByRole('button', { name: '关闭', exact: true }).click();
+  await expect(payment).toContainText('日常储蓄卡');
+  await editor.locator('.recognition-summary').click();
+  await review(page).locator('.review-fields').getByRole('button', { name: '选择分类', exact: true }).click();
+  await review(page).getByLabel('搜索分类').fill('停车费');
+  await review(page).getByRole('button', { name: '停车费', exact: true }).click();
+  await review(page).getByRole('button', { name: '完成核对', exact: true }).click();
+  await editor.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(editor).toBeHidden();
+  await page.reload();
+  // 等待读回注入的密文，避免与创建页同名密码框发生初始化竞态。
+  await expect(page.getByRole('heading', { name: '欢迎回来', exact: true })).toBeVisible();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-picker-password');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
+  await page.goto('./#/accounts');
+  await expect(page.locator('.assets-total')).toContainText('985.00');
+});
+
+test('自动账户跟随唯一匹配，核对其他字段后仍可跟随，未知尾号或清空撤回旧自动账户', async ({ page }) => {
+  const editor = await open(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const note = editor.getByLabel('备注', { exact: true });
+  const payment = editor.getByRole('button', { name: '付款账户', exact: true });
+  await note.fill('尾号1234卡2026年11月21日08:20停车费10元。【示例银行】');
+  await expect(payment).toContainText('日常储蓄卡');
+  await editor.locator('.recognition-summary').click();
+  await review(page).getByRole('button', { name: '完成核对', exact: true }).click();
+  await note.fill('尾号5678卡停车费12元');
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('12.00');
+  await expect(payment).toContainText('选择账户');
+  await note.fill('尾号1234卡停车费13元');
+  await expect(payment).toContainText('日常储蓄卡');
+  await note.fill('');
+  await expect(payment).toContainText('选择账户');
+});
+
+test('手选账户不被匹配尾号或清空备注覆盖，核对面板展示实际保留的账户', async ({ page }) => {
+  const editor = await open(page, 'many');
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const note = editor.getByLabel('备注', { exact: true });
+  const payment = editor.getByRole('button', { name: '付款账户', exact: true });
+  await note.fill('尾号1234卡停车费10元');
+  await expect(payment).toContainText('日常储蓄卡');
+  await payment.click();
+  await page
+    .locator('.account-picker-backdrop')
+    .getByRole('button', { name: '随身现金', exact: true })
+    .click();
+  await note.fill('尾号1234卡停车费12元');
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('12.00');
+  await expect(payment).toContainText('随身现金');
+  await editor.locator('.recognition-summary').click();
+  await expect(review(page).locator('.review-fields')).toContainText('随身现金');
+  await expect(review(page).locator('.review-fields')).toContainText('保留已选账户');
+  await review(page).getByRole('button', { name: '关闭', exact: true }).click();
+  await note.fill('');
+  await expect(payment).toContainText('随身现金');
+});
+
+test('两个同银行同尾号账户不自动选择，在核对面板明确展示歧义', async ({ page }) => {
+  const editor = await open(page, 'ambiguous');
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await editor
+    .getByLabel('备注', { exact: true })
+    .fill('尾号1234卡2026年11月21日08:20停车费10元。【示例银行】');
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('10.00');
+  await expect(editor.getByRole('button', { name: '付款账户', exact: true })).toContainText('选择账户');
+  await editor.locator('.recognition-summary').click();
+  await expect(review(page)).toContainText('匹配多个账户，请选择');
+});
+
+test('收入唯一尾号自动填收款账户，不要求先点采用', async ({ page }) => {
+  const editor = await open(page);
+  await editor.getByRole('button', { name: '收入', exact: true }).click();
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await editor
+    .getByLabel('备注', { exact: true })
+    .fill('尾号1234卡2026年11月21日10:20收入(工资薪水)100元。【示例银行】');
+  await expect(editor.getByRole('button', { name: '收款账户', exact: true })).toContainText('日常储蓄卡');
+  await expect(review(page)).toHaveCount(0);
+});
+
+test('自动识别立即填入完整时间，不用采用即可保存，刷新重开仍是交易时间', async ({ page }) => {
+  const editor = await open(page);
+  await bank(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const text = '2026年11月21日08:20停车费10元';
+  await editor.getByLabel('备注', { exact: true }).fill(text);
+  await expect(editor.getByRole('button', { name: '修改发生时间', exact: true })).toContainText(
+    '2026-11-21 08:20',
+  );
+  await expect(editor.locator('.recognition-summary')).toContainText('时间');
+  await expect(review(page)).toHaveCount(0);
+  await editor.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(editor).toBeHidden();
+  await page.reload();
+  // 等待读回注入的密文，避免与创建页同名密码框发生初始化竞态。
+  await expect(page.getByRole('heading', { name: '欢迎回来', exact: true })).toBeVisible();
+  await page.getByLabel('解锁密码', { exact: true }).fill('fictional-picker-password');
+  await page.getByRole('button', { name: '打开账本', exact: true }).click();
+  await page.getByRole('button').filter({ hasText: text }).click();
+  await expect(page.getByRole('dialog')).toContainText('2026-11-21 08:20');
+});
+
+test('缺少年份先更新候选时间但保存仍核对，手调后不被新备注覆盖', async ({ page }) => {
+  const editor = await open(page);
+  await bank(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const note = editor.getByLabel('备注', { exact: true });
+  const time = editor.getByRole('button', { name: '修改发生时间', exact: true });
+  await note.fill('10月14日08:20停车费10元');
+  await expect(time).toContainText('2026-10-14 08:20');
+  await editor.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(review(page).getByText('年份待确认', { exact: true })).toBeVisible();
+  await review(page).getByRole('button', { name: '关闭', exact: true }).click();
+  await expect(time).toContainText('2026-10-14 08:20');
+  await time.click();
+  const picker = page.getByRole('dialog', { name: '发生时间', exact: true });
+  await setEntryTime(picker, '2025-10-13T09:25');
+  await picker.getByRole('button', { name: '确定', exact: true }).click();
+  await note.fill('2026年11月20日18:40停车费12元');
+  await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('12.00');
+  await expect(time).toContainText('2025-10-13 09:25');
+  await editor.locator('.recognition-summary').click();
+  await expect(review(page).getByText('保留手动时间', { exact: true })).toBeVisible();
+});
+
+test('备注删除日期、日期无效或多时间时撤回旧自动时间，异常日期保存前仍需核对', async ({ page }) => {
+  const editor = await open(page);
+  await bank(page);
+  await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  const note = editor.getByLabel('备注', { exact: true });
+  const time = editor.getByRole('button', { name: '修改发生时间', exact: true });
+  const initial = await time.innerText();
+  for (const [text, warning] of [
+    ['停车费12元', ''],
+    ['2026年2月30日08:20停车费12元', '原文日期无效'],
+    ['2027年1月1日08:20停车费12元', '晚于今天'],
+    ['2026年10月14日08:20停车费12元，通知时间2026年10月15日09:30', '多个时间'],
+  ]) {
+    await note.fill('2026年11月21日08:20停车费10元');
+    await expect(time).toContainText('2026-11-21 08:20');
+    await note.fill(text);
+    await expect(editor.getByLabel('金额', { exact: true })).toHaveValue('12.00');
+    await expect(time).toHaveText(initial);
+    if (warning) {
+      await editor.getByRole('button', { name: '保存账目', exact: true }).click();
+      await expect(review(page).locator('.review-field.pending')).toContainText(warning);
+      await review(page).getByRole('button', { name: '保留我的填写', exact: true }).click();
+    }
+  }
+  await note.fill('2026年11月21日08:20停车费10元');
+  await expect(time).toContainText('2026-11-21 08:20');
+  await note.fill('');
+  await expect(time).toHaveText(initial);
+});
 
 test('缺分类与推断年份突出，详情默认收起；直接补齐后保存，不把短信余额写到账户', async ({ page }) => {
   const editor = await open(page);

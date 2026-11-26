@@ -5,7 +5,7 @@ import type { Account } from '../../src/domain/model';
 import type { StoredVault } from '../../src/storage/backend';
 
 /** 选择器演示独立构造；跨账本流水用于验证余额沿用共用账户口径。 */
-export async function accountPickerFixture(mode: 'single' | 'many' | 'empty') {
+export async function accountPickerFixture(mode: 'single' | 'many' | 'empty' | 'ambiguous') {
   let row: StoredVault | undefined;
   const vault = new Vault({
     read: async () => row,
@@ -30,6 +30,10 @@ export async function accountPickerFixture(mode: 'single' | 'many' | 'empty') {
       tail: '1234',
     };
     put(state, account, 'picker-bank');
+    if (mode === 'ambiguous') {
+      put(state, { ...account, name: '同尾号备用卡' }, 'picker-duplicate-bank');
+      return;
+    }
     if (mode === 'single') return;
     for (const [id, name, type, opening, displayType] of [
       ['cash', '随身现金', 'cash', 50000, 'cash'],

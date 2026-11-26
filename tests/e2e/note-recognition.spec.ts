@@ -269,12 +269,14 @@ test('识别模式在重开与刷新解锁后保持，编辑旧账不自动弹�
   await controlTime(page);
   await page.clock.runFor(1000);
   await expect(page.locator('.recognition-panel')).toHaveCount(0);
-  await edit.getByLabel('备注', { exact: true }).fill('停车费11元');
+  const originalTime = await edit.getByRole('button', { name: '修改发生时间', exact: true }).innerText();
+  await edit.getByLabel('备注', { exact: true }).fill('2026年10月14日08:20停车费11元');
   await page.clock.runFor(350);
   await openReview(page);
   await expect(page.locator('.recognition-panel')).toContainText('金额 ¥ 11.00');
   await closeReview(page);
   await expect(edit.getByLabel('金额', { exact: true })).toHaveValue('10.00');
+  await expect(edit.getByRole('button', { name: '修改发生时间', exact: true })).toHaveText(originalTime);
   await edit.getByRole('switch', { name: '自动识别备注', exact: true }).click();
   for (const colorScheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme });

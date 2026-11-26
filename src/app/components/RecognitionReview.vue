@@ -134,6 +134,9 @@ const needsYear = computed(
     !choice.changed.at,
 );
 const yearChecked = ref(false);
+const ambiguousDate = computed(
+  () => props.result.dateAmbiguous && !choice.changed.at && !timeProtected.value,
+);
 const invalidDate = computed(
   () =>
     props.result.warnings.some((warning) => warning.includes('日期无效')) &&
@@ -157,7 +160,11 @@ const tasks = computed(() =>
   [
     (!reviewAmount(amountInput.value) || needsAmountChoice.value || inferredUnit.value) && '金额',
     withCategory.value && !choice.categoryId && '分类',
-    ((needsYear.value && !yearChecked.value) || invalidDate.value || futureDate.value) && '时间',
+    ((needsYear.value && !yearChecked.value) ||
+      ambiguousDate.value ||
+      invalidDate.value ||
+      futureDate.value) &&
+      '时间',
     (!account.value || ambiguousAccount.value) && '账户',
   ].filter(Boolean),
 );
@@ -334,12 +341,13 @@ async function apply() {
           </section>
           <section
             class="review-field"
-            :class="{ pending: (needsYear && !yearChecked) || invalidDate || futureDate }"
+            :class="{ pending: (needsYear && !yearChecked) || ambiguousDate || invalidDate || futureDate }"
           >
             <span class="review-field-label">时间</span>
             <div>
               <strong>{{ choice.at.slice(0, 16).replace('T', ' ') }}</strong
               ><small v-if="timeProtected">保留手动时间</small
+              ><small v-else-if="ambiguousDate">多个时间，请核对</small
               ><small v-else-if="invalidDate">原文日期无效，沿用填写时间</small
               ><small v-else-if="needsYear">{{ yearChecked ? '年份已确认' : '年份待确认' }}</small
               ><small v-else-if="futureDate">晚于今天，请核对</small
@@ -366,8 +374,10 @@ async function apply() {
                     ? '保留已选账户'
                     : ambiguousAccount
                       ? '匹配多个账户，请选择'
-                      : result.accountIds.length === 1 && account
-                        ? '已匹配'
+                      : result.accountIds.length === 1 && account && result.accountIds[0] === choice.accountId
+                        ? automatic && draft[choice.side] === choice.accountId
+                          ? '已自动选用'
+                          : '已匹配，采用后选用'
                         : account
                           ? '沿用已选账户'
                           : '请选择账户'

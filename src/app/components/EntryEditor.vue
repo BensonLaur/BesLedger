@@ -13,7 +13,7 @@ import { entryIcon, loanIcons, transferIcons } from '../entry-presentation';
 import AccountPicker from './AccountPicker.vue';
 import AccountOpeningDialog from './AccountOpeningDialog.vue';
 import { readAutoRecognition, rememberAutoRecognition } from '../recognition-mode';
-import { automaticFields } from '../automatic-recognition';
+import { automaticAccount, automaticFields } from '../automatic-recognition';
 import { useEntryViewport } from '../use-entry-viewport';
 import EntryDateTimePicker from './EntryDateTimePicker.vue';
 import RecognitionReview from './RecognitionReview.vue';
@@ -74,11 +74,12 @@ const protectedFields = reactive({
   amount: !!draft.amount,
   category: !!draft.categoryId,
   at: !!ui.editingId,
-  from: !!draft.from,
-  to: !!draft.to,
+  from: !!ui.editingId || !!draft.from,
+  to: !!ui.editingId || !!draft.to,
   type: !!ui.editingId || draft.type !== 'expense',
 });
-const automatic = reactive({ amount: false, category: false });
+const automatic = reactive({ amount: false, category: false, at: false, from: false, to: false });
+const initialTime = draft.at;
 function protectAmount() {
   protectedFields.amount = true;
   automatic.amount = false;
@@ -90,6 +91,7 @@ function selectCategory(id: string) {
 }
 function selectAccount(side: 'from' | 'to', id: string) {
   protectedFields[side] = true;
+  automatic[side] = false;
   draft[side] = id;
 }
 const tab = ref(
@@ -104,6 +106,7 @@ const datePicker = ref(false),
 function setDate(value: string) {
   draft.at = value;
   protectedFields.at = true;
+  automatic.at = false;
   datePicker.value = false;
 }
 function openDate() {
@@ -178,13 +181,18 @@ function compositionEnd() {
   composingNote.value = false;
   scheduleRecognition();
 }
-// 改备注时一并撤回上一版自动值，避免等待期间看到/保存过期金额；手动值不撤回。
+// 改备注时撤回上一版自动值；日期回到草稿初始时间，避免无日期的新备注沿用上一条交易时间。
 watch(
   () => draft.note,
   () => {
     if (autoRecognition.value && automatic.amount && !protectedFields.amount) amount.value = '';
     if (autoRecognition.value && automatic.category && !protectedFields.category) draft.categoryId = '';
-    automatic.amount = automatic.category = false;
+    if (autoRecognition.value && automatic.at && !protectedFields.at) draft.at = initialTime;
+    for (const side of ['from', 'to'] as const) {
+      if (autoRecognition.value && automatic[side] && !protectedFields[side]) draft[side] = '';
+      automatic[side] = false;
+    }
+    automatic.amount = automatic.category = automatic.at = false;
     clearRecognition();
     scheduleRecognition();
   },
@@ -274,6 +282,7 @@ const loanDrafts = new Map<string, { data: Entry; amount: string; interest: stri
 function switchType(type: Entry['type']) {
   protectedFields.type = true;
   if (type === draft.type) return;
+  automatic.from = automatic.to = false;
   const switchingLoan = isLoan.value && ['borrow', 'lend', 'repay', 'collect'].includes(type);
   if (isLoan.value)
     loanDrafts.set(draft.type, {
@@ -311,6 +320,16 @@ function switchType(type: Entry['type']) {
 function accountName(id: string) {
   return accounts.value.find((a) => a.id === id)?.data.name || '选择账户';
 }
+function accountPlan(result: Recognition) {
+  return automaticAccount(result, {
+    type: draft.type,
+    protectedFrom: protectedFields.from,
+    protectedTo: protectedFields.to,
+    automaticFrom: automatic.from,
+    automaticTo: automatic.to,
+    availableIds: accounts.value.map((account) => account.id),
+  });
+}
 function parse(showReview = !autoRecognition.value) {
   cancelScheduledRecognition();
   if (composingNote.value || !draft.note.trim()) return;
@@ -320,6 +339,7 @@ function parse(showReview = !autoRecognition.value) {
       type: draft.type,
       protectedAmount: protectedFields.amount,
       protectedCategory: protectedFields.category,
+      protectedAt: protectedFields.at,
       automaticAmount: automatic.amount,
       automaticCategory: automatic.category,
     });
@@ -330,6 +350,15 @@ function parse(showReview = !autoRecognition.value) {
     if (plan.categoryId !== undefined) {
       draft.categoryId = plan.categoryId ?? '';
       automatic.category = plan.categoryId !== null;
+    }
+    if (plan.at !== undefined) {
+      draft.at = plan.at;
+      automatic.at = true;
+    }
+    const account = accountPlan(parsed.value);
+    if (account) {
+      draft[account.side] = account.accountId ?? '';
+      automatic[account.side] = account.accountId !== null;
     }
   }
   if (showReview) {
@@ -351,7 +380,13 @@ const recognitionReview = computed(() => {
   )
     reasons.push('请选择分类');
   if (p.type && p.type !== draft.type && !protectedFields.type) reasons.push('请核对记账类型');
-  if (p.at && !protectedFields.at && (p.yearBasis !== 'explicitText' || p.at !== normalizeTime(draft.at)))
+  if (
+    !protectedFields.at &&
+    (p.dateAmbiguous ||
+      (!!p.rawDate && !p.at) ||
+      (p.at && (p.yearBasis !== 'explicitText' || p.at !== normalizeTime(draft.at))) ||
+      p.warnings.some((warning) => warning.includes('时间晚于今天')))
+  )
     reasons.push('请核对发生时间和年份');
   const side = ['income', 'refund', 'collect', 'borrow'].includes(p.type || draft.type) ? 'to' : 'from';
   if (
@@ -365,7 +400,12 @@ const recognitionPending = computed(
   () => !!parsed.value && (!autoRecognition.value || recognitionReview.value.length > 0),
 );
 const automaticSummary = computed(() => {
-  const fields = [automatic.amount ? '金额' : '', automatic.category ? '分类' : ''].filter(Boolean);
+  const fields = [
+    automatic.amount ? '金额' : '',
+    automatic.category ? '分类' : '',
+    automatic.at ? '时间' : '',
+    automatic.from || automatic.to ? '账户' : '',
+  ].filter(Boolean);
   return fields.length ? `已自动填入${fields.join('、')}` : '已保留当前填写';
 });
 onMounted(() => {
@@ -390,12 +430,23 @@ function applyRecognition(choice: ReviewedRecognition) {
   if ((p.at || choice.changed.at) && (choice.changed.at || !autoRecognition.value || !protectedFields.at)) {
     draft.at = choice.at;
     protectedFields.at = true;
+    automatic.at = false;
   }
   if (
     choice.accountId &&
     (choice.changed.account || !autoRecognition.value || !protectedFields[choice.side])
   ) {
-    selectAccount(choice.side, choice.accountId);
+    const account = accountPlan(p);
+    if (
+      autoRecognition.value &&
+      !choice.changed.account &&
+      account?.side === choice.side &&
+      account.accountId === choice.accountId
+    ) {
+      // 只核对其他字段，不把已经自动选中的账户变成手选，后续备注仍可跟随唯一匹配。
+      draft[choice.side] = choice.accountId;
+      automatic[choice.side] = true;
+    } else selectAccount(choice.side, choice.accountId);
   }
   if (choice.categoryId && (choice.changed.category || !autoRecognition.value || !protectedFields.category)) {
     draft.categoryId = choice.categoryId;
@@ -823,7 +874,9 @@ async function save(again = false) {
         </label>
         <p id="recognition-mode-hint" class="sr-only">
           {{
-            autoRecognition ? '明确的金额和分类直接填入，手动改过的会保留。' : '点击识别备注，再核对结果。'
+            autoRecognition
+              ? '明确的金额、分类、时间和唯一匹配的账户直接填入，推断年份需核对，手动改过的会保留。'
+              : '点击识别备注，再核对结果。'
           }}
         </p>
         <p v-if="modeNotRemembered" class="hint entry-mode-warning">
@@ -1037,7 +1090,9 @@ async function save(again = false) {
     >
   </Modal>
   <Modal v-if="helpOpen" title="识别备注怎么用" @close="helpOpen = false"
-    ><p>输入用途和金额，或粘贴交易短信。自动识别开启后，明确的金额和分类直接填入，手动改过的会保留。</p>
+    ><p>
+      输入用途和金额，或粘贴交易短信。自动识别开启后，明确的金额、分类、时间和唯一匹配的账户直接填入，手动改过的会保留。
+    </p>
     <p>不确定的金额、分类、账户和年份需核对后再保存。备注只在本机识别。</p></Modal
   >
 

@@ -13,6 +13,7 @@ export type Recognition = {
   accountIds: string[];
   categoryIds: string[];
   at?: string;
+  dateAmbiguous?: boolean;
   rawDate: string;
   yearBasis: string;
   warnings: string[];
@@ -82,9 +83,16 @@ export function recognize(
     result.warnings.push(
       result.accountIds.length ? '尾号匹配多个账户，请选择' : '未匹配到资金账户，请核对已选账户或手动选择',
     );
-  const date =
-    raw.match(/(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/) ??
-    raw.match(/(?:(\d{4})[-/])?(\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  const dates = [
+    ...raw.matchAll(/(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/g),
+    ...raw.matchAll(/(?:(\d{4})[-/])?(\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/g),
+  ].sort((a, b) => a.index - b.index);
+  const date = dates[0];
+  if (dates.length > 1) {
+    // 保留首个时间供明确核对，不自动把交易时间、通知时间或多条交易中的任意一项写入草稿。
+    result.dateAmbiguous = true;
+    result.warnings.push('备注含有多个日期时间，请核对发生时间');
+  }
   if (date) {
     result.rawDate = date[0];
     let year = Number(date[1] || today(now).slice(0, 4));
