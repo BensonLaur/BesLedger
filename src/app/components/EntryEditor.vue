@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, toRaw, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
-import { accounts, currentEntries, mutate, newEntry, run, state, ui } from '../store';
+import { accounts, entries, mutate, newEntry, run, state, ui } from '../store';
 import { categories, quickCategories } from '../../domain/categories';
 import { list, put, type Entry } from '../../domain/model';
 import { saveEntry, movements } from '../../domain/ledger';
@@ -19,6 +19,9 @@ import EntryDateTimePicker from './EntryDateTimePicker.vue';
 import RecognitionReview from './RecognitionReview.vue';
 import type { ReviewedRecognition } from '../recognition-review';
 const draft = reactive(structuredClone(toRaw(ui.draft!)));
+const copiedFromId = ui.copiedFromId;
+const copiedNote = copiedFromId ? draft.note : undefined;
+const editorTitle = ui.editingId ? '编辑账目' : copiedFromId ? '复制记一笔' : '记一笔';
 const noteInput = ref<HTMLTextAreaElement>();
 const entryForm = ref<HTMLElement>(),
   choices = ref<HTMLElement>(),
@@ -157,7 +160,9 @@ function clearRecognition() {
 }
 function scheduleRecognition() {
   cancelScheduledRecognition();
-  if (!autoRecognition.value || composingNote.value || !draft.note.trim()) return;
+  // 复制来的原备注只作参考，避免旧短信把新草稿的发生时间改回去。
+  if (!autoRecognition.value || composingNote.value || !draft.note.trim() || draft.note === copiedNote)
+    return;
   recognitionQueued.value = true;
   const note = draft.note;
   // 中文组词期间不运行，只处理最后一版文本；明确字段可填草稿，手动值由保护标记保留。
@@ -267,7 +272,8 @@ function pickedAccount(id: string) {
   selectAccount(accountPicker.value, id);
   accountPicker.value = '';
 }
-const originals = computed(() => currentEntries.value.filter((e) => e.data.type === 'expense'));
+const ledgerEntries = computed(() => entries.value.filter((e) => e.data.ledgerId === draft.ledgerId));
+const originals = computed(() => ledgerEntries.value.filter((e) => e.data.type === 'expense'));
 const typeLabels: Record<Entry['type'], string> = {
   expense: '支出',
   income: '收入',
@@ -501,17 +507,20 @@ async function openingAdjusted(message: string) {
     openingNotice.value = '';
   }, 5500);
 }
-const duplicates = computed(() =>
-  currentEntries.value.filter(
-    (e) =>
-      e.id !== ui.editingId &&
-      ((draft.note.trim() && e.data.note.trim() === draft.note.trim()) ||
-        (e.data.at === draft.at &&
-          decimal(e.data.amount) === amount.value &&
-          e.data.from === draft.from &&
-          e.data.to === draft.to)),
-  ),
-);
+const duplicates = computed(() => {
+  const note = draft.note.trim();
+  return ledgerEntries.value.filter((e) => {
+    if (e.id === ui.editingId) return false;
+    // 源账目的备注是有意复制的，仍检查同时间、金额和账户的重复录入。
+    const sameNote = e.id !== copiedFromId && note && e.data.note.trim() === note;
+    const sameTransaction =
+      e.data.at === normalizedEntryTime.value &&
+      decimal(e.data.amount) === amount.value &&
+      e.data.from === draft.from &&
+      e.data.to === draft.to;
+    return sameNote || sameTransaction;
+  });
+});
 const checksComplete = computed(
   () =>
     (!hasPreOpening.value || confirmOpening.value) && (!duplicates.value.length || confirmDuplicate.value),
@@ -603,14 +612,7 @@ async function save(again = false) {
 }
 </script>
 <template>
-  <Modal
-    class="entry-backdrop"
-    :style="viewportStyle"
-    :title="ui.editingId ? '编辑账目' : '记一笔'"
-    page
-    wide
-    @close="close"
-  >
+  <Modal class="entry-backdrop" :style="viewportStyle" :title="editorTitle" page wide @close="close">
     <form
       ref="entryForm"
       class="entry-form"

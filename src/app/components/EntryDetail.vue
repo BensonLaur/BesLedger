@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { editEntry, entries, mutate, newEntry, run, state, ui } from '../store';
+import { copyEntry, editEntry, entries, mutate, newEntry, run, state, ui } from '../store';
 import { categoryName } from '../../domain/categories';
 import { money, sum } from '../../domain/money';
 import { deleteEntry } from '../../domain/ledger';
@@ -105,16 +105,54 @@ async function remove() {
       </button>
     </section>
     <p v-if="ui.error" class="field-error">{{ ui.error }}</p>
-    <div v-if="!deleting" class="actions">
-      <button class="danger-outline" @click="deleting = true"><Icon name="delete" />删除</button
-      ><button class="primary" @click="editEntry(entity.id)"><Icon name="edit" />编辑账目</button>
-    </div>
-    <div v-else class="warning-panel">
-      <p>确认将这笔账移入回收站？余额和统计会同步更新，可在“我的 → 回收站”找回。</p>
-      <div class="actions">
-        <button class="secondary" @click="deleting = false">取消</button
-        ><button class="danger" :disabled="ui.busy" @click="remove">确认删除</button>
+    <template #footer>
+      <div v-if="!deleting" class="actions detail-actions">
+        <button type="button" class="danger-outline" @click="deleting = true">
+          <Icon name="delete" :size="16" />删除
+        </button>
+        <button v-if="!ui.editor" type="button" class="secondary" @click="copyEntry(entity.id)">
+          <Icon name="copy" :size="16" />复制记一笔
+        </button>
+        <button type="button" class="primary" @click="editEntry(entity.id)">
+          <Icon name="edit" :size="16" />编辑账目
+        </button>
       </div>
-    </div></Modal
+      <div v-else class="detail-delete">
+        <div class="warning-panel">
+          <p>确认将这笔账移入回收站？余额和统计会同步更新，可在“我的 → 回收站”找回。</p>
+          <div class="actions">
+            <button class="secondary" @click="deleting = false">取消</button>
+            <button class="danger" :disabled="ui.busy" @click="remove">确认删除</button>
+          </div>
+        </div>
+      </div>
+    </template></Modal
   >
 </template>
+
+<style scoped>
+.detail-actions,
+.detail-delete {
+  border-top: 1px solid var(--line);
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+}
+.detail-actions {
+  margin-top: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.detail-actions > button {
+  gap: 6px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+@media (max-width: 360px) {
+  .detail-actions {
+    gap: 6px;
+    padding-inline: 12px;
+  }
+  .detail-actions > button {
+    padding-inline: 6px;
+  }
+}
+</style>

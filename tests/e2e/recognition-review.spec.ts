@@ -65,6 +65,69 @@ async function bank(page: Page) {
     .click();
 }
 
+test('复制带退款的支出生成独立草稿，保留新日期，放弃不新增且保存不复制退款', async ({ page }) => {
+  const form = await open(page);
+  const note = '尾号1234卡2026年11月21日08:20停车费10元。【示例银行】';
+  await form.getByRole('switch', { name: '自动识别备注', exact: true }).click();
+  await form.getByLabel('备注', { exact: true }).fill(note);
+  await expect(form.getByRole('button', { name: '付款账户', exact: true })).toContainText('日常储蓄卡');
+  await form.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(form).toBeHidden();
+
+  const rows = page.locator('.entry-row').filter({ hasText: note });
+  const detail = page.getByRole('dialog', { name: '账目详情', exact: true });
+  await rows.click();
+  await detail.getByRole('button', { name: '＋ 添加退款', exact: true }).click();
+  await form.getByLabel('金额', { exact: true }).fill('2.00');
+  await form.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(form).toBeHidden();
+  await rows.click();
+  await expect(detail).toContainText('关联退款 1 笔');
+
+  await page.setViewportSize({ width: 320, height: 650 });
+  const footer = detail.locator('.detail-actions');
+  await expect(footer.getByRole('button')).toHaveText(['删除', '复制记一笔', '编辑账目']);
+  const bounds = await footer.getByRole('button').evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const { left, right, top } = button.getBoundingClientRect();
+      return { left, right, top };
+    }),
+  );
+  expect(bounds.every((b) => b.left >= 0 && b.right <= 320 && b.top === bounds[0].top)).toBe(true);
+  await footer.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(detail.getByRole('button', { name: '确认删除', exact: true })).toBeVisible();
+  await detail.getByRole('button', { name: '取消', exact: true }).click();
+
+  const copy = page.getByRole('dialog', { name: '复制记一笔', exact: true });
+  await footer.getByRole('button', { name: '复制记一笔', exact: true }).click();
+  await expect(copy.getByLabel('备注', { exact: true })).toHaveValue(note);
+  await expect(copy.getByLabel('金额', { exact: true })).toHaveValue('10.00');
+  await expect(copy.getByRole('button', { name: '当前分类：停车费', exact: true })).toBeVisible();
+  await expect(copy.getByRole('button', { name: '付款账户', exact: true })).toContainText('日常储蓄卡');
+  await expect(copy.getByRole('button', { name: '修改发生时间', exact: true })).toHaveText('今天 23:00');
+  await copy.getByRole('button', { name: '返回', exact: true }).click();
+  await page.getByRole('button', { name: '放弃草稿', exact: true }).click();
+  await expect(rows).toHaveCount(1);
+
+  await page.getByRole('button', { name: '展开日历', exact: true }).click();
+  await page.getByRole('button', { name: /^2026-11-21 / }).click();
+  await rows.click();
+  await detail.getByRole('button', { name: '复制记一笔', exact: true }).click();
+  await expect(copy.getByRole('button', { name: '修改发生时间', exact: true })).toHaveText(
+    '2026-11-21 12:00',
+  );
+  await copy.getByRole('button', { name: '保存账目', exact: true }).click();
+  await expect(copy).toBeHidden();
+  await expect(rows).toHaveCount(2);
+  await rows.filter({ hasText: '12:00' }).click();
+  await expect(detail).toContainText('2026-11-21 12:00:00');
+  await expect(detail).toContainText('关联退款 0 笔');
+  await detail.getByRole('button', { name: '关闭', exact: true }).click();
+  await rows.filter({ hasText: '08:20 ·' }).click();
+  await expect(detail).toContainText('2026-11-21 08:20:00');
+  await expect(detail).toContainText('关联退款 1 笔');
+});
+
 test('唯一尾号在分类和年份仍待核对时已填入主页面，关闭核对仍保留，保存重开账户正确', async ({ page }) => {
   const editor = await open(page);
   await editor.getByRole('switch', { name: '自动识别备注', exact: true }).click();

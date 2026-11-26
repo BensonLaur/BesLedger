@@ -19,6 +19,7 @@ export const ui = reactive({
   allTime: false,
   editor: false,
   editingId: '',
+  copiedFromId: '',
   detailId: '',
   accountForm: false,
   accountId: '',
@@ -102,15 +103,21 @@ export async function run(operation: () => Promise<void>): Promise<boolean> {
     ui.busy = false;
   }
 }
-export function newEntry(type: Entry['type'] = 'expense', overrides: Partial<Entry> = {}): void {
-  if (!currentLedgerId.value) {
+export function newEntry(
+  type: Entry['type'] = 'expense',
+  overrides: Partial<Entry> = {},
+  copiedFromId = '',
+): void {
+  const ledgerId = overrides.ledgerId ?? currentLedgerId.value;
+  if (!ledgerId) {
     ui.error = '请先选择、取回或新建一本账';
     return;
   }
   ui.editingId = '';
+  ui.copiedFromId = copiedFromId;
   ui.draft = {
     kind: 'entry',
-    ledgerId: currentLedgerId.value,
+    ledgerId,
     type,
     amount: 0,
     interest: 0,
@@ -126,10 +133,33 @@ export function newEntry(type: Entry['type'] = 'expense', overrides: Partial<Ent
   ui.quick = false;
   ui.editor = true;
 }
+export function copyEntry(id: string): void {
+  const entity = state.value?.entities[id];
+  if (ui.editor || entity?.data.kind !== 'entry' || entity.deleted) return;
+  const source = entity.data;
+  const availableAccounts = new Set(accounts.value.map((account) => account.id));
+  // 只带入可复用的录入项，时间用新草稿默认值，关系和识别依据需要按新交易重新确认。
+  newEntry(
+    source.type,
+    {
+      ledgerId: source.ledgerId,
+      amount: source.amount,
+      interest: source.interest,
+      from: availableAccounts.has(source.from) ? source.from : '',
+      to: availableAccounts.has(source.to) ? source.to : '',
+      categoryId: source.categoryId,
+      note: source.note,
+      behavior: source.behavior,
+    },
+    id,
+  );
+  ui.detailId = '';
+}
 export function editEntry(id: string): void {
   const entity = state.value?.entities[id];
   if (entity?.data.kind !== 'entry' || entity.deleted) return;
   ui.editingId = id;
+  ui.copiedFromId = '';
   ui.draft = structuredClone(entity.data);
   ui.detailId = '';
   ui.editor = true;
